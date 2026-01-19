@@ -105,9 +105,17 @@ impl InputHandler {
                 InputEvent::ExitMode => {
                     state.set_mode(EditorMode::Normal);
                 }
-                InputEvent::MoveDown | InputEvent::MoveUp
-                | InputEvent::MoveLeft | InputEvent::MoveRight => {
-                    // TODO: implement cursor movement in future tasks
+                InputEvent::MoveDown => {
+                    state.move_cursor_down();
+                }
+                InputEvent::MoveUp => {
+                    state.move_cursor_up();
+                }
+                InputEvent::MoveRight => {
+                    state.toggle_expand_at_cursor();
+                }
+                InputEvent::MoveLeft => {
+                    state.toggle_expand_at_cursor();
                 }
                 InputEvent::Unknown => {
                     // Ignore unknown keys

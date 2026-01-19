@@ -28,10 +28,15 @@ fn main() -> Result<()> {
     let ui = UI::new(theme);
     let input_handler = InputHandler::new();
 
-    // Create sample document
-    let obj = vec![
+    // Create sample document with nested structure
+    let user_obj = vec![
         ("name".to_string(), JsonNode::new(JsonValue::String("Alice".to_string()))),
-        ("age".to_string(), JsonNode::new(JsonValue::Number(30.0))),
+        ("email".to_string(), JsonNode::new(JsonValue::String("alice@example.com".to_string()))),
+    ];
+
+    let obj = vec![
+        ("user".to_string(), JsonNode::new(JsonValue::Object(user_obj))),
+        ("count".to_string(), JsonNode::new(JsonValue::Number(42.0))),
         ("active".to_string(), JsonNode::new(JsonValue::Boolean(true))),
     ];
 

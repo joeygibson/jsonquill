@@ -112,10 +112,16 @@ impl EditorState {
         let mut tree_view = TreeViewState::new();
         tree_view.rebuild(&tree);
 
+        // Initialize cursor to first visible line if available
+        let mut cursor = Cursor::new();
+        if let Some(first_line) = tree_view.lines().first() {
+            cursor.set_path(first_line.path.clone());
+        }
+
         Self {
             tree,
             mode: EditorMode::Normal,
-            cursor: Cursor::new(),
+            cursor,
             dirty: false,
             filename: None,
             tree_view,
@@ -419,6 +425,139 @@ impl EditorState {
     /// state.rebuild_tree_view();
     /// ```
     pub fn rebuild_tree_view(&mut self) {
+        self.tree_view.rebuild(&self.tree);
+    }
+
+    /// Moves the cursor down to the next visible line in the tree view.
+    ///
+    /// If the cursor is at the last line or the tree is empty, this does nothing.
+    /// If the cursor is not found in the tree, it moves to the first line.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use jeditor::editor::state::EditorState;
+    /// use jeditor::document::node::{JsonNode, JsonValue};
+    /// use jeditor::document::tree::JsonTree;
+    ///
+    /// let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
+    ///     ("a".to_string(), JsonNode::new(JsonValue::Number(1.0))),
+    ///     ("b".to_string(), JsonNode::new(JsonValue::Number(2.0))),
+    /// ])));
+    /// let mut state = EditorState::new(tree);
+    ///
+    /// // Initially at first line [0]
+    /// assert_eq!(state.cursor().path(), &[0]);
+    ///
+    /// // Move down to [1]
+    /// state.move_cursor_down();
+    /// assert_eq!(state.cursor().path(), &[1]);
+    ///
+    /// // At last line, stays at [1]
+    /// state.move_cursor_down();
+    /// assert_eq!(state.cursor().path(), &[1]);
+    /// ```
+    pub fn move_cursor_down(&mut self) {
+        let lines = self.tree_view.lines();
+        if lines.is_empty() {
+            return;
+        }
+
+        let current_path = self.cursor.path();
+
+        // Find current line index
+        if let Some(current_idx) = lines.iter().position(|l| l.path == current_path) {
+            if current_idx + 1 < lines.len() {
+                let next_path = lines[current_idx + 1].path.clone();
+                self.cursor.set_path(next_path);
+            }
+        } else if !lines.is_empty() {
+            // If cursor not found, go to first line
+            self.cursor.set_path(lines[0].path.clone());
+        }
+    }
+
+    /// Moves the cursor up to the previous visible line in the tree view.
+    ///
+    /// If the cursor is at the first line or the tree is empty, this does nothing.
+    /// If the cursor is not found in the tree, it moves to the first line.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use jeditor::editor::state::EditorState;
+    /// use jeditor::document::node::{JsonNode, JsonValue};
+    /// use jeditor::document::tree::JsonTree;
+    ///
+    /// let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
+    ///     ("a".to_string(), JsonNode::new(JsonValue::Number(1.0))),
+    ///     ("b".to_string(), JsonNode::new(JsonValue::Number(2.0))),
+    /// ])));
+    /// let mut state = EditorState::new(tree);
+    ///
+    /// // Move to second line
+    /// state.move_cursor_down();
+    /// assert_eq!(state.cursor().path(), &[1]);
+    ///
+    /// // Move back up to first line
+    /// state.move_cursor_up();
+    /// assert_eq!(state.cursor().path(), &[0]);
+    ///
+    /// // At first line, stays at [0]
+    /// state.move_cursor_up();
+    /// assert_eq!(state.cursor().path(), &[0]);
+    /// ```
+    pub fn move_cursor_up(&mut self) {
+        let lines = self.tree_view.lines();
+        if lines.is_empty() {
+            return;
+        }
+
+        let current_path = self.cursor.path();
+
+        if let Some(current_idx) = lines.iter().position(|l| l.path == current_path) {
+            if current_idx > 0 {
+                let prev_path = lines[current_idx - 1].path.clone();
+                self.cursor.set_path(prev_path);
+            }
+        } else if !lines.is_empty() {
+            self.cursor.set_path(lines[0].path.clone());
+        }
+    }
+
+    /// Toggles expand/collapse at the current cursor position and rebuilds the tree view.
+    ///
+    /// If the node at the cursor is expandable (object/array), this toggles its
+    /// expanded state and rebuilds the tree view to show/hide children.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use jeditor::editor::state::EditorState;
+    /// use jeditor::document::node::{JsonNode, JsonValue};
+    /// use jeditor::document::tree::JsonTree;
+    ///
+    /// let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
+    ///     ("user".to_string(), JsonNode::new(JsonValue::Object(vec![
+    ///         ("name".to_string(), JsonNode::new(JsonValue::String("Alice".to_string()))),
+    ///     ]))),
+    /// ])));
+    /// let mut state = EditorState::new(tree);
+    ///
+    /// // Initially collapsed - 1 line
+    /// assert_eq!(state.tree_view().lines().len(), 1);
+    ///
+    /// // Toggle to expand
+    /// state.toggle_expand_at_cursor();
+    /// assert_eq!(state.tree_view().lines().len(), 2);
+    ///
+    /// // Toggle to collapse
+    /// state.toggle_expand_at_cursor();
+    /// assert_eq!(state.tree_view().lines().len(), 1);
+    /// ```
+    pub fn toggle_expand_at_cursor(&mut self) {
+        let current_path = self.cursor.path().to_vec();
+        self.tree_view.toggle_expand(&current_path);
         self.tree_view.rebuild(&self.tree);
     }
 }

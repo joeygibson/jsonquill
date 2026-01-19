@@ -377,3 +377,249 @@ fn test_rebuild_tree_view() {
     state.rebuild_tree_view();
     assert_eq!(state.tree_view().lines().len(), 0);
 }
+
+// Navigation tests
+
+#[test]
+fn test_move_cursor_down_in_empty_tree() {
+    use jeditor::document::node::{JsonNode, JsonValue};
+    use jeditor::document::tree::JsonTree;
+
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![])));
+    let mut state = EditorState::new(tree);
+
+    // Moving down in empty tree should do nothing
+    state.move_cursor_down();
+    assert_eq!(state.cursor().path(), &[] as &[usize]);
+}
+
+#[test]
+fn test_move_cursor_up_in_empty_tree() {
+    use jeditor::document::node::{JsonNode, JsonValue};
+    use jeditor::document::tree::JsonTree;
+
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![])));
+    let mut state = EditorState::new(tree);
+
+    // Moving up in empty tree should do nothing
+    state.move_cursor_up();
+    assert_eq!(state.cursor().path(), &[] as &[usize]);
+}
+
+#[test]
+fn test_move_cursor_down_basic() {
+    use jeditor::document::node::{JsonNode, JsonValue};
+    use jeditor::document::tree::JsonTree;
+
+    // Create a simple flat object
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
+        ("a".to_string(), JsonNode::new(JsonValue::Number(1.0))),
+        ("b".to_string(), JsonNode::new(JsonValue::Number(2.0))),
+        ("c".to_string(), JsonNode::new(JsonValue::Number(3.0))),
+    ])));
+
+    let mut state = EditorState::new(tree);
+
+    // Initially at [0] (first element "a")
+    assert_eq!(state.cursor().path(), &[0]);
+
+    // Move down to [1] ("b")
+    state.move_cursor_down();
+    assert_eq!(state.cursor().path(), &[1]);
+
+    // Move down to [2] ("c")
+    state.move_cursor_down();
+    assert_eq!(state.cursor().path(), &[2]);
+
+    // Move down at last line - should stay at [2]
+    state.move_cursor_down();
+    assert_eq!(state.cursor().path(), &[2]);
+}
+
+#[test]
+fn test_move_cursor_up_basic() {
+    use jeditor::document::node::{JsonNode, JsonValue};
+    use jeditor::document::tree::JsonTree;
+
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
+        ("a".to_string(), JsonNode::new(JsonValue::Number(1.0))),
+        ("b".to_string(), JsonNode::new(JsonValue::Number(2.0))),
+        ("c".to_string(), JsonNode::new(JsonValue::Number(3.0))),
+    ])));
+
+    let mut state = EditorState::new(tree);
+
+    // Start at [2]
+    state.cursor_mut().set_path(vec![2]);
+    assert_eq!(state.cursor().path(), &[2]);
+
+    // Move up to [1]
+    state.move_cursor_up();
+    assert_eq!(state.cursor().path(), &[1]);
+
+    // Move up to [0]
+    state.move_cursor_up();
+    assert_eq!(state.cursor().path(), &[0]);
+
+    // Move up at first line - should stay at [0]
+    state.move_cursor_up();
+    assert_eq!(state.cursor().path(), &[0]);
+}
+
+#[test]
+fn test_move_cursor_with_invalid_position() {
+    use jeditor::document::node::{JsonNode, JsonValue};
+    use jeditor::document::tree::JsonTree;
+
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
+        ("a".to_string(), JsonNode::new(JsonValue::Number(1.0))),
+        ("b".to_string(), JsonNode::new(JsonValue::Number(2.0))),
+    ])));
+
+    let mut state = EditorState::new(tree);
+
+    // Set cursor to invalid position
+    state.cursor_mut().set_path(vec![99, 99]);
+
+    // Move down should reset to first line
+    state.move_cursor_down();
+    assert_eq!(state.cursor().path(), &[0]);
+
+    // Set cursor to invalid position again
+    state.cursor_mut().set_path(vec![99]);
+
+    // Move up should reset to first line
+    state.move_cursor_up();
+    assert_eq!(state.cursor().path(), &[0]);
+}
+
+#[test]
+fn test_toggle_expand_at_cursor_expandable() {
+    use jeditor::document::node::{JsonNode, JsonValue};
+    use jeditor::document::tree::JsonTree;
+
+    // Create nested object
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
+        ("user".to_string(), JsonNode::new(JsonValue::Object(vec![
+            ("name".to_string(), JsonNode::new(JsonValue::String("Alice".to_string()))),
+        ]))),
+    ])));
+
+    let mut state = EditorState::new(tree);
+
+    // Initially collapsed - only 1 line visible
+    assert_eq!(state.tree_view().lines().len(), 1);
+    assert!(!state.tree_view().is_expanded(&[0]));
+
+    // Toggle expand at cursor (which is at [0])
+    state.toggle_expand_at_cursor();
+
+    // Now should be expanded - 2 lines visible
+    assert_eq!(state.tree_view().lines().len(), 2);
+    assert!(state.tree_view().is_expanded(&[0]));
+
+    // Toggle again to collapse
+    state.toggle_expand_at_cursor();
+    assert_eq!(state.tree_view().lines().len(), 1);
+    assert!(!state.tree_view().is_expanded(&[0]));
+}
+
+#[test]
+fn test_toggle_expand_at_cursor_non_expandable() {
+    use jeditor::document::node::{JsonNode, JsonValue};
+    use jeditor::document::tree::JsonTree;
+
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
+        ("name".to_string(), JsonNode::new(JsonValue::String("Alice".to_string()))),
+        ("age".to_string(), JsonNode::new(JsonValue::Number(30.0))),
+    ])));
+
+    let mut state = EditorState::new(tree);
+
+    // At [0] which is a string (not expandable)
+    let initial_lines = state.tree_view().lines().len();
+
+    // Toggle expand should do nothing for non-expandable nodes
+    state.toggle_expand_at_cursor();
+
+    // Lines count should be the same
+    assert_eq!(state.tree_view().lines().len(), initial_lines);
+}
+
+#[test]
+fn test_navigation_with_nested_expanded_tree() {
+    use jeditor::document::node::{JsonNode, JsonValue};
+    use jeditor::document::tree::JsonTree;
+
+    // Create nested structure
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
+        ("user".to_string(), JsonNode::new(JsonValue::Object(vec![
+            ("name".to_string(), JsonNode::new(JsonValue::String("Alice".to_string()))),
+            ("email".to_string(), JsonNode::new(JsonValue::String("alice@example.com".to_string()))),
+        ]))),
+        ("count".to_string(), JsonNode::new(JsonValue::Number(42.0))),
+    ])));
+
+    let mut state = EditorState::new(tree);
+
+    // Initially: 2 lines visible ([0]=user, [1]=count)
+    assert_eq!(state.tree_view().lines().len(), 2);
+    assert_eq!(state.cursor().path(), &[0]);
+
+    // Expand user
+    state.toggle_expand_at_cursor();
+    // Now: 4 lines ([0]=user, [0,0]=name, [0,1]=email, [1]=count)
+    assert_eq!(state.tree_view().lines().len(), 4);
+
+    // Navigate through all lines
+    state.move_cursor_down();
+    assert_eq!(state.cursor().path(), &[0, 0]); // name
+
+    state.move_cursor_down();
+    assert_eq!(state.cursor().path(), &[0, 1]); // email
+
+    state.move_cursor_down();
+    assert_eq!(state.cursor().path(), &[1]); // count
+
+    state.move_cursor_down();
+    assert_eq!(state.cursor().path(), &[1]); // stay at last line
+
+    // Navigate back up
+    state.move_cursor_up();
+    assert_eq!(state.cursor().path(), &[0, 1]); // email
+
+    state.move_cursor_up();
+    assert_eq!(state.cursor().path(), &[0, 0]); // name
+
+    state.move_cursor_up();
+    assert_eq!(state.cursor().path(), &[0]); // user
+
+    state.move_cursor_up();
+    assert_eq!(state.cursor().path(), &[0]); // stay at first line
+}
+
+#[test]
+fn test_navigation_with_array() {
+    use jeditor::document::node::{JsonNode, JsonValue};
+    use jeditor::document::tree::JsonTree;
+
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Array(vec![
+        JsonNode::new(JsonValue::Number(1.0)),
+        JsonNode::new(JsonValue::Number(2.0)),
+        JsonNode::new(JsonValue::Number(3.0)),
+    ])));
+
+    let mut state = EditorState::new(tree);
+
+    // Start at [0]
+    assert_eq!(state.cursor().path(), &[0]);
+
+    state.move_cursor_down();
+    assert_eq!(state.cursor().path(), &[1]);
+
+    state.move_cursor_down();
+    assert_eq!(state.cursor().path(), &[2]);
+
+    state.move_cursor_up();
+    assert_eq!(state.cursor().path(), &[1]);
+}
