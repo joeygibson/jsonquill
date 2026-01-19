@@ -43,6 +43,8 @@ use crate::theme::Theme;
 /// // ui.render(&mut terminal, &state).unwrap();
 /// ```
 pub struct UI {
+    // Theme is stored but will be used in Task 10 (Status Line Widget) to apply colors
+    #[allow(dead_code)]
     theme: Theme,
 }
 
@@ -106,6 +108,8 @@ impl UI {
         terminal: &mut Terminal<B>,
         _state: &EditorState,
     ) -> Result<()> {
+        // Note: state parameter unused in this minimal implementation
+        // Will be used when status line and tree view are implemented (Tasks 10-14)
         terminal.draw(|f| {
             let chunks = Layout::default()
                 .direction(Direction::Vertical)
@@ -143,5 +147,25 @@ mod tests {
         let theme = get_builtin_theme("default-light").unwrap();
         let _ui = UI::new(theme);
         // Verify UI can be created with light theme
+    }
+
+    #[test]
+    fn test_render_executes() {
+        use ratatui::backend::TestBackend;
+        use ratatui::Terminal;
+        use crate::document::tree::JsonTree;
+        use crate::document::node::{JsonNode, JsonValue};
+
+        let theme = get_builtin_theme("default-dark").unwrap();
+        let ui = UI::new(theme);
+
+        let backend = TestBackend::new(80, 24);
+        let mut terminal = Terminal::new(backend).unwrap();
+
+        let tree = JsonTree::new(JsonNode::new(JsonValue::Null));
+        let state = EditorState::new(tree);
+        let result = ui.render(&mut terminal, &state);
+
+        assert!(result.is_ok());
     }
 }
