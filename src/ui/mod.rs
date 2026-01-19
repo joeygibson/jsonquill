@@ -43,8 +43,6 @@ use crate::theme::Theme;
 /// // ui.render(&mut terminal, &state).unwrap();
 /// ```
 pub struct UI {
-    // Theme is stored but will be used in Task 10 (Status Line Widget) to apply colors
-    #[allow(dead_code)]
     theme: Theme,
 }
 
@@ -106,10 +104,8 @@ impl UI {
     pub fn render<B: Backend>(
         &self,
         terminal: &mut Terminal<B>,
-        _state: &EditorState,
+        state: &EditorState,
     ) -> Result<()> {
-        // Note: state parameter unused in this minimal implementation
-        // Will be used when status line and tree view are implemented (Tasks 10-14)
         terminal.draw(|f| {
             let chunks = Layout::default()
                 .direction(Direction::Vertical)
@@ -120,10 +116,20 @@ impl UI {
                 ])
                 .split(f.area());
 
-            // For now, render empty blocks as placeholders
-            // These will be replaced with actual widgets in future tasks
+            // Main view (empty for now)
             let block = Block::default().borders(Borders::NONE);
             f.render_widget(block, chunks[0]);
+
+            // Status line
+            status_line::render_status_line(
+                f,
+                chunks[1],
+                state,
+                &self.theme.colors,
+            );
+
+            // Note: state parameter now used for status line rendering
+            // Message area will be implemented in future tasks
         })?;
 
         Ok(())
@@ -167,5 +173,31 @@ mod tests {
         let result = ui.render(&mut terminal, &state);
 
         assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_render_with_status_line() {
+        use ratatui::backend::TestBackend;
+        use ratatui::Terminal;
+        use crate::document::tree::JsonTree;
+        use crate::document::node::{JsonNode, JsonValue};
+
+        let theme = get_builtin_theme("default-dark").unwrap();
+        let ui = UI::new(theme);
+
+        let backend = TestBackend::new(80, 24);
+        let mut terminal = Terminal::new(backend).unwrap();
+
+        let tree = JsonTree::new(JsonNode::new(JsonValue::Null));
+        let mut state = EditorState::new(tree);
+        state.set_filename("test.json".to_string());
+        state.mark_dirty();
+
+        let result = ui.render(&mut terminal, &state);
+        assert!(result.is_ok());
+
+        // Verify the terminal was drawn to
+        let buffer = terminal.backend().buffer();
+        assert!(buffer.area().width > 0);
     }
 }
