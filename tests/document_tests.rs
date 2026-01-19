@@ -769,3 +769,32 @@ fn test_is_container() {
     let null_val = JsonValue::Null;
     assert!(!null_val.is_container());
 }
+
+// ============================================================================
+// JSON Parser Tests
+// ============================================================================
+
+use jeditor::document::parser::parse_json;
+
+#[test]
+fn test_parse_simple_object() {
+    let json = r#"{"name": "Alice", "age": 30}"#;
+    let tree = parse_json(json).unwrap();
+
+    match tree.root().value() {
+        JsonValue::Object(entries) => {
+            assert_eq!(entries.len(), 2);
+            assert_eq!(entries[0].0, "name");
+        }
+        _ => panic!("Expected object"),
+    }
+}
+
+#[test]
+fn test_parse_nested_structure() {
+    let json = r#"{"user": {"name": "Bob"}}"#;
+    let tree = parse_json(json).unwrap();
+
+    let user_node = tree.get_node(&[0]);
+    assert!(user_node.is_some());
+}

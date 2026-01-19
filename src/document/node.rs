@@ -54,8 +54,8 @@ pub enum JsonValue {
 /// modified and preserve original formatting information for format-preserving edits.
 #[derive(Debug, Clone, PartialEq)]
 pub struct JsonNode {
-    value: JsonValue,
-    metadata: NodeMetadata,
+    pub(crate) value: JsonValue,
+    pub(crate) metadata: NodeMetadata,
 }
 
 /// Metadata associated with a JSON node.
