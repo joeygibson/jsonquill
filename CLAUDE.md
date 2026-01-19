@@ -88,6 +88,10 @@ Implemented modules:
 - ❌ **Stdin piping not supported** - `cat file.json | jeditor` fails due to terminal I/O conflict
 - ❌ **No save functionality** - Cannot write changes back to disk
 - ❌ **Message area empty** - Third UI line reserved but not used for messages/errors
+- ❌ **Start with structure expanded** - For single JSON files, expand all objects. For JSONL, don't.
+- ❌ **Start in dark mode** - Choose whichever dark mode is blak/gray, not blue.
+- ❌ **Include a way to show available themes** - Preferably showing the colors for the elements.
+
 
 ## Usage
 
