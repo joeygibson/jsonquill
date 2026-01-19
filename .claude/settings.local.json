@@ -33,7 +33,9 @@
       "Skill(superpowers:finishing-a-development-branch)",
       "Bash(git worktree:*)",
       "Bash(git show-ref:*)",
-      "Bash(git merge:*)"
+      "Bash(git merge:*)",
+      "Bash(./target/release/jeditor)",
+      "Bash(cargo fix:*)"
     ]
   }
 }

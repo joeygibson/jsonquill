@@ -5,7 +5,7 @@ use crossterm::{
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
 use ratatui::{backend::CrosstermBackend, Terminal};
-use std::io;
+use std::io::{self, IsTerminal};
 use std::time::Duration;
 
 use jeditor::document::node::{JsonNode, JsonValue};
@@ -33,23 +33,8 @@ struct Cli {
 fn main() -> Result<()> {
     let cli = Cli::parse();
 
-    // Setup terminal
-    enable_raw_mode()?;
-    let mut stdout = io::stdout();
-    execute!(stdout, EnterAlternateScreen)?;
-    let backend = CrosstermBackend::new(stdout);
-    let mut terminal = Terminal::new(backend)?;
-    terminal.clear()?;
-
-    // Initialize components
-    let theme = get_builtin_theme(&cli.theme).unwrap_or_else(|| {
-        eprintln!("Warning: Theme '{}' not found, using default-dark", cli.theme);
-        get_builtin_theme("default-dark").unwrap()
-    });
-    let ui = UI::new(theme);
-    let input_handler = InputHandler::new();
-
-    // Load file or create empty document
+    // Load file or create empty document BEFORE terminal setup
+    // (stdin might be used for JSON data, so we need to read it before taking over the terminal)
     let (tree, filename) = if let Some(file_path) = cli.file {
         if file_path == "-" {
             // Load from stdin
@@ -91,6 +76,33 @@ fn main() -> Result<()> {
         let tree = JsonTree::new(JsonNode::new(JsonValue::Object(obj)));
         (tree, None)
     };
+
+    // Setup terminal AFTER loading data (so stdin is available for JSON if needed)
+    // Check if stdin is a terminal - if not, JSON was piped/redirected
+    if !io::stdin().is_terminal() {
+        anyhow::bail!(
+            "stdin is not a terminal (piped or redirected input detected).\n\n\
+             Piping or redirecting JSON via stdin is not supported.\n\
+             The TUI requires stdin for keyboard input, which conflicts with data input.\n\n\
+             Please pass the file path directly instead:\n   \
+                   jeditor foo.json"
+        );
+    }
+
+    enable_raw_mode()?;
+    let mut stdout = io::stdout();
+    execute!(stdout, EnterAlternateScreen)?;
+    let backend = CrosstermBackend::new(stdout);
+    let mut terminal = Terminal::new(backend)?;
+    terminal.clear()?;
+
+    // Initialize components
+    let theme = get_builtin_theme(&cli.theme).unwrap_or_else(|| {
+        eprintln!("Warning: Theme '{}' not found, using default-dark", cli.theme);
+        get_builtin_theme("default-dark").unwrap()
+    });
+    let ui = UI::new(theme);
+    let input_handler = InputHandler::new();
 
     let mut state = EditorState::new(tree);
     if let Some(name) = filename {

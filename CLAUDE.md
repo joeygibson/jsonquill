@@ -58,10 +58,51 @@ The project follows a standard Rust binary + library structure:
 - **anyhow (1.0)**: Error handling utilities
 - **arboard (3.4)**: Clipboard support for copy/paste operations
 
-### Planned Module Structure
+### Current Module Structure
 
-Future modules will include:
-- JSON parsing and tree representation
-- TUI rendering and event handling
-- Vim-style keybinding implementation
-- Configuration management
+Implemented modules:
+- **src/document/** - JSON parsing, tree representation, and node structures
+- **src/editor/** - Editor state, cursor, and mode management
+- **src/input/** - Keyboard event handling and key mapping
+- **src/ui/** - Terminal UI rendering (tree view, status line, layout)
+- **src/theme/** - Color themes and theming system
+- **src/file/** - JSON file loading and saving (filesystem only, stdin piping not supported)
+- **src/config/** - Configuration structures
+
+## Current Status
+
+**Working Features:**
+- ✅ JSON file loading (filesystem paths only)
+- ✅ Tree view rendering with expand/collapse
+- ✅ Basic navigation (j/k/h/l, arrow keys)
+- ✅ Mode switching (i for INSERT, : for COMMAND, Esc to NORMAL)
+- ✅ Status line showing current mode and filename
+- ✅ All 259 tests passing
+
+**Known Issues / TODO:**
+- ❌ **Command mode has no visible prompt** - Pressing `:` switches to COMMAND mode but shows no `:` prompt at the bottom
+- ❌ **Command input buffer not implemented** - Cannot type or execute commands (`:w`, `:q`, etc.)
+- ❌ **Help system missing** - `?` key not mapped, no help overlay implemented
+- ❌ **Insert mode not functional** - Pressing `i` switches mode but cannot edit values
+- ❌ **No editing operations** - Delete, yank, paste, rename not implemented
+- ❌ **Stdin piping not supported** - `cat file.json | jeditor` fails due to terminal I/O conflict
+- ❌ **No save functionality** - Cannot write changes back to disk
+- ❌ **Message area empty** - Third UI line reserved but not used for messages/errors
+
+## Usage
+
+```bash
+# Open a JSON file
+./target/release/jeditor foo.json
+
+# Basic navigation
+j/k         - Move down/up
+h/l         - Collapse/expand node (or move left/right)
+Arrow keys  - Also work for navigation
+
+# Mode switching (partially implemented)
+i           - Enter INSERT mode (but editing not implemented yet)
+:           - Enter COMMAND mode (but no prompt/commands yet)
+Esc         - Return to NORMAL mode
+q           - Quit (only works in NORMAL mode)
+```

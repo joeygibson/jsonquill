@@ -1,0 +1,220 @@
+{
+  "company": {
+    "name": "TechCorp Industries",
+    "founded": 2010,
+    "active": true,
+    "headquarters": {
+      "address": {
+        "street": "123 Innovation Drive",
+        "city": "San Francisco",
+        "state": "CA",
+        "zip": "94105",
+        "country": "USA",
+        "coordinates": {
+          "latitude": 37.7749,
+          "longitude": -122.4194
+        }
+      },
+      "facilities": [
+        {
+          "name": "Building A",
+          "floors": 12,
+          "departments": [
+            {
+              "name": "Engineering",
+              "employees": 150,
+              "teams": [
+                {
+                  "name": "Backend",
+                  "lead": "Alice Johnson",
+                  "projects": [
+                    {
+                      "id": "proj-001",
+                      "title": "API Gateway Refactor",
+                      "status": "in-progress",
+                      "priority": "high",
+                      "milestones": [
+                        {
+                          "phase": "Design",
+                          "completed": true,
+                          "tasks": [
+                            "Architecture review",
+                            "Database schema design",
+                            "API endpoint specification"
+                          ]
+                        },
+                        {
+                          "phase": "Implementation",
+                          "completed": false,
+                          "tasks": [
+                            "Core service development",
+                            "Integration testing",
+                            "Performance optimization"
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Frontend",
+                  "lead": "Bob Chen",
+                  "projects": [
+                    {
+                      "id": "proj-002",
+                      "title": "Dashboard Redesign",
+                      "status": "planning",
+                      "priority": "medium",
+                      "milestones": []
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Marketing",
+              "employees": 45,
+              "teams": []
+            }
+          ]
+        }
+      ]
+    },
+    "products": [
+      {
+        "id": "prod-alpha",
+        "name": "CloudSync Pro",
+        "version": "3.2.1",
+        "pricing": {
+          "tiers": [
+            {
+              "name": "Starter",
+              "price": 9.99,
+              "currency": "USD",
+              "features": {
+                "storage": "10GB",
+                "users": 1,
+                "support": "email",
+                "advanced": {
+                  "api_access": false,
+                  "custom_domain": false,
+                  "sla": null
+                }
+              }
+            },
+            {
+              "name": "Professional",
+              "price": 29.99,
+              "currency": "USD",
+              "features": {
+                "storage": "100GB",
+                "users": 5,
+                "support": "priority",
+                "advanced": {
+                  "api_access": true,
+                  "custom_domain": true,
+                  "sla": "99.9%"
+                }
+              }
+            },
+            {
+              "name": "Enterprise",
+              "price": 99.99,
+              "currency": "USD",
+              "features": {
+                "storage": "unlimited",
+                "users": "unlimited",
+                "support": "24/7 phone",
+                "advanced": {
+                  "api_access": true,
+                  "custom_domain": true,
+                  "sla": "99.99%",
+                  "dedicated": {
+                    "account_manager": true,
+                    "custom_integration": true,
+                    "training": {
+                      "onboarding": true,
+                      "workshops": 4,
+                      "certification": true
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        "metadata": {
+          "tags": ["cloud", "storage", "collaboration"],
+          "categories": ["productivity", "business"],
+          "reviews": {
+            "average": 4.7,
+            "count": 1523,
+            "distribution": {
+              "5_star": 1102,
+              "4_star": 298,
+              "3_star": 87,
+              "2_star": 24,
+              "1_star": 12
+            }
+          }
+        }
+      }
+    ],
+    "investors": [
+      {
+        "name": "Venture Capital Partners",
+        "type": "VC",
+        "rounds": [
+          {
+            "series": "A",
+            "date": "2012-03-15",
+            "amount": 5000000,
+            "valuation": {
+              "pre_money": 15000000,
+              "post_money": 20000000
+            }
+          },
+          {
+            "series": "B",
+            "date": "2015-08-22",
+            "amount": 25000000,
+            "valuation": {
+              "pre_money": 75000000,
+              "post_money": 100000000
+            }
+          }
+        ]
+      }
+    ],
+    "compliance": {
+      "certifications": ["ISO-27001", "SOC2-Type2", "GDPR"],
+      "audits": {
+        "last_external": "2025-12-01",
+        "next_scheduled": "2026-12-01",
+        "findings": {
+          "critical": 0,
+          "high": 1,
+          "medium": 3,
+          "low": 8,
+          "details": [
+            {
+              "severity": "high",
+              "category": "access_control",
+              "description": "MFA not enforced for all admin accounts",
+              "remediation": {
+                "status": "in-progress",
+                "assigned_to": "security-team",
+                "due_date": "2026-02-01",
+                "steps": [
+                  "Audit current admin accounts",
+                  "Deploy MFA enforcement policy",
+                  "Verify compliance"
+                ]
+              }
+            }
+          ]
+        }
+      }
+    }
+  }
+}
