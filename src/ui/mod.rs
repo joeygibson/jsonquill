@@ -9,7 +9,6 @@ pub mod tree_view;
 use anyhow::Result;
 use ratatui::backend::Backend;
 use ratatui::layout::{Constraint, Direction, Layout};
-use ratatui::widgets::{Block, Borders};
 use ratatui::Terminal;
 
 use crate::editor::state::EditorState;
@@ -116,9 +115,14 @@ impl UI {
                 ])
                 .split(f.area());
 
-            // Main view (empty for now)
-            let block = Block::default().borders(Borders::NONE);
-            f.render_widget(block, chunks[0]);
+            // Render tree view
+            tree_view::render_tree_view(
+                f,
+                chunks[0],
+                state.tree_view(),
+                state.cursor(),
+                &self.theme.colors,
+            );
 
             // Status line
             status_line::render_status_line(
@@ -128,7 +132,7 @@ impl UI {
                 &self.theme.colors,
             );
 
-            // Note: state parameter now used for status line rendering
+            // Note: state parameter now used for status line and tree view rendering
             // Message area will be implemented in future tasks
         })?;
 

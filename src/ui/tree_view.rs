@@ -312,3 +312,118 @@ mod tests {
         assert_eq!(state.get_value_preview(&JsonValue::Null), "null");
     }
 }
+
+use ratatui::{
+    layout::Rect,
+    style::{Style, Modifier},
+    text::{Line, Span},
+    widgets::{Block, Borders, Paragraph},
+    Frame,
+};
+use crate::theme::colors::ThemeColors;
+use crate::editor::cursor::Cursor;
+
+/// Renders the tree view with syntax highlighting and cursor.
+///
+/// Displays JSON tree as an expandable/collapsible list with:
+/// - Indentation based on depth
+/// - Expand/collapse indicators (▼/▶) for containers
+/// - Syntax-highlighted keys and values
+/// - Cursor highlight on the current line
+///
+/// # Arguments
+///
+/// * `f` - The ratatui frame to render into
+/// * `area` - The rectangular area for the tree view
+/// * `tree_view` - The tree view state with visible lines
+/// * `cursor` - The cursor position
+/// * `colors` - Theme colors for syntax highlighting
+///
+/// # Example
+///
+/// ```no_run
+/// use jeditor::ui::tree_view::{render_tree_view, TreeViewState};
+/// use jeditor::editor::cursor::Cursor;
+/// use jeditor::theme::colors::ThemeColors;
+/// use jeditor::document::node::{JsonNode, JsonValue};
+/// use jeditor::document::tree::JsonTree;
+/// use ratatui::backend::TestBackend;
+/// use ratatui::Terminal;
+/// use ratatui::layout::Rect;
+///
+/// let backend = TestBackend::new(80, 24);
+/// let mut terminal = Terminal::new(backend).unwrap();
+/// let colors = ThemeColors::default_dark();
+/// let cursor = Cursor::new();
+///
+/// let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
+///     ("name".to_string(), JsonNode::new(JsonValue::String("Alice".to_string()))),
+/// ])));
+/// let mut tree_view = TreeViewState::new();
+/// tree_view.rebuild(&tree);
+///
+/// terminal.draw(|f| {
+///     render_tree_view(f, f.area(), &tree_view, &cursor, &colors);
+/// }).unwrap();
+/// ```
+pub fn render_tree_view(
+    f: &mut Frame,
+    area: Rect,
+    tree_view: &TreeViewState,
+    cursor: &Cursor,
+    colors: &ThemeColors,
+) {
+    let mut lines_to_render = Vec::new();
+
+    for line in tree_view.lines().iter() {
+        let is_cursor = cursor.path() == line.path.as_slice();
+
+        let mut spans = Vec::new();
+
+        // Indentation
+        spans.push(Span::raw("  ".repeat(line.depth)));
+
+        // Expand/collapse indicator
+        if line.expandable {
+            let indicator = if line.expanded { "▼ " } else { "▶ " };
+            spans.push(Span::raw(indicator));
+        } else {
+            spans.push(Span::raw("  "));
+        }
+
+        // Key (if object property)
+        if let Some(key) = &line.key {
+            spans.push(Span::styled(
+                format!("\"{}\": ", key),
+                Style::default().fg(colors.key),
+            ));
+        }
+
+        // Value
+        let value_color = match line.value_type {
+            ValueType::String => colors.string,
+            ValueType::Number => colors.number,
+            ValueType::Boolean => colors.boolean,
+            ValueType::Null => colors.null,
+            ValueType::Object | ValueType::Array => colors.foreground,
+        };
+
+        spans.push(Span::styled(
+            &line.value_preview,
+            Style::default().fg(value_color),
+        ));
+
+        let mut style = Style::default();
+        if is_cursor {
+            style = style.bg(colors.cursor).add_modifier(Modifier::BOLD);
+        }
+
+        lines_to_render.push(Line::from(spans).style(style));
+    }
+
+    let paragraph = Paragraph::new(lines_to_render)
+        .block(Block::default().borders(Borders::NONE))
+        .style(Style::default().bg(colors.background).fg(colors.foreground));
+
+    f.render_widget(paragraph, area);
+}

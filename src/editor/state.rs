@@ -43,6 +43,7 @@
 use super::cursor::Cursor;
 use super::mode::EditorMode;
 use crate::document::tree::JsonTree;
+use crate::ui::tree_view::TreeViewState;
 
 /// Manages the complete runtime state of the editor.
 ///
@@ -81,6 +82,7 @@ pub struct EditorState {
     cursor: Cursor,
     dirty: bool,
     filename: Option<String>,
+    tree_view: TreeViewState,
 }
 
 impl EditorState {
@@ -107,12 +109,16 @@ impl EditorState {
     /// assert_eq!(state.filename(), None);
     /// ```
     pub fn new(tree: JsonTree) -> Self {
+        let mut tree_view = TreeViewState::new();
+        tree_view.rebuild(&tree);
+
         Self {
             tree,
             mode: EditorMode::Normal,
             cursor: Cursor::new(),
             dirty: false,
             filename: None,
+            tree_view,
         }
     }
 
@@ -347,5 +353,48 @@ impl EditorState {
     /// ```
     pub fn set_filename(&mut self, filename: String) {
         self.filename = Some(filename);
+    }
+
+    /// Returns a reference to the tree view state.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use jeditor::editor::state::EditorState;
+    /// use jeditor::document::node::{JsonNode, JsonValue};
+    /// use jeditor::document::tree::JsonTree;
+    ///
+    /// let tree = JsonTree::new(JsonNode::new(JsonValue::Null));
+    /// let state = EditorState::new(tree);
+    ///
+    /// let tree_view = state.tree_view();
+    /// assert_eq!(tree_view.lines().len(), 0);
+    /// ```
+    pub fn tree_view(&self) -> &TreeViewState {
+        &self.tree_view
+    }
+
+    /// Returns a mutable reference to the tree view state.
+    ///
+    /// This allows modification of the tree view state, such as toggling
+    /// expand/collapse of nodes.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use jeditor::editor::state::EditorState;
+    /// use jeditor::document::node::{JsonNode, JsonValue};
+    /// use jeditor::document::tree::JsonTree;
+    ///
+    /// let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
+    ///     ("key".to_string(), JsonNode::new(JsonValue::Null)),
+    /// ])));
+    /// let mut state = EditorState::new(tree);
+    ///
+    /// state.tree_view_mut().toggle_expand(&[0]);
+    /// assert!(state.tree_view().is_expanded(&[0]));
+    /// ```
+    pub fn tree_view_mut(&mut self) -> &mut TreeViewState {
+        &mut self.tree_view
     }
 }
