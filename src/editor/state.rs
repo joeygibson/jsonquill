@@ -143,23 +143,23 @@ impl EditorState {
 
     /// Returns a mutable reference to the JSON tree.
     ///
-    /// This allows modifications to the document structure. After modifying
-    /// the tree, you should typically call `mark_dirty()` to indicate unsaved changes.
+    /// **IMPORTANT:** After modifying the tree, you MUST call `rebuild_tree_view()`
+    /// to update the tree view display, or the UI will show stale data.
     ///
-    /// # Examples
+    /// # Example
     ///
     /// ```
-    /// use jeditor::editor::state::EditorState;
-    /// use jeditor::document::node::{JsonNode, JsonValue};
-    /// use jeditor::document::tree::JsonTree;
+    /// # use jeditor::document::node::{JsonNode, JsonValue};
+    /// # use jeditor::document::tree::JsonTree;
+    /// # use jeditor::editor::state::EditorState;
+    /// # let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![])));
+    /// # let mut state = EditorState::new(tree);
+    /// // Modify the tree
+    /// let tree = state.tree_mut();
+    /// // ... make modifications ...
     ///
-    /// let tree = JsonTree::new(JsonNode::new(JsonValue::Null));
-    /// let mut state = EditorState::new(tree);
-    ///
-    /// let tree_mut = state.tree_mut();
-    /// // Modify tree_mut
-    /// // Then mark as dirty
-    /// // state.mark_dirty();
+    /// // REQUIRED: Rebuild tree view after modifications
+    /// state.rebuild_tree_view();
     /// ```
     pub fn tree_mut(&mut self) -> &mut JsonTree {
         &mut self.tree
@@ -396,5 +396,29 @@ impl EditorState {
     /// ```
     pub fn tree_view_mut(&mut self) -> &mut TreeViewState {
         &mut self.tree_view
+    }
+
+    /// Rebuilds the tree view after the JSON tree has been modified.
+    ///
+    /// IMPORTANT: This must be called after any modifications to the tree
+    /// (obtained via `tree_mut()`) to keep the tree view display in sync.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use jeditor::document::node::{JsonNode, JsonValue};
+    /// use jeditor::document::tree::JsonTree;
+    /// use jeditor::editor::state::EditorState;
+    ///
+    /// let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![])));
+    /// let mut state = EditorState::new(tree);
+    ///
+    /// // After modifying the tree:
+    /// // let tree = state.tree_mut();
+    /// // ... modify tree ...
+    /// state.rebuild_tree_view();
+    /// ```
+    pub fn rebuild_tree_view(&mut self) {
+        self.tree_view.rebuild(&self.tree);
     }
 }

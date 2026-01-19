@@ -200,119 +200,6 @@ impl Default for TreeViewState {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_value_type_from_json() {
-        assert_eq!(ValueType::from_json_value(&JsonValue::Object(vec![])), ValueType::Object);
-        assert_eq!(ValueType::from_json_value(&JsonValue::Array(vec![])), ValueType::Array);
-        assert_eq!(ValueType::from_json_value(&JsonValue::String("x".to_string())), ValueType::String);
-        assert_eq!(ValueType::from_json_value(&JsonValue::Number(42.0)), ValueType::Number);
-        assert_eq!(ValueType::from_json_value(&JsonValue::Boolean(true)), ValueType::Boolean);
-        assert_eq!(ValueType::from_json_value(&JsonValue::Null), ValueType::Null);
-    }
-
-    #[test]
-    fn test_tree_view_state_creation() {
-        let state = TreeViewState::new();
-        assert_eq!(state.lines().len(), 0);
-    }
-
-    #[test]
-    fn test_rebuild_with_flat_object() {
-        let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
-            ("name".to_string(), JsonNode::new(JsonValue::String("Alice".to_string()))),
-            ("age".to_string(), JsonNode::new(JsonValue::Number(30.0))),
-        ])));
-
-        let mut state = TreeViewState::new();
-        state.rebuild(&tree);
-
-        assert_eq!(state.lines().len(), 2);
-        assert_eq!(state.lines()[0].key, Some("name".to_string()));
-        assert_eq!(state.lines()[0].depth, 0);
-        assert_eq!(state.lines()[1].key, Some("age".to_string()));
-    }
-
-    #[test]
-    fn test_rebuild_with_array() {
-        let tree = JsonTree::new(JsonNode::new(JsonValue::Array(vec![
-            JsonNode::new(JsonValue::Number(1.0)),
-            JsonNode::new(JsonValue::Number(2.0)),
-        ])));
-
-        let mut state = TreeViewState::new();
-        state.rebuild(&tree);
-
-        assert_eq!(state.lines().len(), 2);
-        assert_eq!(state.lines()[0].key, None);
-        assert_eq!(state.lines()[0].value_preview, "1");
-    }
-
-    #[test]
-    fn test_toggle_expand() {
-        let mut state = TreeViewState::new();
-        let path = vec![0];
-
-        assert!(!state.is_expanded(&path));
-        state.toggle_expand(&path);
-        assert!(state.is_expanded(&path));
-        state.toggle_expand(&path);
-        assert!(!state.is_expanded(&path));
-    }
-
-    #[test]
-    fn test_nested_object_collapsed() {
-        let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
-            ("user".to_string(), JsonNode::new(JsonValue::Object(vec![
-                ("name".to_string(), JsonNode::new(JsonValue::String("Bob".to_string()))),
-            ]))),
-        ])));
-
-        let mut state = TreeViewState::new();
-        state.rebuild(&tree);
-
-        // Should only show the "user" field, not its children (not expanded)
-        assert_eq!(state.lines().len(), 1);
-        assert_eq!(state.lines()[0].key, Some("user".to_string()));
-        assert_eq!(state.lines()[0].expandable, true);
-    }
-
-    #[test]
-    fn test_nested_object_expanded() {
-        let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
-            ("user".to_string(), JsonNode::new(JsonValue::Object(vec![
-                ("name".to_string(), JsonNode::new(JsonValue::String("Bob".to_string()))),
-            ]))),
-        ])));
-
-        let mut state = TreeViewState::new();
-        state.toggle_expand(&[0]); // Expand "user"
-        state.rebuild(&tree);
-
-        // Should show both "user" and "user.name"
-        assert_eq!(state.lines().len(), 2);
-        assert_eq!(state.lines()[0].key, Some("user".to_string()));
-        assert_eq!(state.lines()[0].depth, 0);
-        assert_eq!(state.lines()[1].key, Some("name".to_string()));
-        assert_eq!(state.lines()[1].depth, 1);
-    }
-
-    #[test]
-    fn test_value_preview() {
-        let state = TreeViewState::new();
-
-        assert_eq!(state.get_value_preview(&JsonValue::Object(vec![("a".to_string(), JsonNode::new(JsonValue::Null))])), "{ 1 fields }");
-        assert_eq!(state.get_value_preview(&JsonValue::Array(vec![JsonNode::new(JsonValue::Null), JsonNode::new(JsonValue::Null)])), "[ 2 items ]");
-        assert_eq!(state.get_value_preview(&JsonValue::String("test".to_string())), "\"test\"");
-        assert_eq!(state.get_value_preview(&JsonValue::Number(3.14)), "3.14");
-        assert_eq!(state.get_value_preview(&JsonValue::Boolean(true)), "true");
-        assert_eq!(state.get_value_preview(&JsonValue::Null), "null");
-    }
-}
-
 use ratatui::{
     layout::Rect,
     style::{Style, Modifier},
@@ -426,4 +313,117 @@ pub fn render_tree_view(
         .style(Style::default().bg(colors.background).fg(colors.foreground));
 
     f.render_widget(paragraph, area);
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_value_type_from_json() {
+        assert_eq!(ValueType::from_json_value(&JsonValue::Object(vec![])), ValueType::Object);
+        assert_eq!(ValueType::from_json_value(&JsonValue::Array(vec![])), ValueType::Array);
+        assert_eq!(ValueType::from_json_value(&JsonValue::String("x".to_string())), ValueType::String);
+        assert_eq!(ValueType::from_json_value(&JsonValue::Number(42.0)), ValueType::Number);
+        assert_eq!(ValueType::from_json_value(&JsonValue::Boolean(true)), ValueType::Boolean);
+        assert_eq!(ValueType::from_json_value(&JsonValue::Null), ValueType::Null);
+    }
+
+    #[test]
+    fn test_tree_view_state_creation() {
+        let state = TreeViewState::new();
+        assert_eq!(state.lines().len(), 0);
+    }
+
+    #[test]
+    fn test_rebuild_with_flat_object() {
+        let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
+            ("name".to_string(), JsonNode::new(JsonValue::String("Alice".to_string()))),
+            ("age".to_string(), JsonNode::new(JsonValue::Number(30.0))),
+        ])));
+
+        let mut state = TreeViewState::new();
+        state.rebuild(&tree);
+
+        assert_eq!(state.lines().len(), 2);
+        assert_eq!(state.lines()[0].key, Some("name".to_string()));
+        assert_eq!(state.lines()[0].depth, 0);
+        assert_eq!(state.lines()[1].key, Some("age".to_string()));
+    }
+
+    #[test]
+    fn test_rebuild_with_array() {
+        let tree = JsonTree::new(JsonNode::new(JsonValue::Array(vec![
+            JsonNode::new(JsonValue::Number(1.0)),
+            JsonNode::new(JsonValue::Number(2.0)),
+        ])));
+
+        let mut state = TreeViewState::new();
+        state.rebuild(&tree);
+
+        assert_eq!(state.lines().len(), 2);
+        assert_eq!(state.lines()[0].key, None);
+        assert_eq!(state.lines()[0].value_preview, "1");
+    }
+
+    #[test]
+    fn test_toggle_expand() {
+        let mut state = TreeViewState::new();
+        let path = vec![0];
+
+        assert!(!state.is_expanded(&path));
+        state.toggle_expand(&path);
+        assert!(state.is_expanded(&path));
+        state.toggle_expand(&path);
+        assert!(!state.is_expanded(&path));
+    }
+
+    #[test]
+    fn test_nested_object_collapsed() {
+        let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
+            ("user".to_string(), JsonNode::new(JsonValue::Object(vec![
+                ("name".to_string(), JsonNode::new(JsonValue::String("Bob".to_string()))),
+            ]))),
+        ])));
+
+        let mut state = TreeViewState::new();
+        state.rebuild(&tree);
+
+        // Should only show the "user" field, not its children (not expanded)
+        assert_eq!(state.lines().len(), 1);
+        assert_eq!(state.lines()[0].key, Some("user".to_string()));
+        assert_eq!(state.lines()[0].expandable, true);
+    }
+
+    #[test]
+    fn test_nested_object_expanded() {
+        let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
+            ("user".to_string(), JsonNode::new(JsonValue::Object(vec![
+                ("name".to_string(), JsonNode::new(JsonValue::String("Bob".to_string()))),
+            ]))),
+        ])));
+
+        let mut state = TreeViewState::new();
+        state.toggle_expand(&[0]); // Expand "user"
+        state.rebuild(&tree);
+
+        // Should show both "user" and "user.name"
+        assert_eq!(state.lines().len(), 2);
+        assert_eq!(state.lines()[0].key, Some("user".to_string()));
+        assert_eq!(state.lines()[0].depth, 0);
+        assert_eq!(state.lines()[1].key, Some("name".to_string()));
+        assert_eq!(state.lines()[1].depth, 1);
+    }
+
+    #[test]
+    fn test_value_preview() {
+        let state = TreeViewState::new();
+
+        assert_eq!(state.get_value_preview(&JsonValue::Object(vec![("a".to_string(), JsonNode::new(JsonValue::Null))])), "{ 1 fields }");
+        assert_eq!(state.get_value_preview(&JsonValue::Array(vec![JsonNode::new(JsonValue::Null), JsonNode::new(JsonValue::Null)])), "[ 2 items ]");
+        assert_eq!(state.get_value_preview(&JsonValue::String("test".to_string())), "\"test\"");
+        assert_eq!(state.get_value_preview(&JsonValue::Number(3.14)), "3.14");
+        assert_eq!(state.get_value_preview(&JsonValue::Boolean(true)), "true");
+        assert_eq!(state.get_value_preview(&JsonValue::Null), "null");
+    }
 }

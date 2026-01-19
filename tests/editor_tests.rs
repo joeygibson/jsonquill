@@ -318,3 +318,62 @@ fn test_all_mode_variants() {
     assert_eq!(format!("{}", insert), "INSERT");
     assert_eq!(format!("{}", command), "COMMAND");
 }
+
+#[test]
+fn test_tree_view_initialized() {
+    use jeditor::document::node::{JsonNode, JsonValue};
+    use jeditor::document::tree::JsonTree;
+
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
+        ("test".to_string(), JsonNode::new(JsonValue::String("value".to_string()))),
+    ])));
+
+    let state = EditorState::new(tree);
+
+    // Verify tree view is initialized
+    assert_eq!(state.tree_view().lines().len(), 1);
+    assert_eq!(state.tree_view().lines()[0].key, Some("test".to_string()));
+}
+
+#[test]
+fn test_tree_view_mut_toggle() {
+    use jeditor::document::node::{JsonNode, JsonValue};
+    use jeditor::document::tree::JsonTree;
+
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
+        ("nested".to_string(), JsonNode::new(JsonValue::Object(vec![
+            ("inner".to_string(), JsonNode::new(JsonValue::Number(42.0))),
+        ]))),
+    ])));
+
+    let mut state = EditorState::new(tree);
+
+    // Initially collapsed
+    assert_eq!(state.tree_view().lines().len(), 1);
+    assert!(!state.tree_view().is_expanded(&[0]));
+
+    // Toggle expand
+    state.tree_view_mut().toggle_expand(&[0]);
+    state.rebuild_tree_view();
+
+    // Now expanded - should see both lines
+    assert!(state.tree_view().is_expanded(&[0]));
+    assert_eq!(state.tree_view().lines().len(), 2);
+}
+
+#[test]
+fn test_rebuild_tree_view() {
+    use jeditor::document::node::{JsonNode, JsonValue};
+    use jeditor::document::tree::JsonTree;
+
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![])));
+    let mut state = EditorState::new(tree);
+
+    // Empty tree
+    assert_eq!(state.tree_view().lines().len(), 0);
+
+    // This is a conceptual test - in practice you'd modify the tree
+    // For now, just verify rebuild_tree_view() doesn't panic
+    state.rebuild_tree_view();
+    assert_eq!(state.tree_view().lines().len(), 0);
+}
