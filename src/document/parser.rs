@@ -38,6 +38,12 @@ use serde_json::Value as SerdeValue;
 /// - `Ok(JsonTree)` if parsing succeeds
 /// - `Err(anyhow::Error)` if the JSON is malformed
 ///
+/// # Note on Number Precision
+///
+/// JSON numbers are stored as `f64` internally. This means very large integers
+/// (beyond 2^53 - 1) may lose precision during parsing. If exact integer precision
+/// is required for large numbers, consider using string representations instead
+///
 /// # Example
 ///
 /// ```
@@ -171,7 +177,7 @@ mod tests {
         let tree = parse_json(json).unwrap();
 
         match tree.root().value() {
-            JsonValue::Boolean(b) => assert_eq!(*b, true),
+            JsonValue::Boolean(b) => assert!(*b),
             _ => panic!("Expected boolean"),
         }
     }
@@ -230,7 +236,7 @@ mod tests {
                 }
 
                 match entries[2].1.value() {
-                    JsonValue::Boolean(b) => assert_eq!(*b, true),
+                    JsonValue::Boolean(b) => assert!(*b),
                     _ => panic!("Expected boolean"),
                 }
             }
@@ -407,7 +413,7 @@ mod tests {
         let test_cases = vec![
             ("0", 0.0),
             ("-1", -1.0),
-            ("3.14159", 3.14159),
+            ("3.14", 3.14),
             ("-0.5", -0.5),
             ("1e10", 1e10),
             ("1.5e-5", 1.5e-5),
