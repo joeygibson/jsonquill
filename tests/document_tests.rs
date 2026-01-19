@@ -390,3 +390,382 @@ fn test_equality_empty_collections() {
     // Empty object and empty array are different
     assert_ne!(empty_obj1, empty_arr1);
 }
+
+// ============================================================================
+// Tree Structure Tests
+// ============================================================================
+
+use jeditor::document::tree::JsonTree;
+
+#[test]
+fn test_create_empty_object_tree() {
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![])));
+    assert!(tree.root().value().is_object());
+}
+
+#[test]
+fn test_tree_get_child() {
+    let obj = vec![
+        ("name".to_string(), JsonNode::new(JsonValue::String("Alice".to_string())))
+    ];
+
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Object(obj)));
+    let path = vec![0]; // First child
+    let child = tree.get_node(&path);
+    assert!(child.is_some());
+}
+
+#[test]
+fn test_tree_root_access() {
+    let root_node = JsonNode::new(JsonValue::Number(42.0));
+    let tree = JsonTree::new(root_node.clone());
+
+    assert_eq!(tree.root().value(), root_node.value());
+}
+
+#[test]
+fn test_tree_root_mut_access() {
+    let mut tree = JsonTree::new(JsonNode::new(JsonValue::String("original".to_string())));
+
+    *tree.root_mut().value_mut() = JsonValue::String("modified".to_string());
+
+    if let JsonValue::String(s) = tree.root().value() {
+        assert_eq!(s, "modified");
+    } else {
+        panic!("Expected String value");
+    }
+}
+
+#[test]
+fn test_tree_get_empty_path() {
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Boolean(true)));
+    let empty_path: Vec<usize> = vec![];
+
+    // Empty path should return root
+    let node = tree.get_node(&empty_path);
+    assert!(node.is_some());
+    assert!(matches!(node.unwrap().value(), JsonValue::Boolean(true)));
+}
+
+#[test]
+fn test_tree_navigate_object() {
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
+        ("first".to_string(), JsonNode::new(JsonValue::String("a".to_string()))),
+        ("second".to_string(), JsonNode::new(JsonValue::String("b".to_string()))),
+        ("third".to_string(), JsonNode::new(JsonValue::String("c".to_string()))),
+    ])));
+
+    // Test accessing each field by index
+    let node0 = tree.get_node(&[0]).unwrap();
+    if let JsonValue::String(s) = node0.value() {
+        assert_eq!(s, "a");
+    } else {
+        panic!("Expected String");
+    }
+
+    let node1 = tree.get_node(&[1]).unwrap();
+    if let JsonValue::String(s) = node1.value() {
+        assert_eq!(s, "b");
+    } else {
+        panic!("Expected String");
+    }
+
+    let node2 = tree.get_node(&[2]).unwrap();
+    if let JsonValue::String(s) = node2.value() {
+        assert_eq!(s, "c");
+    } else {
+        panic!("Expected String");
+    }
+}
+
+#[test]
+fn test_tree_navigate_array() {
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Array(vec![
+        JsonNode::new(JsonValue::Number(1.0)),
+        JsonNode::new(JsonValue::Number(2.0)),
+        JsonNode::new(JsonValue::Number(3.0)),
+    ])));
+
+    // Test accessing each element by index
+    for i in 0..3 {
+        let node = tree.get_node(&[i]).unwrap();
+        if let JsonValue::Number(n) = node.value() {
+            assert_eq!(*n, (i + 1) as f64);
+        } else {
+            panic!("Expected Number");
+        }
+    }
+}
+
+#[test]
+fn test_tree_navigate_nested() {
+    // Create: {"data": {"items": [1, 2, 3]}}
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
+        ("data".to_string(), JsonNode::new(JsonValue::Object(vec![
+            ("items".to_string(), JsonNode::new(JsonValue::Array(vec![
+                JsonNode::new(JsonValue::Number(1.0)),
+                JsonNode::new(JsonValue::Number(2.0)),
+                JsonNode::new(JsonValue::Number(3.0)),
+            ]))),
+        ]))),
+    ])));
+
+    // Navigate: root -> "data" (0) -> "items" (0) -> element 1 (1)
+    let path = vec![0, 0, 1];
+    let node = tree.get_node(&path).unwrap();
+
+    if let JsonValue::Number(n) = node.value() {
+        assert_eq!(*n, 2.0);
+    } else {
+        panic!("Expected Number(2.0)");
+    }
+}
+
+#[test]
+fn test_tree_navigate_deeply_nested() {
+    // Create: {"a": {"b": {"c": {"d": "deep"}}}}
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
+        ("a".to_string(), JsonNode::new(JsonValue::Object(vec![
+            ("b".to_string(), JsonNode::new(JsonValue::Object(vec![
+                ("c".to_string(), JsonNode::new(JsonValue::Object(vec![
+                    ("d".to_string(), JsonNode::new(JsonValue::String("deep".to_string()))),
+                ]))),
+            ]))),
+        ]))),
+    ])));
+
+    // Navigate through all levels: each level has index 0
+    let path = vec![0, 0, 0, 0];
+    let node = tree.get_node(&path).unwrap();
+
+    if let JsonValue::String(s) = node.value() {
+        assert_eq!(s, "deep");
+    } else {
+        panic!("Expected String(\"deep\")");
+    }
+}
+
+#[test]
+fn test_tree_get_node_out_of_bounds() {
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Array(vec![
+        JsonNode::new(JsonValue::Number(1.0)),
+    ])));
+
+    // Array has only 1 element (index 0), try to access index 1
+    let node = tree.get_node(&[1]);
+    assert!(node.is_none());
+
+    // Try to access index 99
+    let node = tree.get_node(&[99]);
+    assert!(node.is_none());
+}
+
+#[test]
+fn test_tree_get_node_invalid_path_non_container() {
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
+        ("value".to_string(), JsonNode::new(JsonValue::Number(42.0))),
+    ])));
+
+    // Try to navigate into a Number (which is not a container)
+    let path = vec![0, 0]; // First field, then try to index into the number
+    let node = tree.get_node(&path);
+    assert!(node.is_none());
+}
+
+#[test]
+fn test_tree_get_node_invalid_path_through_string() {
+    let tree = JsonTree::new(JsonNode::new(JsonValue::String("test".to_string())));
+
+    // Try to navigate into a String
+    let path = vec![0];
+    let node = tree.get_node(&path);
+    assert!(node.is_none());
+}
+
+#[test]
+fn test_tree_get_node_mut() {
+    let mut tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
+        ("name".to_string(), JsonNode::new(JsonValue::String("Alice".to_string()))),
+    ])));
+
+    // Modify the first field
+    let path = vec![0];
+    if let Some(node) = tree.get_node_mut(&path) {
+        *node.value_mut() = JsonValue::String("Bob".to_string());
+    }
+
+    // Verify the change
+    let node = tree.get_node(&path).unwrap();
+    if let JsonValue::String(s) = node.value() {
+        assert_eq!(s, "Bob");
+    } else {
+        panic!("Expected String");
+    }
+}
+
+#[test]
+fn test_tree_get_node_mut_nested() {
+    let mut tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
+        ("data".to_string(), JsonNode::new(JsonValue::Array(vec![
+            JsonNode::new(JsonValue::Number(1.0)),
+            JsonNode::new(JsonValue::Number(2.0)),
+        ]))),
+    ])));
+
+    // Modify nested array element
+    let path = vec![0, 1]; // "data" field, second array element
+    if let Some(node) = tree.get_node_mut(&path) {
+        *node.value_mut() = JsonValue::Number(99.0);
+    }
+
+    // Verify the change
+    let node = tree.get_node(&path).unwrap();
+    if let JsonValue::Number(n) = node.value() {
+        assert_eq!(*n, 99.0);
+    } else {
+        panic!("Expected Number(99.0)");
+    }
+}
+
+#[test]
+fn test_tree_get_node_mut_out_of_bounds() {
+    let mut tree = JsonTree::new(JsonNode::new(JsonValue::Array(vec![
+        JsonNode::new(JsonValue::Number(1.0)),
+    ])));
+
+    // Try to mutate out of bounds
+    let path = vec![5];
+    let node = tree.get_node_mut(&path);
+    assert!(node.is_none());
+}
+
+#[test]
+fn test_tree_get_node_mut_invalid_path() {
+    let mut tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
+        ("value".to_string(), JsonNode::new(JsonValue::Boolean(true))),
+    ])));
+
+    // Try to navigate through a non-container
+    let path = vec![0, 0];
+    let node = tree.get_node_mut(&path);
+    assert!(node.is_none());
+}
+
+#[test]
+fn test_tree_clone() {
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
+        ("name".to_string(), JsonNode::new(JsonValue::String("original".to_string()))),
+    ])));
+
+    let mut cloned = tree.clone();
+
+    // Modify the clone
+    if let Some(node) = cloned.get_node_mut(&[0]) {
+        *node.value_mut() = JsonValue::String("modified".to_string());
+    }
+
+    // Original should be unchanged
+    let original_node = tree.get_node(&[0]).unwrap();
+    if let JsonValue::String(s) = original_node.value() {
+        assert_eq!(s, "original");
+    } else {
+        panic!("Expected String");
+    }
+
+    // Clone should be modified
+    let cloned_node = cloned.get_node(&[0]).unwrap();
+    if let JsonValue::String(s) = cloned_node.value() {
+        assert_eq!(s, "modified");
+    } else {
+        panic!("Expected String");
+    }
+}
+
+#[test]
+fn test_tree_with_mixed_array_in_object() {
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
+        ("values".to_string(), JsonNode::new(JsonValue::Array(vec![
+            JsonNode::new(JsonValue::String("text".to_string())),
+            JsonNode::new(JsonValue::Number(123.0)),
+            JsonNode::new(JsonValue::Boolean(false)),
+            JsonNode::new(JsonValue::Null),
+        ]))),
+    ])));
+
+    // Access each type in the array
+    assert!(matches!(tree.get_node(&[0, 0]).unwrap().value(), JsonValue::String(_)));
+    assert!(matches!(tree.get_node(&[0, 1]).unwrap().value(), JsonValue::Number(_)));
+    assert!(matches!(tree.get_node(&[0, 2]).unwrap().value(), JsonValue::Boolean(false)));
+    assert!(matches!(tree.get_node(&[0, 3]).unwrap().value(), JsonValue::Null));
+}
+
+#[test]
+fn test_tree_with_array_of_objects() {
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Array(vec![
+        JsonNode::new(JsonValue::Object(vec![
+            ("id".to_string(), JsonNode::new(JsonValue::Number(1.0))),
+        ])),
+        JsonNode::new(JsonValue::Object(vec![
+            ("id".to_string(), JsonNode::new(JsonValue::Number(2.0))),
+        ])),
+    ])));
+
+    // Navigate to second object's id field
+    let path = vec![1, 0]; // Second array element, first object field
+    let node = tree.get_node(&path).unwrap();
+
+    if let JsonValue::Number(n) = node.value() {
+        assert_eq!(*n, 2.0);
+    } else {
+        panic!("Expected Number(2.0)");
+    }
+}
+
+// ============================================================================
+// JsonValue Helper Method Tests
+// ============================================================================
+
+#[test]
+fn test_is_object() {
+    let obj = JsonValue::Object(vec![]);
+    assert!(obj.is_object());
+
+    let arr = JsonValue::Array(vec![]);
+    assert!(!arr.is_object());
+
+    let str_val = JsonValue::String("test".to_string());
+    assert!(!str_val.is_object());
+}
+
+#[test]
+fn test_is_array() {
+    let arr = JsonValue::Array(vec![]);
+    assert!(arr.is_array());
+
+    let obj = JsonValue::Object(vec![]);
+    assert!(!obj.is_array());
+
+    let num = JsonValue::Number(42.0);
+    assert!(!num.is_array());
+}
+
+#[test]
+fn test_is_container() {
+    let obj = JsonValue::Object(vec![]);
+    assert!(obj.is_container());
+
+    let arr = JsonValue::Array(vec![]);
+    assert!(arr.is_container());
+
+    let str_val = JsonValue::String("test".to_string());
+    assert!(!str_val.is_container());
+
+    let num = JsonValue::Number(42.0);
+    assert!(!num.is_container());
+
+    let bool_val = JsonValue::Boolean(true);
+    assert!(!bool_val.is_container());
+
+    let null_val = JsonValue::Null;
+    assert!(!null_val.is_container());
+}

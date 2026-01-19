@@ -71,6 +71,62 @@ pub struct NodeMetadata {
     pub modified: bool,
 }
 
+impl JsonValue {
+    /// Returns true if this value is an object.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use jeditor::document::node::JsonValue;
+    ///
+    /// let obj = JsonValue::Object(vec![]);
+    /// assert!(obj.is_object());
+    ///
+    /// let num = JsonValue::Number(42.0);
+    /// assert!(!num.is_object());
+    /// ```
+    pub fn is_object(&self) -> bool {
+        matches!(self, JsonValue::Object(_))
+    }
+
+    /// Returns true if this value is an array.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use jeditor::document::node::JsonValue;
+    ///
+    /// let arr = JsonValue::Array(vec![]);
+    /// assert!(arr.is_array());
+    ///
+    /// let num = JsonValue::Number(42.0);
+    /// assert!(!num.is_array());
+    /// ```
+    pub fn is_array(&self) -> bool {
+        matches!(self, JsonValue::Array(_))
+    }
+
+    /// Returns true if this value is a container (object or array).
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use jeditor::document::node::JsonValue;
+    ///
+    /// let obj = JsonValue::Object(vec![]);
+    /// assert!(obj.is_container());
+    ///
+    /// let arr = JsonValue::Array(vec![]);
+    /// assert!(arr.is_container());
+    ///
+    /// let num = JsonValue::Number(42.0);
+    /// assert!(!num.is_container());
+    /// ```
+    pub fn is_container(&self) -> bool {
+        self.is_object() || self.is_array()
+    }
+}
+
 impl JsonNode {
     /// Creates a new `JsonNode` with the given value.
     ///
