@@ -15,14 +15,53 @@ Key requirements from global instructions:
 
 These global standards apply to ALL projects and override defaults when they conflict.
 
-## Project Status
+## Project Overview
 
-This is a new repository with no code yet. This file should be updated once the project structure and tooling are established.
+**jeditor** is a terminal-based structural JSON editor built in Rust. It provides vim-style keybindings for navigating and editing JSON documents in a tree-like structure, making it easy to work with complex JSON files directly in the terminal.
 
 ## Development Commands
 
-(To be added once build system is configured)
+Standard Rust/Cargo commands:
+
+```bash
+# Build the project
+cargo build
+
+# Run the binary
+cargo run
+
+# Run tests
+cargo test
+
+# Run tests with output
+cargo test -- --nocapture
+
+# Build optimized release binary
+cargo build --release
+```
 
 ## Architecture
 
-(To be added once codebase is established)
+The project follows a standard Rust binary + library structure:
+
+- **src/main.rs**: Entry point for the terminal application
+- **src/lib.rs**: Library code that can be imported by other modules
+- **Binary structure**: Currently minimal, will expand with TUI implementation
+
+### Key Dependencies
+
+- **ratatui (0.29)**: Terminal UI framework for building the interface
+- **crossterm (0.28)**: Cross-platform terminal manipulation library (backend for ratatui)
+- **serde (1.0)** + **serde_json (1.0)**: JSON serialization/deserialization
+- **clap (4.5)**: Command-line argument parsing
+- **toml (0.8)**: Configuration file support
+- **anyhow (1.0)**: Error handling utilities
+- **arboard (3.4)**: Clipboard support for copy/paste operations
+
+### Planned Module Structure
+
+Future modules will include:
+- JSON parsing and tree representation
+- TUI rendering and event handling
+- Vim-style keybinding implementation
+- Configuration management
