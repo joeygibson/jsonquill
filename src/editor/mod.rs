@@ -7,6 +7,8 @@
 //! # Modules
 //!
 //! - `mode`: Editor mode enumeration and transitions
+//! - `cursor`: Cursor position tracking in the JSON tree
+//! - `state`: Editor state management (tree, mode, cursor, etc.)
 //!
 //! # Example
 //!
@@ -19,3 +21,5 @@
 //! ```
 
 pub mod mode;
+pub mod cursor;
+pub mod state;

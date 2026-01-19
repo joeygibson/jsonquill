@@ -1,9 +1,249 @@
 use jeditor::editor::mode::EditorMode;
+use jeditor::editor::state::EditorState;
+use jeditor::document::node::{JsonNode, JsonValue};
+use jeditor::document::tree::JsonTree;
 
 #[test]
 fn test_mode_starts_normal() {
     let mode = EditorMode::Normal;
     assert!(matches!(mode, EditorMode::Normal));
+}
+
+#[test]
+fn test_editor_state_creation() {
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![])));
+    let state = EditorState::new(tree);
+
+    assert_eq!(state.mode(), &EditorMode::Normal);
+    assert!(!state.is_dirty());
+}
+
+#[test]
+fn test_editor_state_set_dirty() {
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![])));
+    let mut state = EditorState::new(tree);
+
+    state.mark_dirty();
+    assert!(state.is_dirty());
+}
+
+#[test]
+fn test_editor_state_clear_dirty() {
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![])));
+    let mut state = EditorState::new(tree);
+
+    state.mark_dirty();
+    assert!(state.is_dirty());
+
+    state.clear_dirty();
+    assert!(!state.is_dirty());
+}
+
+#[test]
+fn test_editor_state_mode_transitions() {
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Null));
+    let mut state = EditorState::new(tree);
+
+    // Start in Normal mode
+    assert_eq!(state.mode(), &EditorMode::Normal);
+
+    // Switch to Insert mode
+    state.set_mode(EditorMode::Insert);
+    assert_eq!(state.mode(), &EditorMode::Insert);
+
+    // Switch to Command mode
+    state.set_mode(EditorMode::Command);
+    assert_eq!(state.mode(), &EditorMode::Command);
+
+    // Back to Normal mode
+    state.set_mode(EditorMode::Normal);
+    assert_eq!(state.mode(), &EditorMode::Normal);
+}
+
+#[test]
+fn test_editor_state_filename() {
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Null));
+    let mut state = EditorState::new(tree);
+
+    // Initially no filename
+    assert_eq!(state.filename(), None);
+
+    // Set a filename
+    state.set_filename("test.json".to_string());
+    assert_eq!(state.filename(), Some("test.json"));
+
+    // Change the filename
+    state.set_filename("other.json".to_string());
+    assert_eq!(state.filename(), Some("other.json"));
+}
+
+#[test]
+fn test_editor_state_cursor_access() {
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Array(vec![])));
+    let mut state = EditorState::new(tree);
+
+    // Initial cursor is at root
+    assert_eq!(state.cursor().path(), &[] as &[usize]);
+
+    // Modify cursor through mutable reference
+    state.cursor_mut().push(0);
+    assert_eq!(state.cursor().path(), &[0]);
+
+    state.cursor_mut().push(1);
+    assert_eq!(state.cursor().path(), &[0, 1]);
+
+    state.cursor_mut().pop();
+    assert_eq!(state.cursor().path(), &[0]);
+}
+
+#[test]
+fn test_editor_state_tree_access() {
+    let tree = JsonTree::new(JsonNode::new(JsonValue::String("test".to_string())));
+    let state = EditorState::new(tree);
+
+    // Access tree through immutable reference
+    let tree_ref = state.tree();
+    // Verify we can access the root node
+    let _root = tree_ref.root();
+}
+
+#[test]
+fn test_editor_state_tree_mut_access() {
+    let tree = JsonTree::new(JsonNode::new(JsonValue::String("initial".to_string())));
+    let mut state = EditorState::new(tree);
+
+    // Access tree through mutable reference
+    let _tree_mut = state.tree_mut();
+    // Can modify tree here
+}
+
+// Cursor tests
+use jeditor::editor::cursor::Cursor;
+
+#[test]
+fn test_cursor_new() {
+    let cursor = Cursor::new();
+    assert_eq!(cursor.path(), &[] as &[usize]);
+}
+
+#[test]
+fn test_cursor_default() {
+    let cursor = Cursor::default();
+    assert_eq!(cursor.path(), &[] as &[usize]);
+}
+
+#[test]
+fn test_cursor_push() {
+    let mut cursor = Cursor::new();
+    cursor.push(0);
+    assert_eq!(cursor.path(), &[0]);
+
+    cursor.push(1);
+    assert_eq!(cursor.path(), &[0, 1]);
+
+    cursor.push(2);
+    assert_eq!(cursor.path(), &[0, 1, 2]);
+}
+
+#[test]
+fn test_cursor_pop() {
+    let mut cursor = Cursor::new();
+    cursor.push(0);
+    cursor.push(1);
+    cursor.push(2);
+
+    assert_eq!(cursor.pop(), Some(2));
+    assert_eq!(cursor.path(), &[0, 1]);
+
+    assert_eq!(cursor.pop(), Some(1));
+    assert_eq!(cursor.path(), &[0]);
+
+    assert_eq!(cursor.pop(), Some(0));
+    assert_eq!(cursor.path(), &[] as &[usize]);
+
+    // Pop from empty returns None
+    assert_eq!(cursor.pop(), None);
+    assert_eq!(cursor.path(), &[] as &[usize]);
+}
+
+#[test]
+fn test_cursor_set_path() {
+    let mut cursor = Cursor::new();
+    cursor.set_path(vec![0, 1, 2]);
+    assert_eq!(cursor.path(), &[0, 1, 2]);
+
+    cursor.set_path(vec![]);
+    assert_eq!(cursor.path(), &[] as &[usize]);
+
+    cursor.set_path(vec![5]);
+    assert_eq!(cursor.path(), &[5]);
+}
+
+#[test]
+fn test_cursor_clone() {
+    let mut cursor = Cursor::new();
+    cursor.push(0);
+    cursor.push(1);
+
+    let cloned = cursor.clone();
+    assert_eq!(cursor.path(), cloned.path());
+    assert_eq!(cursor, cloned);
+}
+
+#[test]
+fn test_cursor_equality() {
+    let mut cursor1 = Cursor::new();
+    let mut cursor2 = Cursor::new();
+
+    assert_eq!(cursor1, cursor2);
+
+    cursor1.push(0);
+    assert_ne!(cursor1, cursor2);
+
+    cursor2.push(0);
+    assert_eq!(cursor1, cursor2);
+
+    cursor1.push(1);
+    cursor2.push(2);
+    assert_ne!(cursor1, cursor2);
+}
+
+#[test]
+fn test_cursor_debug() {
+    let mut cursor = Cursor::new();
+    cursor.push(0);
+    cursor.push(1);
+
+    let debug_str = format!("{:?}", cursor);
+    assert!(debug_str.contains("Cursor"));
+    assert!(debug_str.contains("path"));
+}
+
+#[test]
+fn test_cursor_multiple_operations() {
+    let mut cursor = Cursor::new();
+
+    // Build up a path
+    cursor.push(0);
+    cursor.push(1);
+    cursor.push(2);
+    assert_eq!(cursor.path(), &[0, 1, 2]);
+
+    // Pop one level
+    cursor.pop();
+    assert_eq!(cursor.path(), &[0, 1]);
+
+    // Push a different index
+    cursor.push(5);
+    assert_eq!(cursor.path(), &[0, 1, 5]);
+
+    // Replace entire path
+    cursor.set_path(vec![10, 20]);
+    assert_eq!(cursor.path(), &[10, 20]);
+
+    // Clear by setting empty path
+    cursor.set_path(vec![]);
+    assert_eq!(cursor.path(), &[] as &[usize]);
 }
 
 #[test]
