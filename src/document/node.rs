@@ -1,19 +1,68 @@
+//! JSON node representation with metadata tracking.
+//!
+//! This module provides the core data structures for representing JSON documents
+//! in jeditor. Each JSON value is wrapped in a `JsonNode` that tracks metadata
+//! such as modification status and original formatting, enabling format-preserving
+//! edits and efficient change tracking.
+//!
+//! # Example
+//!
+//! ```
+//! use jeditor::document::node::{JsonNode, JsonValue};
+//!
+//! // Create a simple string node
+//! let mut node = JsonNode::new(JsonValue::String("hello".to_string()));
+//! assert!(node.is_modified()); // New nodes are marked as modified
+//!
+//! // Create a complex nested structure
+//! let object = JsonNode::new(JsonValue::Object(vec![
+//!     ("name".to_string(), JsonNode::new(JsonValue::String("jeditor".to_string()))),
+//!     ("version".to_string(), JsonNode::new(JsonValue::Number(1.0))),
+//! ]));
+//!
+//! // Modify a value
+//! if let JsonValue::Object(ref mut fields) = node.value_mut() {
+//!     fields.push(("key".to_string(), JsonNode::new(JsonValue::Null)));
+//! }
+//! ```
+
+/// A JSON value without metadata.
+///
+/// This enum represents the core JSON types: objects, arrays, strings, numbers,
+/// booleans, and null. Objects and arrays contain `JsonNode` instances to preserve
+/// metadata throughout the tree structure.
 #[derive(Debug, Clone, PartialEq)]
 pub enum JsonValue {
+    /// A JSON object containing key-value pairs
     Object(Vec<(String, JsonNode)>),
+    /// A JSON array containing ordered values
     Array(Vec<JsonNode>),
+    /// A JSON string
     String(String),
+    /// A JSON number (represented as f64)
     Number(f64),
+    /// A JSON boolean
     Boolean(bool),
+    /// A JSON null value
     Null,
 }
 
+/// A JSON value wrapped with metadata for tracking changes and formatting.
+///
+/// `JsonNode` is the primary type used throughout jeditor to represent JSON data.
+/// It wraps a `JsonValue` with `NodeMetadata` to track whether the node has been
+/// modified and preserve original formatting information for format-preserving edits.
 #[derive(Debug, Clone, PartialEq)]
 pub struct JsonNode {
     value: JsonValue,
     metadata: NodeMetadata,
 }
 
+/// Metadata associated with a JSON node.
+///
+/// This structure tracks information about a node beyond its value, including
+/// whether it has been modified since loading and its original text representation
+/// for preserving formatting during edits.
 #[derive(Debug, Clone, PartialEq)]
 pub struct NodeMetadata {
     /// Original formatting (whitespace, indentation)
@@ -23,6 +72,19 @@ pub struct NodeMetadata {
 }
 
 impl JsonNode {
+    /// Creates a new `JsonNode` with the given value.
+    ///
+    /// The node is marked as modified by default since it's newly created.
+    /// The original_text field is set to None.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use jeditor::document::node::{JsonNode, JsonValue};
+    ///
+    /// let node = JsonNode::new(JsonValue::Number(42.0));
+    /// assert!(node.is_modified());
+    /// ```
     pub fn new(value: JsonValue) -> Self {
         Self {
             value,
@@ -33,15 +95,52 @@ impl JsonNode {
         }
     }
 
+    /// Returns an immutable reference to the node's value.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use jeditor::document::node::{JsonNode, JsonValue};
+    ///
+    /// let node = JsonNode::new(JsonValue::Boolean(true));
+    /// assert!(matches!(node.value(), JsonValue::Boolean(true)));
+    /// ```
     pub fn value(&self) -> &JsonValue {
         &self.value
     }
 
+    /// Returns a mutable reference to the node's value.
+    ///
+    /// Calling this method automatically marks the node as modified,
+    /// even if the value is not actually changed.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use jeditor::document::node::{JsonNode, JsonValue};
+    ///
+    /// let mut node = JsonNode::new(JsonValue::String("old".to_string()));
+    /// *node.value_mut() = JsonValue::String("new".to_string());
+    /// assert!(node.is_modified());
+    /// ```
     pub fn value_mut(&mut self) -> &mut JsonValue {
         self.metadata.modified = true;
         &mut self.value
     }
 
+    /// Returns whether this node has been modified.
+    ///
+    /// A node is considered modified if it was newly created or if
+    /// `value_mut()` has been called on it.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use jeditor::document::node::{JsonNode, JsonValue};
+    ///
+    /// let node = JsonNode::new(JsonValue::Null);
+    /// assert!(node.is_modified());
+    /// ```
     pub fn is_modified(&self) -> bool {
         self.metadata.modified
     }
