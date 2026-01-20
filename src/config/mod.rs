@@ -154,3 +154,56 @@ impl Default for Config {
         }
     }
 }
+
+impl Config {
+    /// Returns the path to the config file.
+    ///
+    /// Uses `~/.config/jeditor/config.toml` on all platforms.
+    pub fn config_path() -> Option<std::path::PathBuf> {
+        dirs::home_dir().map(|mut path| {
+            path.push(".config");
+            path.push("jeditor");
+            path.push("config.toml");
+            path
+        })
+    }
+
+    /// Loads configuration from the default config file.
+    ///
+    /// Returns the default configuration if the file doesn't exist or can't be read.
+    pub fn load() -> Self {
+        let config_path = match Self::config_path() {
+            Some(path) => path,
+            None => return Self::default(),
+        };
+
+        if !config_path.exists() {
+            return Self::default();
+        }
+
+        match std::fs::read_to_string(&config_path) {
+            Ok(contents) => {
+                toml::from_str(&contents).unwrap_or_else(|_| Self::default())
+            }
+            Err(_) => Self::default(),
+        }
+    }
+
+    /// Saves configuration to the default config file.
+    ///
+    /// Creates the config directory if it doesn't exist.
+    pub fn save(&self) -> anyhow::Result<()> {
+        let config_path = Self::config_path()
+            .ok_or_else(|| anyhow::anyhow!("Could not determine config directory"))?;
+
+        // Create parent directory if it doesn't exist
+        if let Some(parent) = config_path.parent() {
+            std::fs::create_dir_all(parent)?;
+        }
+
+        let toml_string = toml::to_string_pretty(self)?;
+        std::fs::write(&config_path, toml_string)?;
+
+        Ok(())
+    }
+}

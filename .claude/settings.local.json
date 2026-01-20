@@ -35,7 +35,9 @@
       "Bash(git show-ref:*)",
       "Bash(git merge:*)",
       "Bash(./target/release/jeditor)",
-      "Bash(cargo fix:*)"
+      "Bash(cargo fix:*)",
+      "Skill(superpowers:executing-plans)",
+      "Bash(/tmp/test_config)"
     ]
   }
 }

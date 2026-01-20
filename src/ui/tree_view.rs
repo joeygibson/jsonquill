@@ -136,6 +136,39 @@ impl TreeViewState {
         self.build_lines(tree.root(), &[], 0);
     }
 
+    /// Expands all container nodes (objects and arrays) in the tree.
+    ///
+    /// This is typically called when initially loading a file to show
+    /// the full structure. After calling this, call `rebuild()` to
+    /// regenerate the visible lines.
+    pub fn expand_all(&mut self, tree: &JsonTree) {
+        self.expand_all_recursive(tree.root(), &[]);
+    }
+
+    fn expand_all_recursive(&mut self, node: &JsonNode, path: &[usize]) {
+        match node.value() {
+            JsonValue::Object(entries) => {
+                for (i, (_, child)) in entries.iter().enumerate() {
+                    let child_path: Vec<usize> = path.iter().copied().chain(std::iter::once(i)).collect();
+                    if child.value().is_container() {
+                        self.expanded_paths.insert(child_path.clone());
+                        self.expand_all_recursive(child, &child_path);
+                    }
+                }
+            }
+            JsonValue::Array(elements) => {
+                for (i, child) in elements.iter().enumerate() {
+                    let child_path: Vec<usize> = path.iter().copied().chain(std::iter::once(i)).collect();
+                    if child.value().is_container() {
+                        self.expanded_paths.insert(child_path.clone());
+                        self.expand_all_recursive(child, &child_path);
+                    }
+                }
+            }
+            _ => {}
+        }
+    }
+
     fn build_lines(&mut self, node: &JsonNode, path: &[usize], depth: usize) {
         match node.value() {
             JsonValue::Object(entries) => {
@@ -250,7 +283,7 @@ use crate::editor::cursor::Cursor;
 /// tree_view.rebuild(&tree);
 ///
 /// terminal.draw(|f| {
-///     render_tree_view(f, f.area(), &tree_view, &cursor, &colors);
+///     render_tree_view(f, f.area(), &tree_view, &cursor, &colors, true);
 /// }).unwrap();
 /// ```
 pub fn render_tree_view(
@@ -259,13 +292,28 @@ pub fn render_tree_view(
     tree_view: &TreeViewState,
     cursor: &Cursor,
     colors: &ThemeColors,
+    show_line_numbers: bool,
 ) {
     let mut lines_to_render = Vec::new();
+    let max_line_num_width = if show_line_numbers {
+        tree_view.lines().len().to_string().len()
+    } else {
+        0
+    };
 
-    for line in tree_view.lines().iter() {
+    for (line_num, line) in tree_view.lines().iter().enumerate() {
         let is_cursor = cursor.path() == line.path.as_slice();
 
         let mut spans = Vec::new();
+
+        // Line number
+        if show_line_numbers {
+            let line_num_str = format!("{:>width$} ", line_num + 1, width = max_line_num_width);
+            spans.push(Span::styled(
+                line_num_str,
+                Style::default().fg(colors.foreground).add_modifier(Modifier::DIM),
+            ));
+        }
 
         // Indentation
         spans.push(Span::raw("  ".repeat(line.depth)));

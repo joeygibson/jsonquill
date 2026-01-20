@@ -96,12 +96,23 @@ fn main() -> Result<()> {
     let mut terminal = Terminal::new(backend)?;
     terminal.clear()?;
 
+    // Load config
+    use jeditor::config::Config;
+    let config = Config::load();
+
     // Initialize components
-    let theme = get_builtin_theme(&cli.theme).unwrap_or_else(|| {
-        eprintln!("Warning: Theme '{}' not found, using default-dark", cli.theme);
+    // CLI theme overrides config theme
+    let theme_name = if !cli.theme.is_empty() {
+        &cli.theme
+    } else {
+        &config.theme
+    };
+
+    let theme = get_builtin_theme(theme_name).unwrap_or_else(|| {
+        eprintln!("Warning: Theme '{}' not found, using default-dark", theme_name);
         get_builtin_theme("default-dark").unwrap()
     });
-    let ui = UI::new(theme);
+    let mut ui = UI::new(theme);
     let input_handler = InputHandler::new();
 
     let mut state = EditorState::new(tree);
@@ -109,8 +120,12 @@ fn main() -> Result<()> {
         state.set_filename(name);
     }
 
+    // Apply config settings
+    state.set_current_theme(theme_name.to_string());
+    state.set_show_line_numbers(config.show_line_numbers);
+
     // Main event loop
-    let result = run_event_loop(&mut terminal, &ui, &input_handler, &mut state);
+    let result = run_event_loop(&mut terminal, &mut ui, &input_handler, &mut state);
 
     // Cleanup
     disable_raw_mode()?;
@@ -122,11 +137,16 @@ fn main() -> Result<()> {
 
 fn run_event_loop<B: ratatui::backend::Backend>(
     terminal: &mut Terminal<B>,
-    ui: &UI,
+    ui: &mut UI,
     input_handler: &InputHandler,
     state: &mut EditorState,
 ) -> Result<()> {
     loop {
+        // Check for pending theme changes
+        if let Some(theme_name) = state.take_pending_theme() {
+            ui.set_theme(&theme_name);
+        }
+
         // Render UI
         ui.render(terminal, state)?;
 

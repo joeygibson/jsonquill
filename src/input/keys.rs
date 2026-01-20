@@ -23,8 +23,18 @@ pub enum InputEvent {
     EnterInsertMode,
     /// Enter command mode (from normal mode)
     EnterCommandMode,
+    /// Enter search mode (from normal mode)
+    EnterSearchMode,
     /// Exit current mode back to normal mode
     ExitMode,
+    /// Delete current node
+    Delete,
+    /// Yank (copy) current node
+    Yank,
+    /// Paste from clipboard
+    Paste,
+    /// Jump to next search result
+    NextSearchResult,
     /// Unknown or unmapped key
     Unknown,
 }
@@ -66,6 +76,11 @@ pub fn map_key_event(key: KeyEvent, mode: &EditorMode) -> InputEvent {
             KeyCode::Char('l') => InputEvent::MoveRight,
             KeyCode::Char('i') => InputEvent::EnterInsertMode,
             KeyCode::Char(':') => InputEvent::EnterCommandMode,
+            KeyCode::Char('/') => InputEvent::EnterSearchMode,
+            KeyCode::Char('n') => InputEvent::NextSearchResult,
+            KeyCode::Char('d') => InputEvent::Delete,
+            KeyCode::Char('y') => InputEvent::Yank,
+            KeyCode::Char('p') => InputEvent::Paste,
             KeyCode::Down => InputEvent::MoveDown,
             KeyCode::Up => InputEvent::MoveUp,
             KeyCode::Left => InputEvent::MoveLeft,
@@ -77,6 +92,10 @@ pub fn map_key_event(key: KeyEvent, mode: &EditorMode) -> InputEvent {
             _ => InputEvent::Unknown,
         },
         EditorMode::Command => match key.code {
+            KeyCode::Esc => InputEvent::ExitMode,
+            _ => InputEvent::Unknown,
+        },
+        EditorMode::Search => match key.code {
             KeyCode::Esc => InputEvent::ExitMode,
             _ => InputEvent::Unknown,
         },

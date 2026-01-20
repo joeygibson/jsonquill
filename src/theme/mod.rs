@@ -88,3 +88,25 @@ pub fn get_builtin_theme(name: &str) -> Option<Theme> {
         _ => None,
     }
 }
+
+/// Returns a list of all available built-in theme names.
+///
+/// # Returns
+///
+/// A vector of theme names that can be used with `get_builtin_theme`.
+///
+/// # Examples
+///
+/// ```
+/// use jeditor::theme::list_builtin_themes;
+///
+/// let themes = list_builtin_themes();
+/// assert!(themes.contains(&"default-dark".to_string()));
+/// assert!(themes.contains(&"default-light".to_string()));
+/// ```
+pub fn list_builtin_themes() -> Vec<String> {
+    vec![
+        "default-dark".to_string(),
+        "default-light".to_string(),
+    ]
+}

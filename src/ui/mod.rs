@@ -5,6 +5,8 @@
 pub mod layout;
 pub mod status_line;
 pub mod tree_view;
+pub mod message_area;
+pub mod help_overlay;
 
 use anyhow::Result;
 use ratatui::backend::Backend;
@@ -65,6 +67,25 @@ impl UI {
         Self { theme }
     }
 
+    /// Returns the current theme name.
+    pub fn theme_name(&self) -> &str {
+        &self.theme.name
+    }
+
+    /// Changes the current theme.
+    ///
+    /// Returns true if the theme was successfully changed, false if the theme name is invalid.
+    pub fn set_theme(&mut self, theme_name: &str) -> bool {
+        use crate::theme::get_builtin_theme;
+
+        if let Some(new_theme) = get_builtin_theme(theme_name) {
+            self.theme = new_theme;
+            true
+        } else {
+            false
+        }
+    }
+
     /// Renders the UI to the terminal.
     ///
     /// This method draws the complete UI layout including the main view area,
@@ -122,6 +143,7 @@ impl UI {
                 state.tree_view(),
                 state.cursor(),
                 &self.theme.colors,
+                state.show_line_numbers(),
             );
 
             // Status line
@@ -132,8 +154,18 @@ impl UI {
                 &self.theme.colors,
             );
 
-            // Note: state parameter now used for status line and tree view rendering
-            // Message area will be implemented in future tasks
+            // Message area
+            message_area::render_message_area(
+                f,
+                chunks[2],
+                state,
+                &self.theme.colors,
+            );
+
+            // Help overlay (rendered on top if visible)
+            if state.show_help() {
+                help_overlay::render_help_overlay(f, &self.theme.colors, state.help_scroll());
+            }
         })?;
 
         Ok(())

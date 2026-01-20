@@ -73,24 +73,29 @@ Implemented modules:
 
 **Working Features:**
 - ✅ JSON file loading (filesystem paths only)
-- ✅ Tree view rendering with expand/collapse
-- ✅ Basic navigation (j/k/h/l, arrow keys)
-- ✅ Mode switching (i for INSERT, : for COMMAND, Esc to NORMAL)
+- ✅ Tree view rendering with expand/collapse and auto-expansion
+- ✅ Line numbers (enabled by default, toggle with `:set number`/`:set nonumber`)
+- ✅ Navigation (j/k/h/l, arrow keys)
+- ✅ Mode switching (i for INSERT, : for COMMAND, / for SEARCH, Esc to NORMAL)
 - ✅ Status line showing current mode and filename
-- ✅ All 259 tests passing
+- ✅ Command mode with visible prompt and input buffer
+- ✅ Command execution (`:w`, `:q`, `:q!`, `:wq`, `:x`)
+- ✅ Save functionality (`:w` writes changes to disk atomically)
+- ✅ Message area for errors, warnings, and info messages
+- ✅ Help system (press `?` for scrollable help overlay)
+- ✅ Search functionality (`/` to search, `n` for next result)
+- ✅ Theme system (`:theme` to list, `:theme <name>` to switch)
+- ✅ Settings system (`:set` to view, `:set <option>` to change)
+- ✅ Config file support (`~/.config/jeditor/config.toml`, `:set save` to persist)
+- ✅ Yank operation (`y` copies to clipboard including system clipboard)
+- ✅ Default dark theme (gray/black, not blue)
+- ✅ All 74 tests passing
 
 **Known Issues / TODO:**
-- ❌ **Command mode has no visible prompt** - Pressing `:` switches to COMMAND mode but shows no `:` prompt at the bottom
-- ❌ **Command input buffer not implemented** - Cannot type or execute commands (`:w`, `:q`, etc.)
-- ❌ **Help system missing** - `?` key not mapped, no help overlay implemented
 - ❌ **Insert mode not functional** - Pressing `i` switches mode but cannot edit values
-- ❌ **No editing operations** - Delete, yank, paste, rename not implemented
+- ❌ **Delete/paste not implemented** - `d` and `p` keys show placeholder messages
 - ❌ **Stdin piping not supported** - `cat file.json | jeditor` fails due to terminal I/O conflict
-- ❌ **No save functionality** - Cannot write changes back to disk
-- ❌ **Message area empty** - Third UI line reserved but not used for messages/errors
-- ❌ **Start with structure expanded** - For single JSON files, expand all objects. For JSONL, don't.
-- ❌ **Start in dark mode** - Choose whichever dark mode is blak/gray, not blue.
-- ❌ **Include a way to show available themes** - Preferably showing the colors for the elements.
+- ❌ **No rename operation** - Cannot rename object keys
 
 
 ## Usage
@@ -99,14 +104,93 @@ Implemented modules:
 # Open a JSON file
 ./target/release/jeditor foo.json
 
-# Basic navigation
+# Navigation (NORMAL mode)
 j/k         - Move down/up
-h/l         - Collapse/expand node (or move left/right)
+h/l         - Collapse/expand node
 Arrow keys  - Also work for navigation
 
-# Mode switching (partially implemented)
-i           - Enter INSERT mode (but editing not implemented yet)
-:           - Enter COMMAND mode (but no prompt/commands yet)
+# Search
+/           - Enter SEARCH mode
+n           - Jump to next search result
+Esc         - Exit SEARCH mode
+
+# Modes
+i           - Enter INSERT mode (not yet functional)
+:           - Enter COMMAND mode
 Esc         - Return to NORMAL mode
-q           - Quit (only works in NORMAL mode)
+?           - Toggle help overlay
+q           - Quit (NORMAL mode only)
+
+# Commands (in COMMAND mode)
+:w          - Save file
+:q          - Quit (warns if unsaved)
+:q!         - Force quit without saving
+:wq / :x    - Save and quit
+:theme      - List available themes
+:theme <name> - Switch to theme
+:set          - Show current settings
+:set number   - Enable line numbers
+:set nonumber - Disable line numbers
+:set save     - Save settings to config file
+
+# Editing (NORMAL mode)
+y           - Yank (copy) current node to clipboard
+d           - Delete current node (not yet implemented)
+p           - Paste from clipboard (not yet implemented)
+
+# Help
+j/k or ↑/↓  - Scroll help when open
+? or Esc    - Close help
+```
+
+## Configuration
+
+jeditor supports a configuration file at `~/.config/jeditor/config.toml`.
+
+### Config File Format
+
+```toml
+# Theme name (default: "default-dark")
+theme = "default-dark"
+
+# Number of spaces per indentation level (default: 2)
+indent_size = 2
+
+# Display line numbers (default: true)
+show_line_numbers = true
+
+# Automatically save on changes (default: false)
+auto_save = false
+
+# JSON validation strictness: "strict", "permissive", or "none" (default: "strict")
+validation_mode = "strict"
+
+# Create .bak files before saving (default: false)
+create_backup = false
+
+# Maximum number of undo operations (default: 1000)
+undo_limit = 1000
+
+# Sync unnamed register with system clipboard (default: true)
+sync_unnamed_register = true
+
+# File size in bytes to trigger lazy loading (default: 104857600 = 100MB)
+lazy_load_threshold = 104857600
+```
+
+### Saving Settings
+
+Use `:set save` to persist your current settings to the config file. This will save:
+- Current theme
+- Line number setting
+- Other default values
+
+The config file is created automatically when you run `:set save` for the first time.
+
+### Loading Settings
+
+Settings are loaded automatically when jeditor starts:
+1. Default values are used as a baseline
+2. Config file values override defaults (if the file exists)
+3. Command-line arguments override config file values
 ```

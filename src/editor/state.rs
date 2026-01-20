@@ -43,6 +43,7 @@
 use super::cursor::Cursor;
 use super::mode::EditorMode;
 use crate::document::tree::JsonTree;
+use crate::document::node::JsonNode;
 use crate::ui::tree_view::TreeViewState;
 
 /// Manages the complete runtime state of the editor.
@@ -76,6 +77,21 @@ use crate::ui::tree_view::TreeViewState;
 /// assert!(state.is_dirty());
 /// assert_eq!(state.filename(), Some("data.json"));
 /// ```
+/// Represents a message to display to the user.
+#[derive(Debug, Clone)]
+pub struct Message {
+    pub text: String,
+    pub level: MessageLevel,
+}
+
+/// Message severity level.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum MessageLevel {
+    Info,
+    Warning,
+    Error,
+}
+
 pub struct EditorState {
     tree: JsonTree,
     mode: EditorMode,
@@ -83,6 +99,17 @@ pub struct EditorState {
     dirty: bool,
     filename: Option<String>,
     tree_view: TreeViewState,
+    message: Option<Message>,
+    command_buffer: String,
+    show_help: bool,
+    help_scroll: usize,
+    pending_theme: Option<String>,
+    current_theme: String,
+    clipboard: Option<JsonNode>,
+    search_buffer: String,
+    search_results: Vec<Vec<usize>>,
+    search_index: usize,
+    show_line_numbers: bool,
 }
 
 impl EditorState {
@@ -110,6 +137,8 @@ impl EditorState {
     /// ```
     pub fn new(tree: JsonTree) -> Self {
         let mut tree_view = TreeViewState::new();
+        // Expand all nodes by default for single JSON files
+        tree_view.expand_all(&tree);
         tree_view.rebuild(&tree);
 
         // Initialize cursor to first visible line if available
@@ -125,6 +154,17 @@ impl EditorState {
             dirty: false,
             filename: None,
             tree_view,
+            message: None,
+            command_buffer: String::new(),
+            show_help: false,
+            help_scroll: 0,
+            pending_theme: None,
+            current_theme: "default-dark".to_string(),
+            clipboard: None,
+            search_buffer: String::new(),
+            search_results: Vec::new(),
+            search_index: 0,
+            show_line_numbers: true,
         }
     }
 
@@ -544,20 +584,259 @@ impl EditorState {
     /// ])));
     /// let mut state = EditorState::new(tree);
     ///
-    /// // Initially collapsed - 1 line
-    /// assert_eq!(state.tree_view().lines().len(), 1);
-    ///
-    /// // Toggle to expand
-    /// state.toggle_expand_at_cursor();
+    /// // Initially expanded (auto-expansion is default) - 2 lines
     /// assert_eq!(state.tree_view().lines().len(), 2);
     ///
     /// // Toggle to collapse
     /// state.toggle_expand_at_cursor();
     /// assert_eq!(state.tree_view().lines().len(), 1);
+    ///
+    /// // Toggle to expand again
+    /// state.toggle_expand_at_cursor();
+    /// assert_eq!(state.tree_view().lines().len(), 2);
     /// ```
     pub fn toggle_expand_at_cursor(&mut self) {
         let current_path = self.cursor.path().to_vec();
         self.tree_view.toggle_expand(&current_path);
         self.tree_view.rebuild(&self.tree);
+    }
+
+    /// Returns the current message, if any.
+    pub fn message(&self) -> Option<&Message> {
+        self.message.as_ref()
+    }
+
+    /// Sets a message to display to the user.
+    pub fn set_message(&mut self, text: String, level: MessageLevel) {
+        self.message = Some(Message { text, level });
+    }
+
+    /// Clears the current message.
+    pub fn clear_message(&mut self) {
+        self.message = None;
+    }
+
+    /// Returns the current command buffer.
+    pub fn command_buffer(&self) -> &str {
+        &self.command_buffer
+    }
+
+    /// Sets the command buffer.
+    pub fn set_command_buffer(&mut self, buffer: String) {
+        self.command_buffer = buffer;
+    }
+
+    /// Appends a character to the command buffer.
+    pub fn push_to_command_buffer(&mut self, ch: char) {
+        self.command_buffer.push(ch);
+    }
+
+    /// Removes the last character from the command buffer.
+    pub fn pop_from_command_buffer(&mut self) {
+        self.command_buffer.pop();
+    }
+
+    /// Clears the command buffer.
+    pub fn clear_command_buffer(&mut self) {
+        self.command_buffer.clear();
+    }
+
+    /// Returns whether the help overlay is shown.
+    pub fn show_help(&self) -> bool {
+        self.show_help
+    }
+
+    /// Toggles the help overlay visibility.
+    pub fn toggle_help(&mut self) {
+        self.show_help = !self.show_help;
+        if self.show_help {
+            self.help_scroll = 0; // Reset scroll when opening
+        }
+    }
+
+    /// Returns the current help scroll position.
+    pub fn help_scroll(&self) -> usize {
+        self.help_scroll
+    }
+
+    /// Scrolls the help overlay down.
+    pub fn scroll_help_down(&mut self) {
+        self.help_scroll = self.help_scroll.saturating_add(1);
+    }
+
+    /// Scrolls the help overlay up.
+    pub fn scroll_help_up(&mut self) {
+        self.help_scroll = self.help_scroll.saturating_sub(1);
+    }
+
+    /// Returns the pending theme name if there is one, consuming it.
+    pub fn take_pending_theme(&mut self) -> Option<String> {
+        self.pending_theme.take()
+    }
+
+    /// Requests a theme change.
+    pub fn request_theme_change(&mut self, theme_name: String) {
+        self.current_theme = theme_name.clone();
+        self.pending_theme = Some(theme_name);
+    }
+
+    /// Sets the current theme name (called when theme is applied).
+    pub fn set_current_theme(&mut self, theme_name: String) {
+        self.current_theme = theme_name;
+    }
+
+    /// Yanks (copies) the node at the current cursor position to the clipboard.
+    pub fn yank_node(&mut self) -> bool {
+        let path = self.cursor.path();
+        if let Some(node) = self.tree.get_node(path) {
+            self.clipboard = Some(node.clone());
+
+            // Try to copy to system clipboard as formatted JSON
+            use arboard::Clipboard;
+            if let Ok(mut clipboard) = Clipboard::new() {
+                // Convert the JsonValue to serde_json::Value for pretty printing
+                let json_value = self.node_to_serde_value(node.value());
+                if let Ok(json_str) = serde_json::to_string_pretty(&json_value) {
+                    let _ = clipboard.set_text(json_str);
+                }
+            }
+
+            true
+        } else {
+            false
+        }
+    }
+
+    fn node_to_serde_value(&self, value: &crate::document::node::JsonValue) -> serde_json::Value {
+        use crate::document::node::JsonValue;
+        match value {
+            JsonValue::Object(entries) => {
+                let map: serde_json::Map<String, serde_json::Value> = entries
+                    .iter()
+                    .map(|(k, v)| (k.clone(), self.node_to_serde_value(v.value())))
+                    .collect();
+                serde_json::Value::Object(map)
+            }
+            JsonValue::Array(elements) => {
+                let arr: Vec<serde_json::Value> = elements
+                    .iter()
+                    .map(|v| self.node_to_serde_value(v.value()))
+                    .collect();
+                serde_json::Value::Array(arr)
+            }
+            JsonValue::String(s) => serde_json::Value::String(s.clone()),
+            JsonValue::Number(n) => serde_json::Value::Number(
+                serde_json::Number::from_f64(*n).unwrap_or_else(|| serde_json::Number::from(0))
+            ),
+            JsonValue::Boolean(b) => serde_json::Value::Bool(*b),
+            JsonValue::Null => serde_json::Value::Null,
+        }
+    }
+
+    /// Returns whether there's something in the clipboard.
+    pub fn has_clipboard(&self) -> bool {
+        self.clipboard.is_some()
+    }
+
+    /// Returns the current search buffer.
+    pub fn search_buffer(&self) -> &str {
+        &self.search_buffer
+    }
+
+    /// Appends a character to the search buffer.
+    pub fn push_to_search_buffer(&mut self, ch: char) {
+        self.search_buffer.push(ch);
+    }
+
+    /// Removes the last character from the search buffer.
+    pub fn pop_from_search_buffer(&mut self) {
+        self.search_buffer.pop();
+    }
+
+    /// Clears the search buffer.
+    pub fn clear_search_buffer(&mut self) {
+        self.search_buffer.clear();
+    }
+
+    /// Executes a search for the current search buffer text.
+    pub fn execute_search(&mut self) {
+        if self.search_buffer.is_empty() {
+            return;
+        }
+
+        let query = self.search_buffer.to_lowercase();
+        self.search_results.clear();
+        self.search_index = 0;
+
+        // Search through all visible lines
+        for line in self.tree_view.lines() {
+            let mut matches = false;
+
+            // Check key name
+            if let Some(key) = &line.key {
+                if key.to_lowercase().contains(&query) {
+                    matches = true;
+                }
+            }
+
+            // Check string values
+            if let crate::ui::tree_view::ValueType::String = line.value_type {
+                if line.value_preview.to_lowercase().contains(&query) {
+                    matches = true;
+                }
+            }
+
+            if matches {
+                self.search_results.push(line.path.clone());
+            }
+        }
+
+        // Jump to first result
+        if !self.search_results.is_empty() {
+            self.cursor.set_path(self.search_results[0].clone());
+        }
+    }
+
+    /// Jumps to the next search result.
+    pub fn next_search_result(&mut self) -> bool {
+        if self.search_results.is_empty() {
+            return false;
+        }
+
+        self.search_index = (self.search_index + 1) % self.search_results.len();
+        self.cursor.set_path(self.search_results[self.search_index].clone());
+        true
+    }
+
+    /// Returns the current search results info.
+    pub fn search_results_info(&self) -> Option<(usize, usize)> {
+        if self.search_results.is_empty() {
+            None
+        } else {
+            Some((self.search_index + 1, self.search_results.len()))
+        }
+    }
+
+    /// Returns whether line numbers should be shown.
+    pub fn show_line_numbers(&self) -> bool {
+        self.show_line_numbers
+    }
+
+    /// Sets whether line numbers should be shown.
+    pub fn set_show_line_numbers(&mut self, show: bool) {
+        self.show_line_numbers = show;
+    }
+
+    /// Saves current settings to the config file.
+    pub fn save_config(&self) -> anyhow::Result<()> {
+        use crate::config::Config;
+
+        let config = Config {
+            theme: self.current_theme.clone(),
+            show_line_numbers: self.show_line_numbers,
+            ..Config::default()
+        };
+
+        config.save()
     }
 }

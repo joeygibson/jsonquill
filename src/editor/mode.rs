@@ -61,6 +61,8 @@ pub enum EditorMode {
     Insert,
     /// Command mode for executing editor commands.
     Command,
+    /// Search mode for finding text in keys and values.
+    Search,
 }
 
 impl fmt::Display for EditorMode {
@@ -80,6 +82,7 @@ impl fmt::Display for EditorMode {
             EditorMode::Normal => write!(f, "NORMAL"),
             EditorMode::Insert => write!(f, "INSERT"),
             EditorMode::Command => write!(f, "COMMAND"),
+            EditorMode::Search => write!(f, "SEARCH"),
         }
     }
 }
