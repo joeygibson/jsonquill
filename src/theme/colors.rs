@@ -78,8 +78,9 @@ impl ThemeColors {
     /// - Numbers: Magenta (ANSI 5)
     /// - Booleans: Yellow (ANSI 3)
     /// - Null: Dark Gray (ANSI 8)
-    /// - Background: Black (ANSI 0)
+    /// - Background: Terminal default (Color::Reset)
     /// - Foreground: Gray (ANSI 7)
+    /// - Status bar: White background with black text
     ///
     /// # Examples
     ///
@@ -88,7 +89,8 @@ impl ThemeColors {
     /// use ratatui::style::Color;
     ///
     /// let colors = ThemeColors::default_dark();
-    /// assert_eq!(colors.background, Color::Black);
+    /// assert_eq!(colors.background, Color::Reset);
+    /// assert_eq!(colors.status_line_bg, Color::White);
     /// ```
     pub fn default_dark() -> Self {
         Self {
@@ -98,11 +100,11 @@ impl ThemeColors {
             boolean: Color::Yellow,      // ANSI 3
             null: Color::DarkGray,       // ANSI 8 (jless LIGHT_BLACK)
 
-            background: Color::Black,    // ANSI 0 (terminal default dark)
+            background: Color::Reset,    // Use terminal's default background
             foreground: Color::Gray,     // ANSI 7 (terminal default light)
             cursor: Color::LightBlue,    // ANSI 12 (match key color)
-            status_line_bg: Color::Black,
-            status_line_fg: Color::Gray,
+            status_line_bg: Color::White, // White status bar like jless
+            status_line_fg: Color::Black, // Black text on white
 
             error: Color::Red,           // ANSI 1
             warning: Color::Yellow,      // ANSI 3

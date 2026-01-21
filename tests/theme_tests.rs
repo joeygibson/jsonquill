@@ -48,12 +48,12 @@ fn test_dark_theme_syntax_colors() {
 fn test_dark_theme_ui_colors() {
     let theme = get_builtin_theme("default-dark").unwrap();
 
-    // jless uses terminal default colors
-    assert_eq!(theme.colors.background, Color::Black);      // Terminal default dark
+    // jless uses terminal defaults with white status bar
+    assert_eq!(theme.colors.background, Color::Reset);      // Terminal default background
     assert_eq!(theme.colors.foreground, Color::Gray);       // Terminal default light
     assert_eq!(theme.colors.cursor, Color::LightBlue);      // Match key color
-    assert_eq!(theme.colors.status_line_bg, Color::Black);  // Match background
-    assert_eq!(theme.colors.status_line_fg, Color::Gray);   // Match foreground
+    assert_eq!(theme.colors.status_line_bg, Color::White);  // White status bar like jless
+    assert_eq!(theme.colors.status_line_fg, Color::Black);  // Black text on white
 }
 
 #[test]
@@ -110,8 +110,8 @@ fn test_light_theme_semantic_colors() {
 fn test_theme_colors_default_dark() {
     let colors = ThemeColors::default_dark();
 
-    // Verify it uses ANSI colors like jless
-    assert_eq!(colors.background, Color::Black);
+    // Verify it uses terminal default background like jless
+    assert_eq!(colors.background, Color::Reset);
     assert_eq!(colors.foreground, Color::Gray);
 }
 
