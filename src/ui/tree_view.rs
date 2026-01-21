@@ -235,7 +235,7 @@ impl Default for TreeViewState {
 
 use ratatui::{
     layout::Rect,
-    style::{Style, Modifier},
+    style::{Color, Style, Modifier},
     text::{Line, Span},
     widgets::{Block, Borders, Paragraph},
     Frame,
@@ -333,10 +333,15 @@ pub fn render_tree_view(
 
         // Key (if object property) - highlight only the key when cursor is on this line
         if let Some(key) = &line.key {
-            let mut key_style = Style::default().fg(colors.key);
-            if is_cursor {
-                key_style = key_style.bg(colors.cursor).add_modifier(Modifier::BOLD);
-            }
+            let key_style = if is_cursor {
+                // White text on cursor background for readability
+                Style::default()
+                    .fg(Color::White)
+                    .bg(colors.cursor)
+                    .add_modifier(Modifier::BOLD)
+            } else {
+                Style::default().fg(colors.key)
+            };
             spans.push(Span::styled(
                 format!("{}: ", key),
                 key_style,
@@ -538,9 +543,10 @@ mod tests {
         let buffer = terminal.backend().buffer().clone();
 
         // Check cells on the first line
-        // Expected layout: "  name: \"Alice\""
-        // Only "name:" should be highlighted, not "\"Alice\""
+        // Expected layout: "▶ name: \"Alice\""
+        // Only "name:" should be highlighted with white text, not "\"Alice\""
         let mut found_key_highlight = false;
+        let mut found_key_white_text = false;
         let mut found_value_no_highlight = false;
 
         for (i, cell) in buffer.content().iter().enumerate() {
@@ -550,6 +556,10 @@ mod tests {
                 // This should be part of the key and should have cursor background
                 if cell.bg == colors.cursor {
                     found_key_highlight = true;
+                }
+                // Key text should be white for visibility
+                if cell.fg == Color::White {
+                    found_key_white_text = true;
                 }
             }
             // Look for the 'A' in 'Alice'
@@ -562,6 +572,7 @@ mod tests {
         }
 
         assert!(found_key_highlight, "Key 'name:' should be highlighted with cursor background");
+        assert!(found_key_white_text, "Key 'name:' text should be white for visibility");
         assert!(found_value_no_highlight, "Value '\"Alice\"' should not be highlighted");
     }
 

@@ -56,8 +56,11 @@ pub fn render_status_line(
 
     let left = format!("{} | {}{}", mode_text, filename, dirty_indicator);
 
+    // Pad with spaces to fill the entire width
+    let padded = format!("{:width$}", left, width = area.width as usize);
+
     let line = Line::from(Span::styled(
-        left,
+        padded,
         Style::default()
             .fg(colors.status_line_fg)
             .bg(colors.status_line_bg),
