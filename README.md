@@ -49,4 +49,16 @@ The project is not yet ready for installation or production use. Check back late
 
 ## License
 
-(To be determined)
+This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details.
+
+### Third-Party Licenses
+
+This project depends on several open source libraries, all of which are MIT-compatible. For a complete list of dependencies and their licenses, see [THIRD-PARTY-LICENSES.md](THIRD-PARTY-LICENSES.md).
+
+All direct dependencies are either:
+- MIT licensed, or
+- Dual-licensed under Apache-2.0 OR MIT (used under MIT terms)
+
+### Contributing
+
+By contributing to this project, you agree that your contributions will be licensed under the same MIT License.
