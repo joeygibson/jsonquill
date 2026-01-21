@@ -314,9 +314,11 @@ impl InputHandler {
                     // Check if this is the second 'd' press
                     if state.pending_command() == Some('d') {
                         state.clear_pending_command();
+                        // Yank before deleting (like vim's dd)
+                        state.yank_node();
                         match state.delete_node_at_cursor() {
                             Ok(_) => {
-                                state.set_message("Node deleted".to_string(), MessageLevel::Info);
+                                state.set_message("Node deleted (yanked)".to_string(), MessageLevel::Info);
                             }
                             Err(e) => {
                                 state.set_message(

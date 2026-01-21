@@ -106,6 +106,7 @@ pub struct EditorState {
     pending_theme: Option<String>,
     current_theme: String,
     clipboard: Option<JsonNode>,
+    clipboard_key: Option<String>,
     search_buffer: String,
     search_results: Vec<Vec<usize>>,
     search_index: usize,
@@ -163,6 +164,7 @@ impl EditorState {
             pending_theme: None,
             current_theme: "default-dark".to_string(),
             clipboard: None,
+            clipboard_key: None,
             search_buffer: String::new(),
             search_results: Vec::new(),
             search_index: 0,
@@ -726,6 +728,28 @@ impl EditorState {
         if let Some(node) = self.tree.get_node(path) {
             self.clipboard = Some(node.clone());
 
+            // Store the key name if yanking from an object
+            self.clipboard_key = None;
+            if !path.is_empty() {
+                let parent_path = &path[..path.len() - 1];
+                let index = path[path.len() - 1];
+
+                let parent = if parent_path.is_empty() {
+                    Some(self.tree.root())
+                } else {
+                    self.tree.get_node(parent_path)
+                };
+
+                if let Some(parent_node) = parent {
+                    use crate::document::node::JsonValue;
+                    if let JsonValue::Object(entries) = parent_node.value() {
+                        if let Some((key, _)) = entries.get(index) {
+                            self.clipboard_key = Some(key.clone());
+                        }
+                    }
+                }
+            }
+
             // Try to copy to system clipboard as formatted JSON
             use arboard::Clipboard;
             if let Ok(mut clipboard) = Clipboard::new() {
@@ -803,8 +827,9 @@ impl EditorState {
 
         match parent.value() {
             JsonValue::Object(_) => {
-                // Generate a unique key name
-                let mut key_name = "pasted".to_string();
+                // Use the original key name if available, otherwise use "pasted"
+                let base_key = self.clipboard_key.clone().unwrap_or_else(|| "pasted".to_string());
+                let mut key_name = base_key.clone();
                 let mut counter = 1;
 
                 // Keep trying until we find a unique key
@@ -812,7 +837,7 @@ impl EditorState {
                     let test_key = if counter == 1 {
                         key_name.clone()
                     } else {
-                        format!("{}{}", key_name, counter)
+                        format!("{}{}", base_key, counter)
                     };
 
                     // Check if key exists
