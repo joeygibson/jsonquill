@@ -798,3 +798,113 @@ fn test_parse_nested_structure() {
     let user_node = tree.get_node(&[0]);
     assert!(user_node.is_some());
 }
+
+// ============================================================================
+// Delete Node Tests
+// ============================================================================
+
+#[test]
+fn test_delete_object_property() {
+    use jeditor::document::tree::JsonTree;
+
+    let mut tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
+        ("a".to_string(), JsonNode::new(JsonValue::Number(1.0))),
+        ("b".to_string(), JsonNode::new(JsonValue::Number(2.0))),
+        ("c".to_string(), JsonNode::new(JsonValue::Number(3.0))),
+    ])));
+
+    // Delete second property (index 1)
+    let result = tree.delete_node(&[1]);
+    assert!(result.is_ok());
+
+    // Verify only 2 properties remain
+    match tree.root().value() {
+        JsonValue::Object(entries) => {
+            assert_eq!(entries.len(), 2);
+            assert_eq!(entries[0].0, "a");
+            assert_eq!(entries[1].0, "c");
+        }
+        _ => panic!("Expected object"),
+    }
+}
+
+#[test]
+fn test_delete_array_element() {
+    use jeditor::document::tree::JsonTree;
+
+    let mut tree = JsonTree::new(JsonNode::new(JsonValue::Array(vec![
+        JsonNode::new(JsonValue::Number(10.0)),
+        JsonNode::new(JsonValue::Number(20.0)),
+        JsonNode::new(JsonValue::Number(30.0)),
+    ])));
+
+    // Delete middle element (index 1)
+    let result = tree.delete_node(&[1]);
+    assert!(result.is_ok());
+
+    // Verify only 2 elements remain
+    match tree.root().value() {
+        JsonValue::Array(elements) => {
+            assert_eq!(elements.len(), 2);
+            match elements[0].value() {
+                JsonValue::Number(n) => assert_eq!(*n, 10.0),
+                _ => panic!("Expected number"),
+            }
+            match elements[1].value() {
+                JsonValue::Number(n) => assert_eq!(*n, 30.0),
+                _ => panic!("Expected number"),
+            }
+        }
+        _ => panic!("Expected array"),
+    }
+}
+
+#[test]
+fn test_delete_nested_node() {
+    use jeditor::document::tree::JsonTree;
+
+    let mut tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
+        ("user".to_string(), JsonNode::new(JsonValue::Object(vec![
+            ("name".to_string(), JsonNode::new(JsonValue::String("Alice".to_string()))),
+            ("age".to_string(), JsonNode::new(JsonValue::Number(30.0))),
+        ]))),
+    ])));
+
+    // Delete nested property at path [0, 1] (user.age)
+    let result = tree.delete_node(&[0, 1]);
+    assert!(result.is_ok());
+
+    // Verify only name remains
+    let user_node = tree.get_node(&[0]).unwrap();
+    match user_node.value() {
+        JsonValue::Object(entries) => {
+            assert_eq!(entries.len(), 1);
+            assert_eq!(entries[0].0, "name");
+        }
+        _ => panic!("Expected object"),
+    }
+}
+
+#[test]
+fn test_delete_root_fails() {
+    use jeditor::document::tree::JsonTree;
+
+    let mut tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![])));
+
+    // Cannot delete root node (empty path)
+    let result = tree.delete_node(&[]);
+    assert!(result.is_err());
+}
+
+#[test]
+fn test_delete_invalid_path() {
+    use jeditor::document::tree::JsonTree;
+
+    let mut tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
+        ("a".to_string(), JsonNode::new(JsonValue::Number(1.0))),
+    ])));
+
+    // Try to delete non-existent path
+    let result = tree.delete_node(&[99]);
+    assert!(result.is_err());
+}

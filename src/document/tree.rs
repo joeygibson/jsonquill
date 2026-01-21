@@ -189,4 +189,43 @@ impl JsonTree {
 
         Some(current)
     }
+
+    /// Deletes the node at the given path.
+    /// Returns an error if the path is empty (cannot delete root) or invalid.
+    pub fn delete_node(&mut self, path: &[usize]) -> anyhow::Result<()> {
+        use anyhow::{anyhow, Context};
+
+        if path.is_empty() {
+            return Err(anyhow!("Cannot delete root node"));
+        }
+
+        // Get parent path (all but last index)
+        let parent_path = &path[..path.len() - 1];
+        let index = path[path.len() - 1];
+
+        // Get mutable reference to parent node
+        let parent = self.get_node_mut(parent_path)
+            .ok_or_else(|| anyhow!("Parent node not found"))?;
+
+        // Delete from parent based on its type
+        match parent.value_mut() {
+            JsonValue::Object(entries) => {
+                if index >= entries.len() {
+                    return Err(anyhow!("Index {} out of bounds for object with {} entries", index, entries.len()));
+                }
+                entries.remove(index);
+            }
+            JsonValue::Array(elements) => {
+                if index >= elements.len() {
+                    return Err(anyhow!("Index {} out of bounds for array with {} elements", index, elements.len()));
+                }
+                elements.remove(index);
+            }
+            _ => {
+                return Err(anyhow!("Parent is not a container type"));
+            }
+        }
+
+        Ok(())
+    }
 }
