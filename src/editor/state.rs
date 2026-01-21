@@ -876,6 +876,64 @@ impl EditorState {
         self.edit_buffer = None;
     }
 
+    /// Commits the edited value from the buffer to the tree.
+    /// Parses the buffer according to the original node's type and updates the tree.
+    /// Returns an error if the buffer content is invalid for the node's type.
+    pub fn commit_editing(&mut self) -> anyhow::Result<()> {
+        use crate::document::node::JsonValue;
+        use anyhow::{anyhow, Context};
+
+        let buffer_content = self.edit_buffer.as_ref()
+            .ok_or_else(|| anyhow!("No active edit buffer"))?
+            .clone();
+
+        let path = self.cursor.path();
+        let node = self.tree.get_node(path)
+            .ok_or_else(|| anyhow!("Node not found at cursor"))?;
+
+        // Special case: "null" always converts to Null regardless of original type
+        let new_value = if buffer_content == "null" {
+            JsonValue::Null
+        } else {
+            // Otherwise, determine the new value based on the original node's type
+            match node.value() {
+                JsonValue::String(_) => JsonValue::String(buffer_content),
+                JsonValue::Number(_) => {
+                    let num = buffer_content.parse::<f64>()
+                        .context("Invalid number format")?;
+                    JsonValue::Number(num)
+                }
+                JsonValue::Boolean(_) => {
+                    let bool_val = match buffer_content.as_str() {
+                        "true" => true,
+                        "false" => false,
+                        _ => return Err(anyhow!("Boolean value must be true or false")),
+                    };
+                    JsonValue::Boolean(bool_val)
+                }
+                JsonValue::Null => {
+                    // This shouldn't happen since we checked for "null" above
+                    JsonValue::Null
+                }
+                JsonValue::Object(_) | JsonValue::Array(_) => {
+                    return Err(anyhow!("Cannot edit container types"));
+                }
+            }
+        };
+
+        // Update the node in the tree
+        let node_mut = self.tree.get_node_mut(path)
+            .ok_or_else(|| anyhow!("Node not found for update"))?;
+        *node_mut.value_mut() = new_value;
+
+        // Clear edit buffer and mark dirty
+        self.edit_buffer = None;
+        self.mark_dirty();
+        self.rebuild_tree_view();
+
+        Ok(())
+    }
+
     /// Appends a character to the edit buffer.
     pub fn push_to_edit_buffer(&mut self, ch: char) {
         if let Some(ref mut buffer) = self.edit_buffer {

@@ -717,3 +717,165 @@ fn test_cancel_editing() {
     state.cancel_editing();
     assert_eq!(state.edit_buffer(), None);
 }
+
+// Commit editing tests
+
+#[test]
+fn test_commit_editing_string() {
+    use jeditor::document::node::{JsonNode, JsonValue};
+    use jeditor::document::tree::JsonTree;
+
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
+        ("name".to_string(), JsonNode::new(JsonValue::String("Alice".to_string()))),
+    ])));
+    let mut state = EditorState::new(tree);
+
+    state.cursor_mut().set_path(vec![0]);
+    state.start_editing();
+
+    // Modify the buffer
+    state.clear_edit_buffer();
+    state.push_to_edit_buffer('B');
+    state.push_to_edit_buffer('o');
+    state.push_to_edit_buffer('b');
+
+    // Commit the change
+    let result = state.commit_editing();
+    assert!(result.is_ok());
+    assert!(state.is_dirty());
+    assert_eq!(state.edit_buffer(), None);
+
+    // Verify the tree was updated
+    let node = state.tree().get_node(&[0]).unwrap();
+    match node.value() {
+        JsonValue::String(s) => assert_eq!(s, "Bob"),
+        _ => panic!("Expected string value"),
+    }
+}
+
+#[test]
+fn test_commit_editing_number() {
+    use jeditor::document::node::{JsonNode, JsonValue};
+    use jeditor::document::tree::JsonTree;
+
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
+        ("count".to_string(), JsonNode::new(JsonValue::Number(42.0))),
+    ])));
+    let mut state = EditorState::new(tree);
+
+    state.cursor_mut().set_path(vec![0]);
+    state.start_editing();
+
+    state.clear_edit_buffer();
+    for ch in "123.45".chars() {
+        state.push_to_edit_buffer(ch);
+    }
+
+    let result = state.commit_editing();
+    assert!(result.is_ok());
+
+    let node = state.tree().get_node(&[0]).unwrap();
+    match node.value() {
+        JsonValue::Number(n) => assert_eq!(*n, 123.45),
+        _ => panic!("Expected number value"),
+    }
+}
+
+#[test]
+fn test_commit_editing_boolean() {
+    use jeditor::document::node::{JsonNode, JsonValue};
+    use jeditor::document::tree::JsonTree;
+
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
+        ("active".to_string(), JsonNode::new(JsonValue::Boolean(true))),
+    ])));
+    let mut state = EditorState::new(tree);
+
+    state.cursor_mut().set_path(vec![0]);
+    state.start_editing();
+
+    state.clear_edit_buffer();
+    for ch in "false".chars() {
+        state.push_to_edit_buffer(ch);
+    }
+
+    let result = state.commit_editing();
+    assert!(result.is_ok());
+
+    let node = state.tree().get_node(&[0]).unwrap();
+    match node.value() {
+        JsonValue::Boolean(b) => assert_eq!(*b, false),
+        _ => panic!("Expected boolean value"),
+    }
+}
+
+#[test]
+fn test_commit_editing_null() {
+    use jeditor::document::node::{JsonNode, JsonValue};
+    use jeditor::document::tree::JsonTree;
+
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
+        ("data".to_string(), JsonNode::new(JsonValue::String("old".to_string()))),
+    ])));
+    let mut state = EditorState::new(tree);
+
+    state.cursor_mut().set_path(vec![0]);
+    state.start_editing();
+
+    state.clear_edit_buffer();
+    for ch in "null".chars() {
+        state.push_to_edit_buffer(ch);
+    }
+
+    let result = state.commit_editing();
+    assert!(result.is_ok());
+
+    let node = state.tree().get_node(&[0]).unwrap();
+    assert!(matches!(node.value(), JsonValue::Null));
+}
+
+#[test]
+fn test_commit_editing_invalid_number() {
+    use jeditor::document::node::{JsonNode, JsonValue};
+    use jeditor::document::tree::JsonTree;
+
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
+        ("count".to_string(), JsonNode::new(JsonValue::Number(42.0))),
+    ])));
+    let mut state = EditorState::new(tree);
+
+    state.cursor_mut().set_path(vec![0]);
+    state.start_editing();
+
+    state.clear_edit_buffer();
+    for ch in "not-a-number".chars() {
+        state.push_to_edit_buffer(ch);
+    }
+
+    let result = state.commit_editing();
+    assert!(result.is_err());
+    assert!(result.unwrap_err().to_string().contains("Invalid number"));
+}
+
+#[test]
+fn test_commit_editing_invalid_boolean() {
+    use jeditor::document::node::{JsonNode, JsonValue};
+    use jeditor::document::tree::JsonTree;
+
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
+        ("active".to_string(), JsonNode::new(JsonValue::Boolean(true))),
+    ])));
+    let mut state = EditorState::new(tree);
+
+    state.cursor_mut().set_path(vec![0]);
+    state.start_editing();
+
+    state.clear_edit_buffer();
+    for ch in "maybe".chars() {
+        state.push_to_edit_buffer(ch);
+    }
+
+    let result = state.commit_editing();
+    assert!(result.is_err());
+    assert!(result.unwrap_err().to_string().contains("must be true or false"));
+}
