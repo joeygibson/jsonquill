@@ -66,14 +66,20 @@ pub struct ThemeColors {
 impl ThemeColors {
     /// Returns the default dark color scheme.
     ///
-    /// This is a dark theme inspired by the One Dark color palette,
-    /// optimized for comfortable extended use in low-light environments.
+    /// This theme uses ANSI colors that match jless, the command-line JSON viewer.
+    /// ANSI colors adapt to the user's terminal color scheme, so the actual RGB
+    /// values displayed will depend on their terminal configuration.
     ///
     /// # Color Palette
     ///
-    /// - Background: Dark grey (#282c34)
-    /// - Foreground: Light grey (#abb2bf)
-    /// - Syntax: Warm, vibrant colors for good readability
+    /// Based on jless (https://github.com/PaulJuliusMartinez/jless):
+    /// - Keys: Light Blue (ANSI 12)
+    /// - Strings: Green (ANSI 2)
+    /// - Numbers: Magenta (ANSI 5)
+    /// - Booleans: Yellow (ANSI 3)
+    /// - Null: Dark Gray (ANSI 8)
+    /// - Background: Black (ANSI 0)
+    /// - Foreground: Gray (ANSI 7)
     ///
     /// # Examples
     ///
@@ -82,26 +88,26 @@ impl ThemeColors {
     /// use ratatui::style::Color;
     ///
     /// let colors = ThemeColors::default_dark();
-    /// assert_eq!(colors.background, Color::Rgb(40, 44, 52));
+    /// assert_eq!(colors.background, Color::Black);
     /// ```
     pub fn default_dark() -> Self {
         Self {
-            key: Color::Rgb(224, 108, 117),      // #e06c75
-            string: Color::Rgb(152, 195, 121),   // #98c379
-            number: Color::Rgb(209, 154, 102),   // #d19a66
-            boolean: Color::Rgb(86, 182, 194),   // #56b6c2
-            null: Color::Rgb(198, 120, 221),     // #c678dd
+            key: Color::LightBlue,      // ANSI 12 (jless LIGHT_BLUE)
+            string: Color::Green,        // ANSI 2
+            number: Color::Magenta,      // ANSI 5
+            boolean: Color::Yellow,      // ANSI 3
+            null: Color::DarkGray,       // ANSI 8 (jless LIGHT_BLACK)
 
-            background: Color::Rgb(40, 44, 52),  // #282c34
-            foreground: Color::Rgb(171, 178, 191), // #abb2bf
-            cursor: Color::Rgb(82, 139, 255),    // #528bff
-            status_line_bg: Color::Rgb(33, 37, 43), // #21252b
-            status_line_fg: Color::Rgb(171, 178, 191),
+            background: Color::Black,    // ANSI 0 (terminal default dark)
+            foreground: Color::Gray,     // ANSI 7 (terminal default light)
+            cursor: Color::LightBlue,    // ANSI 12 (match key color)
+            status_line_bg: Color::Black,
+            status_line_fg: Color::Gray,
 
-            error: Color::Rgb(224, 108, 117),
-            warning: Color::Rgb(229, 192, 123),  // #e5c07b
-            info: Color::Rgb(97, 175, 239),      // #61afef
-            search_highlight: Color::Rgb(62, 68, 81), // #3e4451
+            error: Color::Red,           // ANSI 1
+            warning: Color::Yellow,      // ANSI 3
+            info: Color::LightBlue,      // ANSI 12
+            search_highlight: Color::Yellow, // ANSI 3 (jless uses yellow for search)
         }
     }
 
