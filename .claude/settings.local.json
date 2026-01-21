@@ -37,7 +37,14 @@
       "Bash(./target/release/jeditor)",
       "Bash(cargo fix:*)",
       "Skill(superpowers:executing-plans)",
-      "Bash(/tmp/test_config)"
+      "Bash(/tmp/test_config)",
+      "Bash(cargo metadata:*)",
+      "Bash(cargo tree:*)",
+      "Bash(python3:*)",
+      "Bash(for dep in ratatui serde serde_json crossterm clap toml anyhow arboard dirs tempfile)",
+      "Bash(do cargo metadata --format-version=1)",
+      "Bash(done)",
+      "Bash(cargo license:*)"
     ]
   }
 }
