@@ -35,6 +35,12 @@ pub enum InputEvent {
     Paste,
     /// Jump to next search result
     NextSearchResult,
+    /// Insert a character in insert mode
+    InsertCharacter(char),
+    /// Backspace in insert mode
+    InsertBackspace,
+    /// Enter in insert mode
+    InsertEnter,
     /// Unknown or unmapped key
     Unknown,
 }
@@ -89,6 +95,9 @@ pub fn map_key_event(key: KeyEvent, mode: &EditorMode) -> InputEvent {
         },
         EditorMode::Insert => match key.code {
             KeyCode::Esc => InputEvent::ExitMode,
+            KeyCode::Char(c) => InputEvent::InsertCharacter(c),
+            KeyCode::Backspace => InputEvent::InsertBackspace,
+            KeyCode::Enter => InputEvent::InsertEnter,
             _ => InputEvent::Unknown,
         },
         EditorMode::Command => match key.code {

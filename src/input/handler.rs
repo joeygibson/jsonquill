@@ -94,6 +94,45 @@ impl InputHandler {
         use crossterm::event::KeyCode;
 
         if let Event::Key(key) = event {
+            // Handle insert mode separately for character input
+            if *state.mode() == EditorMode::Insert {
+                match key.code {
+                    KeyCode::Char(c) => {
+                        state.push_to_edit_buffer(c);
+                        return Ok(false);
+                    }
+                    KeyCode::Backspace => {
+                        state.pop_from_edit_buffer();
+                        return Ok(false);
+                    }
+                    KeyCode::Enter => {
+                        // Commit the edit
+                        use crate::editor::state::MessageLevel;
+                        match state.commit_editing() {
+                            Ok(_) => {
+                                state.set_mode(EditorMode::Normal);
+                                state.set_message("Value updated".to_string(), MessageLevel::Info);
+                            }
+                            Err(e) => {
+                                state.set_message(
+                                    format!("Invalid value: {}", e),
+                                    MessageLevel::Error,
+                                );
+                            }
+                        }
+                        return Ok(false);
+                    }
+                    KeyCode::Esc => {
+                        state.cancel_editing();
+                        state.set_mode(EditorMode::Normal);
+                        use crate::editor::state::MessageLevel;
+                        state.set_message("Edit cancelled".to_string(), MessageLevel::Info);
+                        return Ok(false);
+                    }
+                    _ => return Ok(false),
+                }
+            }
+
             // Handle command mode separately for character input
             if *state.mode() == EditorMode::Command {
                 match key.code {
@@ -195,7 +234,14 @@ impl InputHandler {
             match input_event {
                 InputEvent::Quit => return Ok(true),
                 InputEvent::EnterInsertMode => {
-                    state.set_mode(EditorMode::Insert);
+                    use crate::editor::state::MessageLevel;
+                    state.start_editing();
+                    if state.edit_buffer().is_some() {
+                        state.set_mode(EditorMode::Insert);
+                        state.set_message("-- INSERT --".to_string(), MessageLevel::Info);
+                    } else {
+                        state.set_message("Cannot edit this node type".to_string(), MessageLevel::Error);
+                    }
                 }
                 InputEvent::EnterCommandMode => {
                     state.clear_command_buffer();
@@ -251,6 +297,9 @@ impl InputHandler {
                 InputEvent::Paste => {
                     use crate::editor::state::MessageLevel;
                     state.set_message("Paste operation not yet implemented".to_string(), MessageLevel::Error);
+                }
+                InputEvent::InsertCharacter(_) | InputEvent::InsertBackspace | InputEvent::InsertEnter => {
+                    // These are handled earlier in insert mode, should never reach here
                 }
                 InputEvent::Unknown => {
                     // Ignore unknown keys
