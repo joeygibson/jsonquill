@@ -228,4 +228,86 @@ impl JsonTree {
 
         Ok(())
     }
+
+    /// Inserts a node into an object at the specified path and index.
+    /// The path must point to the object, and index specifies where to insert.
+    pub fn insert_node_in_object(
+        &mut self,
+        path: &[usize],
+        key: String,
+        node: JsonNode,
+    ) -> anyhow::Result<()> {
+        use anyhow::anyhow;
+
+        // Get parent path (all but last index)
+        let parent_path = if path.is_empty() {
+            &[]
+        } else {
+            &path[..path.len() - 1]
+        };
+        let index = if path.is_empty() { 0 } else { path[path.len() - 1] };
+
+        // Get mutable reference to parent (or root if path is empty)
+        let target = if parent_path.is_empty() {
+            self.root_mut()
+        } else {
+            self.get_node_mut(parent_path)
+                .ok_or_else(|| anyhow!("Parent node not found"))?
+        };
+
+        // Insert into object
+        match target.value_mut() {
+            JsonValue::Object(entries) => {
+                if index > entries.len() {
+                    return Err(anyhow!("Index {} out of bounds for object with {} entries", index, entries.len()));
+                }
+                entries.insert(index, (key, node));
+            }
+            _ => {
+                return Err(anyhow!("Target is not an object"));
+            }
+        }
+
+        Ok(())
+    }
+
+    /// Inserts a node into an array at the specified path and index.
+    pub fn insert_node_in_array(
+        &mut self,
+        path: &[usize],
+        node: JsonNode,
+    ) -> anyhow::Result<()> {
+        use anyhow::anyhow;
+
+        // Get parent path (all but last index)
+        let parent_path = if path.is_empty() {
+            &[]
+        } else {
+            &path[..path.len() - 1]
+        };
+        let index = if path.is_empty() { 0 } else { path[path.len() - 1] };
+
+        // Get mutable reference to parent (or root if path is empty)
+        let target = if parent_path.is_empty() {
+            self.root_mut()
+        } else {
+            self.get_node_mut(parent_path)
+                .ok_or_else(|| anyhow!("Parent node not found"))?
+        };
+
+        // Insert into array
+        match target.value_mut() {
+            JsonValue::Array(elements) => {
+                if index > elements.len() {
+                    return Err(anyhow!("Index {} out of bounds for array with {} elements", index, elements.len()));
+                }
+                elements.insert(index, node);
+            }
+            _ => {
+                return Err(anyhow!("Target is not an array"));
+            }
+        }
+
+        Ok(())
+    }
 }

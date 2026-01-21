@@ -908,3 +908,89 @@ fn test_delete_invalid_path() {
     let result = tree.delete_node(&[99]);
     assert!(result.is_err());
 }
+
+// ============================================================================
+// Insert Node Tests
+// ============================================================================
+
+#[test]
+fn test_insert_node_in_object() {
+    use jeditor::document::tree::JsonTree;
+
+    let mut tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
+        ("a".to_string(), JsonNode::new(JsonValue::Number(1.0))),
+        ("c".to_string(), JsonNode::new(JsonValue::Number(3.0))),
+    ])));
+
+    // Insert new node at index 1 (between a and c)
+    let new_node = JsonNode::new(JsonValue::Number(2.0));
+    let result = tree.insert_node_in_object(&[1], "b".to_string(), new_node);
+    assert!(result.is_ok());
+
+    // Verify three properties in order
+    match tree.root().value() {
+        JsonValue::Object(entries) => {
+            assert_eq!(entries.len(), 3);
+            assert_eq!(entries[0].0, "a");
+            assert_eq!(entries[1].0, "b");
+            assert_eq!(entries[2].0, "c");
+        }
+        _ => panic!("Expected object"),
+    }
+}
+
+#[test]
+fn test_insert_node_in_array() {
+    use jeditor::document::tree::JsonTree;
+
+    let mut tree = JsonTree::new(JsonNode::new(JsonValue::Array(vec![
+        JsonNode::new(JsonValue::Number(10.0)),
+        JsonNode::new(JsonValue::Number(30.0)),
+    ])));
+
+    // Insert new node at index 1 (between 10 and 30)
+    let new_node = JsonNode::new(JsonValue::Number(20.0));
+    let result = tree.insert_node_in_array(&[1], new_node);
+    assert!(result.is_ok());
+
+    // Verify three elements in order
+    match tree.root().value() {
+        JsonValue::Array(elements) => {
+            assert_eq!(elements.len(), 3);
+            match elements[0].value() {
+                JsonValue::Number(n) => assert_eq!(*n, 10.0),
+                _ => panic!("Expected number"),
+            }
+            match elements[1].value() {
+                JsonValue::Number(n) => assert_eq!(*n, 20.0),
+                _ => panic!("Expected number"),
+            }
+            match elements[2].value() {
+                JsonValue::Number(n) => assert_eq!(*n, 30.0),
+                _ => panic!("Expected number"),
+            }
+        }
+        _ => panic!("Expected array"),
+    }
+}
+
+#[test]
+fn test_insert_node_at_end() {
+    use jeditor::document::tree::JsonTree;
+
+    let mut tree = JsonTree::new(JsonNode::new(JsonValue::Array(vec![
+        JsonNode::new(JsonValue::Number(1.0)),
+    ])));
+
+    // Insert at end (index 1, which equals length)
+    let new_node = JsonNode::new(JsonValue::Number(2.0));
+    let result = tree.insert_node_in_array(&[1], new_node);
+    assert!(result.is_ok());
+
+    match tree.root().value() {
+        JsonValue::Array(elements) => {
+            assert_eq!(elements.len(), 2);
+        }
+        _ => panic!("Expected array"),
+    }
+}
