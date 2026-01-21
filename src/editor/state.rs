@@ -111,6 +111,7 @@ pub struct EditorState {
     search_index: usize,
     show_line_numbers: bool,
     edit_buffer: Option<String>,
+    pending_command: Option<char>,
 }
 
 impl EditorState {
@@ -167,6 +168,7 @@ impl EditorState {
             search_index: 0,
             show_line_numbers: true,
             edit_buffer: None,
+            pending_command: None,
         }
     }
 
@@ -978,5 +980,20 @@ impl EditorState {
         if let Some(ref mut buffer) = self.edit_buffer {
             buffer.clear();
         }
+    }
+
+    /// Returns the current pending command character, if any.
+    pub fn pending_command(&self) -> Option<char> {
+        self.pending_command
+    }
+
+    /// Sets the pending command character.
+    pub fn set_pending_command(&mut self, ch: char) {
+        self.pending_command = Some(ch);
+    }
+
+    /// Clears the pending command.
+    pub fn clear_pending_command(&mut self) {
+        self.pending_command = None;
     }
 }

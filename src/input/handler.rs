@@ -232,8 +232,12 @@ impl InputHandler {
             let input_event = map_key_event(key, state.mode());
 
             match input_event {
-                InputEvent::Quit => return Ok(true),
+                InputEvent::Quit => {
+                    state.clear_pending_command();
+                    return Ok(true);
+                }
                 InputEvent::EnterInsertMode => {
+                    state.clear_pending_command();
                     use crate::editor::state::MessageLevel;
                     state.start_editing();
                     if state.edit_buffer().is_some() {
@@ -244,14 +248,17 @@ impl InputHandler {
                     }
                 }
                 InputEvent::EnterCommandMode => {
+                    state.clear_pending_command();
                     state.clear_command_buffer();
                     state.set_mode(EditorMode::Command);
                 }
                 InputEvent::EnterSearchMode => {
+                    state.clear_pending_command();
                     state.clear_search_buffer();
                     state.set_mode(EditorMode::Search);
                 }
                 InputEvent::NextSearchResult => {
+                    state.clear_pending_command();
                     use crate::editor::state::MessageLevel;
                     if state.next_search_result() {
                         if let Some((current, total)) = state.search_results_info() {
@@ -268,50 +275,72 @@ impl InputHandler {
                     }
                 }
                 InputEvent::ExitMode => {
+                    state.clear_pending_command();
                     state.set_mode(EditorMode::Normal);
                 }
                 InputEvent::MoveDown => {
+                    state.clear_pending_command();
                     state.move_cursor_down();
                 }
                 InputEvent::MoveUp => {
+                    state.clear_pending_command();
                     state.move_cursor_up();
                 }
                 InputEvent::MoveRight => {
+                    state.clear_pending_command();
                     state.toggle_expand_at_cursor();
                 }
                 InputEvent::MoveLeft => {
+                    state.clear_pending_command();
                     state.toggle_expand_at_cursor();
                 }
                 InputEvent::Yank => {
                     use crate::editor::state::MessageLevel;
-                    if state.yank_node() {
-                        state.set_message("Node yanked".to_string(), MessageLevel::Info);
+                    // Check if this is the second 'y' press
+                    if state.pending_command() == Some('y') {
+                        state.clear_pending_command();
+                        if state.yank_node() {
+                            state.set_message("Node yanked".to_string(), MessageLevel::Info);
+                        } else {
+                            state.set_message("Nothing to yank".to_string(), MessageLevel::Error);
+                        }
                     } else {
-                        state.set_message("Nothing to yank".to_string(), MessageLevel::Error);
+                        // First 'y' press - set pending
+                        state.set_pending_command('y');
                     }
                 }
                 InputEvent::Delete => {
                     use crate::editor::state::MessageLevel;
-                    match state.delete_node_at_cursor() {
-                        Ok(_) => {
-                            state.set_message("Node deleted".to_string(), MessageLevel::Info);
+                    // Check if this is the second 'd' press
+                    if state.pending_command() == Some('d') {
+                        state.clear_pending_command();
+                        match state.delete_node_at_cursor() {
+                            Ok(_) => {
+                                state.set_message("Node deleted".to_string(), MessageLevel::Info);
+                            }
+                            Err(e) => {
+                                state.set_message(
+                                    format!("Delete failed: {}", e),
+                                    MessageLevel::Error,
+                                );
+                            }
                         }
-                        Err(e) => {
-                            state.set_message(
-                                format!("Delete failed: {}", e),
-                                MessageLevel::Error,
-                            );
-                        }
+                    } else {
+                        // First 'd' press - set pending
+                        state.set_pending_command('d');
                     }
                 }
                 InputEvent::Paste => {
+                    state.clear_pending_command();
                     use crate::editor::state::MessageLevel;
                     state.set_message("Paste operation not yet implemented".to_string(), MessageLevel::Error);
                 }
                 InputEvent::InsertCharacter(_) | InputEvent::InsertBackspace | InputEvent::InsertEnter => {
+                    state.clear_pending_command();
                     // These are handled earlier in insert mode, should never reach here
                 }
                 InputEvent::Unknown => {
+                    state.clear_pending_command();
                     // Ignore unknown keys
                 }
             }
