@@ -337,7 +337,7 @@ impl InputHandler {
                     use crate::editor::state::MessageLevel;
                     match state.paste_node_at_cursor() {
                         Ok(_) => {
-                            state.set_message("Node pasted".to_string(), MessageLevel::Info);
+                            state.set_message("Node pasted after".to_string(), MessageLevel::Info);
                         }
                         Err(e) => {
                             state.set_message(
@@ -345,6 +345,49 @@ impl InputHandler {
                                 MessageLevel::Error,
                             );
                         }
+                    }
+                }
+                InputEvent::PasteBefore => {
+                    state.clear_pending_command();
+                    use crate::editor::state::MessageLevel;
+                    match state.paste_node_before_cursor() {
+                        Ok(_) => {
+                            state.set_message("Node pasted before".to_string(), MessageLevel::Info);
+                        }
+                        Err(e) => {
+                            state.set_message(
+                                format!("Paste failed: {}", e),
+                                MessageLevel::Error,
+                            );
+                        }
+                    }
+                }
+                InputEvent::SaveAndQuit => {
+                    use crate::editor::state::MessageLevel;
+                    // Check if this is the second 'Z' press
+                    if state.pending_command() == Some('Z') {
+                        state.clear_pending_command();
+                        // Save the file
+                        if let Some(filename) = state.filename() {
+                            use crate::file::saver::save_json_file;
+                            match save_json_file(filename, state.tree(), 2, false) {
+                                Ok(_) => {
+                                    state.clear_dirty();
+                                    return Ok(true); // Quit after saving
+                                }
+                                Err(e) => {
+                                    state.set_message(
+                                        format!("Save failed: {}", e),
+                                        MessageLevel::Error,
+                                    );
+                                }
+                            }
+                        } else {
+                            state.set_message("No filename (use :w <filename>)".to_string(), MessageLevel::Error);
+                        }
+                    } else {
+                        // First 'Z' press - set pending
+                        state.set_pending_command('Z');
                     }
                 }
                 InputEvent::InsertCharacter(_) | InputEvent::InsertBackspace | InputEvent::InsertEnter => {

@@ -31,8 +31,12 @@ pub enum InputEvent {
     Delete,
     /// Yank (copy) current node
     Yank,
-    /// Paste from clipboard
+    /// Paste from clipboard after cursor
     Paste,
+    /// Paste from clipboard before cursor
+    PasteBefore,
+    /// Save and quit (ZZ)
+    SaveAndQuit,
     /// Jump to next search result
     NextSearchResult,
     /// Insert a character in insert mode
@@ -87,6 +91,8 @@ pub fn map_key_event(key: KeyEvent, mode: &EditorMode) -> InputEvent {
             KeyCode::Char('d') => InputEvent::Delete,
             KeyCode::Char('y') => InputEvent::Yank,
             KeyCode::Char('p') => InputEvent::Paste,
+            KeyCode::Char('P') => InputEvent::PasteBefore,
+            KeyCode::Char('Z') => InputEvent::SaveAndQuit,
             KeyCode::Down => InputEvent::MoveDown,
             KeyCode::Up => InputEvent::MoveUp,
             KeyCode::Left => InputEvent::MoveLeft,

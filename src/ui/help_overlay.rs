@@ -107,7 +107,7 @@ pub fn render_help_overlay(f: &mut Frame, colors: &ThemeColors, scroll: usize) {
             Span::raw("Quit without saving"),
         ]),
         Line::from(vec![
-            Span::styled("  :wq / :x      ", Style::default().fg(colors.number)),
+            Span::styled("  :wq / :x / ZZ ", Style::default().fg(colors.number)),
             Span::raw("Save and quit"),
         ]),
         Line::from(vec![
