@@ -117,15 +117,15 @@ impl UI {
     /// let theme = get_builtin_theme("default-dark").unwrap();
     /// let ui = UI::new(theme);
     /// let tree = JsonTree::new(JsonNode::new(JsonValue::Null));
-    /// let state = EditorState::new(tree);
+    /// let mut state = EditorState::new(tree);
     /// let backend = CrosstermBackend::new(io::stdout());
     /// let mut terminal = Terminal::new(backend).unwrap();
-    /// ui.render(&mut terminal, &state).unwrap();
+    /// ui.render(&mut terminal, &mut state).unwrap();
     /// ```
     pub fn render<B: Backend>(
         &self,
         terminal: &mut Terminal<B>,
-        state: &EditorState,
+        state: &mut EditorState,
     ) -> Result<()> {
         terminal.draw(|f| {
             let chunks = Layout::default()
@@ -137,6 +137,10 @@ impl UI {
                 ])
                 .split(f.area());
 
+            // Adjust scroll to ensure cursor is visible
+            let viewport_height = chunks[0].height as usize;
+            state.adjust_scroll_to_cursor(viewport_height);
+
             // Render tree view
             tree_view::render_tree_view(
                 f,
@@ -145,6 +149,7 @@ impl UI {
                 state.cursor(),
                 &self.theme.colors,
                 state.show_line_numbers(),
+                state.scroll_offset(),
             );
 
             // Status line
@@ -216,8 +221,8 @@ mod tests {
         let mut terminal = Terminal::new(backend).unwrap();
 
         let tree = JsonTree::new(JsonNode::new(JsonValue::Null));
-        let state = EditorState::new(tree);
-        let result = ui.render(&mut terminal, &state);
+        let mut state = EditorState::new(tree);
+        let result = ui.render(&mut terminal, &mut state);
 
         assert!(result.is_ok());
     }
@@ -240,7 +245,7 @@ mod tests {
         state.set_filename("test.json".to_string());
         state.mark_dirty();
 
-        let result = ui.render(&mut terminal, &state);
+        let result = ui.render(&mut terminal, &mut state);
         assert!(result.is_ok());
 
         // Verify the terminal was drawn to

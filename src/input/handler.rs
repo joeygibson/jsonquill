@@ -390,6 +390,28 @@ impl InputHandler {
                         state.set_pending_command('Z');
                     }
                 }
+                InputEvent::JumpToTop => {
+                    // Check if this is the second 'g' press (gg)
+                    if state.pending_command() == Some('g') {
+                        state.clear_pending_command();
+                        state.jump_to_top();
+                    } else {
+                        // First 'g' press - set pending
+                        state.set_pending_command('g');
+                    }
+                }
+                InputEvent::JumpToBottom => {
+                    state.clear_pending_command();
+                    state.jump_to_bottom();
+                }
+                InputEvent::PageDown => {
+                    state.clear_pending_command();
+                    state.page_down();
+                }
+                InputEvent::PageUp => {
+                    state.clear_pending_command();
+                    state.page_up();
+                }
                 InputEvent::InsertCharacter(_) | InputEvent::InsertBackspace | InputEvent::InsertEnter => {
                     state.clear_pending_command();
                     // These are handled earlier in insert mode, should never reach here

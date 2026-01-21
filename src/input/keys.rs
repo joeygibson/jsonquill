@@ -39,6 +39,14 @@ pub enum InputEvent {
     SaveAndQuit,
     /// Jump to next search result
     NextSearchResult,
+    /// Jump to top of document (gg)
+    JumpToTop,
+    /// Jump to bottom of document (G)
+    JumpToBottom,
+    /// Page down (Ctrl-d)
+    PageDown,
+    /// Page up (Ctrl-u)
+    PageUp,
     /// Insert a character in insert mode
     InsertCharacter(char),
     /// Backspace in insert mode
@@ -78,26 +86,42 @@ pub enum InputEvent {
 /// ```
 pub fn map_key_event(key: KeyEvent, mode: &EditorMode) -> InputEvent {
     match mode {
-        EditorMode::Normal => match key.code {
-            KeyCode::Char('q') => InputEvent::Quit,
-            KeyCode::Char('j') => InputEvent::MoveDown,
-            KeyCode::Char('k') => InputEvent::MoveUp,
-            KeyCode::Char('h') => InputEvent::MoveLeft,
-            KeyCode::Char('l') => InputEvent::MoveRight,
-            KeyCode::Char('i') => InputEvent::EnterInsertMode,
-            KeyCode::Char(':') => InputEvent::EnterCommandMode,
-            KeyCode::Char('/') => InputEvent::EnterSearchMode,
-            KeyCode::Char('n') => InputEvent::NextSearchResult,
-            KeyCode::Char('d') => InputEvent::Delete,
-            KeyCode::Char('y') => InputEvent::Yank,
-            KeyCode::Char('p') => InputEvent::Paste,
-            KeyCode::Char('P') => InputEvent::PasteBefore,
-            KeyCode::Char('Z') => InputEvent::SaveAndQuit,
-            KeyCode::Down => InputEvent::MoveDown,
-            KeyCode::Up => InputEvent::MoveUp,
-            KeyCode::Left => InputEvent::MoveLeft,
-            KeyCode::Right => InputEvent::MoveRight,
-            _ => InputEvent::Unknown,
+        EditorMode::Normal => {
+            use crossterm::event::KeyModifiers;
+
+            // Check for Ctrl-modified keys first
+            if key.modifiers.contains(KeyModifiers::CONTROL) {
+                match key.code {
+                    KeyCode::Char('d') => return InputEvent::PageDown,
+                    KeyCode::Char('u') => return InputEvent::PageUp,
+                    _ => {}
+                }
+            }
+
+            // Then check for regular keys
+            match key.code {
+                KeyCode::Char('q') => InputEvent::Quit,
+                KeyCode::Char('j') => InputEvent::MoveDown,
+                KeyCode::Char('k') => InputEvent::MoveUp,
+                KeyCode::Char('h') => InputEvent::MoveLeft,
+                KeyCode::Char('l') => InputEvent::MoveRight,
+                KeyCode::Char('i') => InputEvent::EnterInsertMode,
+                KeyCode::Char(':') => InputEvent::EnterCommandMode,
+                KeyCode::Char('/') => InputEvent::EnterSearchMode,
+                KeyCode::Char('n') => InputEvent::NextSearchResult,
+                KeyCode::Char('d') => InputEvent::Delete,
+                KeyCode::Char('y') => InputEvent::Yank,
+                KeyCode::Char('p') => InputEvent::Paste,
+                KeyCode::Char('P') => InputEvent::PasteBefore,
+                KeyCode::Char('Z') => InputEvent::SaveAndQuit,
+                KeyCode::Char('g') => InputEvent::JumpToTop,
+                KeyCode::Char('G') => InputEvent::JumpToBottom,
+                KeyCode::Down => InputEvent::MoveDown,
+                KeyCode::Up => InputEvent::MoveUp,
+                KeyCode::Left => InputEvent::MoveLeft,
+                KeyCode::Right => InputEvent::MoveRight,
+                _ => InputEvent::Unknown,
+            }
         },
         EditorMode::Insert => match key.code {
             KeyCode::Esc => InputEvent::ExitMode,

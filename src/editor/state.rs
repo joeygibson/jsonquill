@@ -113,6 +113,8 @@ pub struct EditorState {
     show_line_numbers: bool,
     edit_buffer: Option<String>,
     pending_command: Option<char>,
+    scroll_offset: usize,
+    viewport_height: usize,
 }
 
 impl EditorState {
@@ -171,6 +173,8 @@ impl EditorState {
             show_line_numbers: true,
             edit_buffer: None,
             pending_command: None,
+            scroll_offset: 0,
+            viewport_height: 20,
         }
     }
 
@@ -636,6 +640,121 @@ impl EditorState {
         let current_path = self.cursor.path().to_vec();
         self.tree_view.toggle_expand(&current_path);
         self.tree_view.rebuild(&self.tree);
+    }
+
+    /// Returns the current scroll offset (top line of viewport).
+    pub fn scroll_offset(&self) -> usize {
+        self.scroll_offset
+    }
+
+    /// Adjusts scroll offset to ensure the cursor is visible in the viewport.
+    ///
+    /// # Arguments
+    ///
+    /// * `viewport_height` - The height of the visible area in lines
+    pub fn adjust_scroll_to_cursor(&mut self, viewport_height: usize) {
+        if viewport_height == 0 {
+            return;
+        }
+
+        // Store viewport height for page up/down
+        self.viewport_height = viewport_height;
+
+        let lines = self.tree_view.lines();
+        if lines.is_empty() {
+            self.scroll_offset = 0;
+            return;
+        }
+
+        // Find current cursor line index
+        let cursor_idx = lines.iter()
+            .position(|l| l.path == self.cursor.path())
+            .unwrap_or(0);
+
+        // Ensure cursor is visible in viewport
+        if cursor_idx < self.scroll_offset {
+            // Cursor is above viewport, scroll up
+            self.scroll_offset = cursor_idx;
+        } else if cursor_idx >= self.scroll_offset + viewport_height {
+            // Cursor is below viewport, scroll down
+            self.scroll_offset = cursor_idx - viewport_height + 1;
+        }
+    }
+
+    /// Jumps to the first line in the tree.
+    pub fn jump_to_top(&mut self) {
+        let lines = self.tree_view.lines();
+        if let Some(first_line) = lines.first() {
+            self.cursor.set_path(first_line.path.clone());
+            self.scroll_offset = 0;
+        }
+    }
+
+    /// Jumps to the last line in the tree.
+    pub fn jump_to_bottom(&mut self) {
+        let lines = self.tree_view.lines();
+        if let Some(last_line) = lines.last() {
+            self.cursor.set_path(last_line.path.clone());
+        }
+    }
+
+    /// Scrolls down one page (half viewport height).
+    ///
+    /// This scrolls the viewport down by half its height and moves the cursor
+    /// to maintain its relative position on screen (vim Ctrl-d behavior).
+    pub fn page_down(&mut self) {
+        if self.viewport_height == 0 {
+            return;
+        }
+
+        let lines = self.tree_view.lines();
+        if lines.is_empty() {
+            return;
+        }
+
+        let current_idx = lines.iter()
+            .position(|l| l.path == self.cursor.path())
+            .unwrap_or(0);
+
+        // Calculate scroll amount (half viewport height)
+        let scroll_amount = self.viewport_height / 2;
+
+        // Scroll the viewport down
+        let new_scroll = (self.scroll_offset + scroll_amount).min(lines.len().saturating_sub(self.viewport_height));
+        self.scroll_offset = new_scroll;
+
+        // Move cursor down by the same amount to maintain screen position
+        let new_cursor_idx = (current_idx + scroll_amount).min(lines.len() - 1);
+        self.cursor.set_path(lines[new_cursor_idx].path.clone());
+    }
+
+    /// Scrolls up one page (half viewport height).
+    ///
+    /// This scrolls the viewport up by half its height and moves the cursor
+    /// to maintain its relative position on screen (vim Ctrl-u behavior).
+    pub fn page_up(&mut self) {
+        if self.viewport_height == 0 {
+            return;
+        }
+
+        let lines = self.tree_view.lines();
+        if lines.is_empty() {
+            return;
+        }
+
+        let current_idx = lines.iter()
+            .position(|l| l.path == self.cursor.path())
+            .unwrap_or(0);
+
+        // Calculate scroll amount (half viewport height)
+        let scroll_amount = self.viewport_height / 2;
+
+        // Scroll the viewport up
+        self.scroll_offset = self.scroll_offset.saturating_sub(scroll_amount);
+
+        // Move cursor up by the same amount to maintain screen position
+        let new_cursor_idx = current_idx.saturating_sub(scroll_amount);
+        self.cursor.set_path(lines[new_cursor_idx].path.clone());
     }
 
     /// Returns the current message, if any.

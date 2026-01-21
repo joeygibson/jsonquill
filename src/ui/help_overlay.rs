@@ -43,6 +43,22 @@ pub fn render_help_overlay(f: &mut Frame, colors: &ThemeColors, scroll: usize) {
             Span::raw("Collapse/expand node"),
         ]),
         Line::from(vec![
+            Span::styled("  gg            ", Style::default().fg(colors.number)),
+            Span::raw("Jump to top of document"),
+        ]),
+        Line::from(vec![
+            Span::styled("  G             ", Style::default().fg(colors.number)),
+            Span::raw("Jump to bottom of document"),
+        ]),
+        Line::from(vec![
+            Span::styled("  Ctrl-d        ", Style::default().fg(colors.number)),
+            Span::raw("Page down"),
+        ]),
+        Line::from(vec![
+            Span::styled("  Ctrl-u        ", Style::default().fg(colors.number)),
+            Span::raw("Page up"),
+        ]),
+        Line::from(vec![
             Span::styled("  Arrow keys    ", Style::default().fg(colors.number)),
             Span::raw("Also work for navigation"),
         ]),

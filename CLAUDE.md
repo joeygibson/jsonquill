@@ -89,15 +89,33 @@ Implemented modules:
 - ✅ Config file support (`~/.config/jeditor/config.toml`, `:set save` to persist)
 - ✅ Yank operation (`yy` copies to clipboard including system clipboard)
 - ✅ Delete operation (`dd` removes nodes from tree)
-- ✅ Paste operation (`p` inserts yanked nodes)
+- ✅ Paste operation (`p` inserts yanked nodes after, `P` inserts before)
 - ✅ Insert mode for editing values (strings, numbers, booleans, null)
+- ✅ Viewport scrolling (automatically scrolls when navigating off-screen)
+- ✅ Jump commands (`gg` for top, `G` for bottom)
+- ✅ Page scrolling (`Ctrl-d` for half-page down, `Ctrl-u` for half-page up)
+- ✅ Save and quit (`ZZ` saves if dirty then quits)
 - ✅ Default dark theme (gray/black, not blue)
 - ✅ All 290 tests passing
 
 **Known Issues / TODO:**
+
+**High Priority (Core Editing):**
+- ❌ **No undo/redo** - `u` and `Ctrl-r` not implemented
+- ❌ **No add operations** - `a` (add field/element), `o/O` (add sibling) not implemented
+- ❌ **No rename operation** - `r` to rename object keys not implemented
+
+**Navigation Enhancements:**
+- ❌ **No sibling navigation** - `{/}` to jump to previous/next sibling not implemented
+- ❌ **No previous search** - `N` for previous search match not implemented
+
+**Advanced Features:**
+- ❌ **No named registers** - `"ayy`, `"ap` for named register operations
+- ❌ **No structural search** - `:find`, `:path` for JSONPath-style queries
 - ❌ **Stdin piping not supported** - `cat file.json | jeditor` fails due to terminal I/O conflict
-- ❌ **No rename operation** - Cannot rename object keys
-- ❌ **No undo/redo** - Changes are permanent until file is saved/reloaded
+- ❌ **No JSONL support** - Line-based JSON editing not implemented
+- ❌ **No format preservation** - Original formatting not preserved on save
+- ❌ **No lazy loading** - Large files (≥100MB) not optimized
 
 
 ## Usage
@@ -109,6 +127,10 @@ Implemented modules:
 # Navigation (NORMAL mode)
 j/k         - Move down/up
 h/l         - Collapse/expand node
+gg          - Jump to top of document
+G           - Jump to bottom of document
+Ctrl-d      - Page down (half page)
+Ctrl-u      - Page up (half page)
 Arrow keys  - Also work for navigation
 
 # Search

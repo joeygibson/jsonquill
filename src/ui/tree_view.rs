@@ -283,7 +283,7 @@ use crate::editor::cursor::Cursor;
 /// tree_view.rebuild(&tree);
 ///
 /// terminal.draw(|f| {
-///     render_tree_view(f, f.area(), &tree_view, &cursor, &colors, true);
+///     render_tree_view(f, f.area(), &tree_view, &cursor, &colors, true, 0);
 /// }).unwrap();
 /// ```
 pub fn render_tree_view(
@@ -293,6 +293,7 @@ pub fn render_tree_view(
     cursor: &Cursor,
     colors: &ThemeColors,
     show_line_numbers: bool,
+    scroll_offset: usize,
 ) {
     let mut lines_to_render = Vec::new();
     let max_line_num_width = if show_line_numbers {
@@ -301,7 +302,9 @@ pub fn render_tree_view(
         0
     };
 
-    for (line_num, line) in tree_view.lines().iter().enumerate() {
+    let viewport_height = area.height as usize;
+
+    for (line_num, line) in tree_view.lines().iter().enumerate().skip(scroll_offset).take(viewport_height) {
         let is_cursor = cursor.path() == line.path.as_slice();
 
         let mut spans = Vec::new();
