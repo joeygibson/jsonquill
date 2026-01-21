@@ -87,15 +87,17 @@ Implemented modules:
 - ✅ Theme system (`:theme` to list, `:theme <name>` to switch)
 - ✅ Settings system (`:set` to view, `:set <option>` to change)
 - ✅ Config file support (`~/.config/jeditor/config.toml`, `:set save` to persist)
-- ✅ Yank operation (`y` copies to clipboard including system clipboard)
+- ✅ Yank operation (`yy` copies to clipboard including system clipboard)
+- ✅ Delete operation (`dd` removes nodes from tree)
+- ✅ Paste operation (`p` inserts yanked nodes)
+- ✅ Insert mode for editing values (strings, numbers, booleans, null)
 - ✅ Default dark theme (gray/black, not blue)
-- ✅ All 74 tests passing
+- ✅ All 290 tests passing
 
 **Known Issues / TODO:**
-- ❌ **Insert mode not functional** - Pressing `i` switches mode but cannot edit values
-- ❌ **Delete/paste not implemented** - `d` and `p` keys show placeholder messages
 - ❌ **Stdin piping not supported** - `cat file.json | jeditor` fails due to terminal I/O conflict
 - ❌ **No rename operation** - Cannot rename object keys
+- ❌ **No undo/redo** - Changes are permanent until file is saved/reloaded
 
 
 ## Usage
@@ -115,11 +117,18 @@ n           - Jump to next search result
 Esc         - Exit SEARCH mode
 
 # Modes
-i           - Enter INSERT mode (not yet functional)
+i           - Enter INSERT mode on current node
 :           - Enter COMMAND mode
+/           - Enter SEARCH mode
 Esc         - Return to NORMAL mode
 ?           - Toggle help overlay
 q           - Quit (NORMAL mode only)
+
+# INSERT mode
+<chars>     - Type to edit the value
+Backspace   - Delete last character
+Enter       - Commit changes and return to NORMAL mode
+Esc         - Cancel editing and return to NORMAL mode
 
 # Commands (in COMMAND mode)
 :w          - Save file
@@ -134,9 +143,10 @@ q           - Quit (NORMAL mode only)
 :set save     - Save settings to config file
 
 # Editing (NORMAL mode)
-y           - Yank (copy) current node to clipboard
-d           - Delete current node (not yet implemented)
-p           - Paste from clipboard (not yet implemented)
+yy          - Yank (copy) current node to clipboard
+dd          - Delete current node (removes from tree)
+p           - Paste clipboard content after current node
+              (generates unique key for objects, inserts after for arrays)
 
 # Help
 j/k or ↑/↓  - Scroll help when open
