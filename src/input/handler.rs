@@ -333,7 +333,17 @@ impl InputHandler {
                 InputEvent::Paste => {
                     state.clear_pending_command();
                     use crate::editor::state::MessageLevel;
-                    state.set_message("Paste operation not yet implemented".to_string(), MessageLevel::Error);
+                    match state.paste_node_at_cursor() {
+                        Ok(_) => {
+                            state.set_message("Node pasted".to_string(), MessageLevel::Info);
+                        }
+                        Err(e) => {
+                            state.set_message(
+                                format!("Paste failed: {}", e),
+                                MessageLevel::Error,
+                            );
+                        }
+                    }
                 }
                 InputEvent::InsertCharacter(_) | InputEvent::InsertBackspace | InputEvent::InsertEnter => {
                     state.clear_pending_command();

@@ -773,6 +773,97 @@ impl EditorState {
         self.clipboard.is_some()
     }
 
+    /// Pastes the clipboard node after the current cursor position.
+    /// For objects, generates a unique key name. For arrays, inserts after current index.
+    pub fn paste_node_at_cursor(&mut self) -> anyhow::Result<()> {
+        use anyhow::anyhow;
+        use crate::document::node::JsonValue;
+
+        let clipboard_node = self.clipboard.clone()
+            .ok_or_else(|| anyhow!("Nothing to paste"))?;
+
+        let current_path = self.cursor.path().to_vec();
+
+        // Determine parent and insert position
+        if current_path.is_empty() {
+            return Err(anyhow!("Cannot paste at root level"));
+        }
+
+        let parent_path = &current_path[..current_path.len() - 1];
+        let current_index = current_path[current_path.len() - 1];
+        let insert_index = current_index + 1;
+
+        // Get parent node to determine type
+        let parent = if parent_path.is_empty() {
+            self.tree.root()
+        } else {
+            self.tree.get_node(parent_path)
+                .ok_or_else(|| anyhow!("Parent node not found"))?
+        };
+
+        match parent.value() {
+            JsonValue::Object(_) => {
+                // Generate a unique key name
+                let mut key_name = "pasted".to_string();
+                let mut counter = 1;
+
+                // Keep trying until we find a unique key
+                loop {
+                    let test_key = if counter == 1 {
+                        key_name.clone()
+                    } else {
+                        format!("{}{}", key_name, counter)
+                    };
+
+                    // Check if key exists
+                    let parent_ref = if parent_path.is_empty() {
+                        self.tree.root()
+                    } else {
+                        self.tree.get_node(parent_path).unwrap()
+                    };
+
+                    let key_exists = if let JsonValue::Object(entries) = parent_ref.value() {
+                        entries.iter().any(|(k, _)| k == &test_key)
+                    } else {
+                        false
+                    };
+
+                    if !key_exists {
+                        key_name = test_key;
+                        break;
+                    }
+
+                    counter += 1;
+                }
+
+                // Build the full path for insertion
+                let mut insert_path = parent_path.to_vec();
+                insert_path.push(insert_index);
+
+                self.tree.insert_node_in_object(&insert_path, key_name, clipboard_node)?;
+            }
+            JsonValue::Array(_) => {
+                let mut insert_path = parent_path.to_vec();
+                insert_path.push(insert_index);
+
+                self.tree.insert_node_in_array(&insert_path, clipboard_node)?;
+            }
+            _ => {
+                return Err(anyhow!("Parent is not a container type"));
+            }
+        }
+
+        self.mark_dirty();
+        self.rebuild_tree_view();
+
+        // Move cursor to newly pasted node
+        let mut new_cursor_path = parent_path.to_vec();
+        new_cursor_path.push(insert_index);
+        self.cursor.set_path(new_cursor_path);
+
+        Ok(())
+    }
+
     /// Returns the current search buffer.
     pub fn search_buffer(&self) -> &str {
         &self.search_buffer

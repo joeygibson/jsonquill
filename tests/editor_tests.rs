@@ -940,3 +940,68 @@ fn test_delete_root_fails() {
     let result = state.delete_node_at_cursor();
     assert!(result.is_err());
 }
+
+// Paste node tests
+
+#[test]
+fn test_paste_node_in_object() {
+    use jeditor::document::node::{JsonNode, JsonValue};
+    use jeditor::document::tree::JsonTree;
+
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
+        ("a".to_string(), JsonNode::new(JsonValue::Number(1.0))),
+        ("c".to_string(), JsonNode::new(JsonValue::Number(3.0))),
+    ])));
+    let mut state = EditorState::new(tree);
+
+    // Yank first element
+    state.cursor_mut().set_path(vec![0]);
+    state.yank_node();
+
+    // Now move to position [1] and paste
+    state.cursor_mut().set_path(vec![1]);
+    let result = state.paste_node_at_cursor();
+    assert!(result.is_ok());
+    assert!(state.is_dirty());
+
+    // Should have 3 nodes now
+    assert_eq!(state.tree_view().lines().len(), 3);
+}
+
+#[test]
+fn test_paste_node_in_array() {
+    use jeditor::document::node::{JsonNode, JsonValue};
+    use jeditor::document::tree::JsonTree;
+
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Array(vec![
+        JsonNode::new(JsonValue::Number(10.0)),
+        JsonNode::new(JsonValue::Number(30.0)),
+    ])));
+    let mut state = EditorState::new(tree);
+
+    // Yank first element
+    state.cursor_mut().set_path(vec![0]);
+    state.yank_node();
+
+    // Paste after first element
+    let result = state.paste_node_at_cursor();
+    assert!(result.is_ok());
+
+    // Should have 3 elements now
+    assert_eq!(state.tree_view().lines().len(), 3);
+}
+
+#[test]
+fn test_paste_without_clipboard_fails() {
+    use jeditor::document::node::{JsonNode, JsonValue};
+    use jeditor::document::tree::JsonTree;
+
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
+        ("a".to_string(), JsonNode::new(JsonValue::Number(1.0))),
+    ])));
+    let mut state = EditorState::new(tree);
+
+    // Try to paste without yanking first
+    let result = state.paste_node_at_cursor();
+    assert!(result.is_err());
+}
