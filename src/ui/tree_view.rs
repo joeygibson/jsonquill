@@ -321,19 +321,25 @@ pub fn render_tree_view(
         // Indentation
         spans.push(Span::raw("  ".repeat(line.depth)));
 
-        // Expand/collapse indicator
+        // Expand/collapse indicator or cursor indicator for scalars
         if line.expandable {
             let indicator = if line.expanded { "▼ " } else { "▶ " };
             spans.push(Span::raw(indicator));
+        } else if is_cursor {
+            spans.push(Span::raw("▶ "));
         } else {
             spans.push(Span::raw("  "));
         }
 
-        // Key (if object property)
+        // Key (if object property) - highlight only the key when cursor is on this line
         if let Some(key) = &line.key {
+            let mut key_style = Style::default().fg(colors.key);
+            if is_cursor {
+                key_style = key_style.bg(colors.cursor).add_modifier(Modifier::BOLD);
+            }
             spans.push(Span::styled(
-                format!("\"{}\": ", key),
-                Style::default().fg(colors.key),
+                format!("{}: ", key),
+                key_style,
             ));
         }
 
@@ -351,12 +357,7 @@ pub fn render_tree_view(
             Style::default().fg(value_color),
         ));
 
-        let mut style = Style::default();
-        if is_cursor {
-            style = style.bg(colors.cursor).add_modifier(Modifier::BOLD);
-        }
-
-        lines_to_render.push(Line::from(spans).style(style));
+        lines_to_render.push(Line::from(spans));
     }
 
     let paragraph = Paragraph::new(lines_to_render)
@@ -476,5 +477,132 @@ mod tests {
         assert_eq!(state.get_value_preview(&JsonValue::Number(3.14)), "3.14");
         assert_eq!(state.get_value_preview(&JsonValue::Boolean(true)), "true");
         assert_eq!(state.get_value_preview(&JsonValue::Null), "null");
+    }
+
+    #[test]
+    fn test_key_display_without_quotes() {
+        use ratatui::backend::TestBackend;
+        use ratatui::Terminal;
+
+        let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
+            ("name".to_string(), JsonNode::new(JsonValue::String("Alice".to_string()))),
+            ("age".to_string(), JsonNode::new(JsonValue::Number(30.0))),
+        ])));
+
+        let mut state = TreeViewState::new();
+        state.rebuild(&tree);
+
+        let backend = TestBackend::new(80, 24);
+        let mut terminal = Terminal::new(backend).unwrap();
+        let colors = ThemeColors::default_dark();
+        let cursor = Cursor::new();
+
+        terminal.draw(|f| {
+            render_tree_view(f, f.area(), &state, &cursor, &colors, false, 0);
+        }).unwrap();
+
+        let buffer = terminal.backend().buffer().clone();
+        let content = buffer.content().iter()
+            .map(|cell| cell.symbol())
+            .collect::<String>();
+
+        // Keys should be displayed without quotes: "name: " not "\"name\": "
+        assert!(content.contains("name: "), "Expected 'name: ' without quotes in rendered output");
+        assert!(content.contains("age: "), "Expected 'age: ' without quotes in rendered output");
+        assert!(!content.contains("\"name\""), "Keys should not have quotes in rendered output");
+        assert!(!content.contains("\"age\""), "Keys should not have quotes in rendered output");
+    }
+
+    #[test]
+    fn test_cursor_highlights_only_key() {
+        use ratatui::backend::TestBackend;
+        use ratatui::Terminal;
+
+        let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
+            ("name".to_string(), JsonNode::new(JsonValue::String("Alice".to_string()))),
+        ])));
+
+        let mut state = TreeViewState::new();
+        state.rebuild(&tree);
+
+        let backend = TestBackend::new(80, 24);
+        let mut terminal = Terminal::new(backend).unwrap();
+        let colors = ThemeColors::default_dark();
+        let mut cursor = Cursor::new();
+        cursor.set_path(vec![0]); // Select first item
+
+        terminal.draw(|f| {
+            render_tree_view(f, f.area(), &state, &cursor, &colors, false, 0);
+        }).unwrap();
+
+        let buffer = terminal.backend().buffer().clone();
+
+        // Check cells on the first line
+        // Expected layout: "  name: \"Alice\""
+        // Only "name:" should be highlighted, not "\"Alice\""
+        let mut found_key_highlight = false;
+        let mut found_value_no_highlight = false;
+
+        for (i, cell) in buffer.content().iter().enumerate() {
+            let symbol = cell.symbol();
+            // Look for the 'n' in 'name'
+            if symbol == "n" && i > 0 {
+                // This should be part of the key and should have cursor background
+                if cell.bg == colors.cursor {
+                    found_key_highlight = true;
+                }
+            }
+            // Look for the 'A' in 'Alice'
+            if symbol == "A" {
+                // This should be part of the value and should NOT have cursor background
+                if cell.bg == colors.background {
+                    found_value_no_highlight = true;
+                }
+            }
+        }
+
+        assert!(found_key_highlight, "Key 'name:' should be highlighted with cursor background");
+        assert!(found_value_no_highlight, "Value '\"Alice\"' should not be highlighted");
+    }
+
+    #[test]
+    fn test_scalar_value_shows_triangle_indicator() {
+        use ratatui::backend::TestBackend;
+        use ratatui::Terminal;
+
+        let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
+            ("name".to_string(), JsonNode::new(JsonValue::String("Alice".to_string()))),
+        ])));
+
+        let mut state = TreeViewState::new();
+        state.rebuild(&tree);
+
+        let backend = TestBackend::new(80, 24);
+        let mut terminal = Terminal::new(backend).unwrap();
+        let colors = ThemeColors::default_dark();
+        let mut cursor = Cursor::new();
+        cursor.set_path(vec![0]); // Select first item
+
+        terminal.draw(|f| {
+            render_tree_view(f, f.area(), &state, &cursor, &colors, false, 0);
+        }).unwrap();
+
+        let buffer = terminal.backend().buffer().clone();
+        let content = buffer.content().iter()
+            .map(|cell| cell.symbol())
+            .collect::<String>();
+
+        // Should contain a right-pointing triangle (▶) on the left side (before the key) for selected scalar
+        // Expected layout: "▶ name: \"Alice\""
+        // The triangle should appear before the key, not after the value
+        let first_line = content.lines().next().unwrap_or("");
+        assert!(first_line.contains("▶"), "Expected triangle indicator on left side for selected scalar value");
+
+        // Verify triangle comes before the key
+        if let Some(triangle_pos) = first_line.find("▶") {
+            if let Some(key_pos) = first_line.find("name") {
+                assert!(triangle_pos < key_pos, "Triangle should appear before the key on the left side");
+            }
+        }
     }
 }
