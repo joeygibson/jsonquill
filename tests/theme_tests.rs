@@ -36,35 +36,35 @@ fn test_theme_name_is_preserved() {
 fn test_dark_theme_syntax_colors() {
     let theme = get_builtin_theme("default-dark").unwrap();
 
-    // jless-inspired color scheme
-    assert_eq!(theme.colors.key, Color::Rgb(92, 133, 255));      // Light blue (ANSI 12)
-    assert_eq!(theme.colors.string, Color::Rgb(184, 255, 167));  // Bright green
-    assert_eq!(theme.colors.number, Color::Rgb(184, 255, 167));  // Bright green
-    assert_eq!(theme.colors.boolean, Color::Rgb(255, 255, 85));  // Yellow (ANSI 3)
-    assert_eq!(theme.colors.null, Color::Rgb(128, 128, 128));    // Gray (ANSI 8)
+    // Verify syntax colors are set (not black by default)
+    assert_eq!(theme.colors.key, Color::Rgb(224, 108, 117));
+    assert_eq!(theme.colors.string, Color::Rgb(152, 195, 121));
+    assert_eq!(theme.colors.number, Color::Rgb(209, 154, 102));
+    assert_eq!(theme.colors.boolean, Color::Rgb(86, 182, 194));
+    assert_eq!(theme.colors.null, Color::Rgb(198, 120, 221));
 }
 
 #[test]
 fn test_dark_theme_ui_colors() {
     let theme = get_builtin_theme("default-dark").unwrap();
 
-    // jless-inspired UI colors
-    assert_eq!(theme.colors.background, Color::Rgb(0, 0, 0));      // Black
-    assert_eq!(theme.colors.foreground, Color::Rgb(184, 255, 167)); // Bright green
-    assert_eq!(theme.colors.cursor, Color::Rgb(92, 133, 255));     // Light blue
-    assert_eq!(theme.colors.status_line_bg, Color::Rgb(20, 20, 20)); // Very dark gray
-    assert_eq!(theme.colors.status_line_fg, Color::Rgb(184, 255, 167));
+    // Verify UI colors
+    assert_eq!(theme.colors.background, Color::Rgb(40, 44, 52));
+    assert_eq!(theme.colors.foreground, Color::Rgb(171, 178, 191));
+    assert_eq!(theme.colors.cursor, Color::Rgb(82, 139, 255));
+    assert_eq!(theme.colors.status_line_bg, Color::Rgb(33, 37, 43));
+    assert_eq!(theme.colors.status_line_fg, Color::Rgb(171, 178, 191));
 }
 
 #[test]
 fn test_dark_theme_semantic_colors() {
     let theme = get_builtin_theme("default-dark").unwrap();
 
-    // jless-inspired semantic colors
-    assert_eq!(theme.colors.error, Color::Rgb(255, 85, 85));      // Bright red
-    assert_eq!(theme.colors.warning, Color::Rgb(255, 255, 85));   // Yellow
-    assert_eq!(theme.colors.info, Color::Rgb(92, 133, 255));      // Light blue
-    assert_eq!(theme.colors.search_highlight, Color::Rgb(255, 255, 85)); // Yellow highlight
+    // Verify semantic colors
+    assert_eq!(theme.colors.error, Color::Rgb(224, 108, 117));
+    assert_eq!(theme.colors.warning, Color::Rgb(229, 192, 123));
+    assert_eq!(theme.colors.info, Color::Rgb(97, 175, 239));
+    assert_eq!(theme.colors.search_highlight, Color::Rgb(62, 68, 81));
 }
 
 // Tests for default-light theme colors
@@ -110,9 +110,9 @@ fn test_light_theme_semantic_colors() {
 fn test_theme_colors_default_dark() {
     let colors = ThemeColors::default_dark();
 
-    // Verify it creates a valid color set with dark background (jless-inspired)
-    assert_eq!(colors.background, Color::Rgb(0, 0, 0));
-    assert_eq!(colors.foreground, Color::Rgb(184, 255, 167));
+    // Verify it creates a valid color set with dark background
+    assert_eq!(colors.background, Color::Rgb(40, 44, 52));
+    assert_eq!(colors.foreground, Color::Rgb(171, 178, 191));
 }
 
 #[test]
@@ -156,12 +156,11 @@ fn test_dark_and_light_themes_have_different_backgrounds() {
 }
 
 #[test]
-fn test_both_themes_have_different_cursor_colors() {
+fn test_both_themes_have_same_cursor_color() {
     let dark = get_builtin_theme("default-dark").unwrap();
     let light = get_builtin_theme("default-light").unwrap();
 
-    // Dark theme uses light blue cursor (jless-inspired)
-    assert_eq!(dark.colors.cursor, Color::Rgb(92, 133, 255));
-    // Light theme keeps its original cursor color
-    assert_eq!(light.colors.cursor, Color::Rgb(82, 139, 255));
+    // Both themes use the same cursor color for consistency
+    assert_eq!(dark.colors.cursor, light.colors.cursor);
+    assert_eq!(dark.colors.cursor, Color::Rgb(82, 139, 255));
 }

@@ -66,17 +66,14 @@ pub struct ThemeColors {
 impl ThemeColors {
     /// Returns the default dark color scheme.
     ///
-    /// This is a dark theme inspired by jless, the command-line JSON viewer.
-    /// Features a true black background with bright, high-contrast colors
-    /// optimized for terminal use.
+    /// This is a dark theme inspired by the One Dark color palette,
+    /// optimized for comfortable extended use in low-light environments.
     ///
     /// # Color Palette
     ///
-    /// - Background: Black (#000000)
-    /// - Foreground: Bright green (#b8ffa7)
-    /// - Keys: Light blue (ANSI 12)
-    /// - Booleans: Yellow (ANSI 3)
-    /// - Null: Gray (ANSI 8)
+    /// - Background: Dark grey (#282c34)
+    /// - Foreground: Light grey (#abb2bf)
+    /// - Syntax: Warm, vibrant colors for good readability
     ///
     /// # Examples
     ///
@@ -85,26 +82,26 @@ impl ThemeColors {
     /// use ratatui::style::Color;
     ///
     /// let colors = ThemeColors::default_dark();
-    /// assert_eq!(colors.background, Color::Rgb(0, 0, 0));
+    /// assert_eq!(colors.background, Color::Rgb(40, 44, 52));
     /// ```
     pub fn default_dark() -> Self {
         Self {
-            key: Color::Rgb(92, 133, 255),       // Light blue (ANSI 12)
-            string: Color::Rgb(184, 255, 167),   // Bright green #b8ffa7
-            number: Color::Rgb(184, 255, 167),   // Bright green #b8ffa7
-            boolean: Color::Rgb(255, 255, 85),   // Yellow (ANSI 3)
-            null: Color::Rgb(128, 128, 128),     // Gray (ANSI 8)
+            key: Color::Rgb(224, 108, 117),      // #e06c75
+            string: Color::Rgb(152, 195, 121),   // #98c379
+            number: Color::Rgb(209, 154, 102),   // #d19a66
+            boolean: Color::Rgb(86, 182, 194),   // #56b6c2
+            null: Color::Rgb(198, 120, 221),     // #c678dd
 
-            background: Color::Rgb(0, 0, 0),     // Black
-            foreground: Color::Rgb(184, 255, 167), // Bright green #b8ffa7
-            cursor: Color::Rgb(92, 133, 255),    // Light blue
-            status_line_bg: Color::Rgb(20, 20, 20), // Very dark gray
-            status_line_fg: Color::Rgb(184, 255, 167),
+            background: Color::Rgb(40, 44, 52),  // #282c34
+            foreground: Color::Rgb(171, 178, 191), // #abb2bf
+            cursor: Color::Rgb(82, 139, 255),    // #528bff
+            status_line_bg: Color::Rgb(33, 37, 43), // #21252b
+            status_line_fg: Color::Rgb(171, 178, 191),
 
-            error: Color::Rgb(255, 85, 85),      // Bright red
-            warning: Color::Rgb(255, 255, 85),   // Yellow
-            info: Color::Rgb(92, 133, 255),      // Light blue
-            search_highlight: Color::Rgb(255, 255, 85), // Yellow highlight
+            error: Color::Rgb(224, 108, 117),
+            warning: Color::Rgb(229, 192, 123),  // #e5c07b
+            info: Color::Rgb(97, 175, 239),      // #61afef
+            search_highlight: Color::Rgb(62, 68, 81), // #3e4451
         }
     }
 
