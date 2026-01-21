@@ -873,3 +873,70 @@ fn test_commit_editing_invalid_boolean() {
     assert!(result.is_err());
     assert!(result.unwrap_err().to_string().contains("must be true or false"));
 }
+
+// Delete node tests
+
+#[test]
+fn test_delete_node_at_cursor() {
+    use jeditor::document::node::{JsonNode, JsonValue};
+    use jeditor::document::tree::JsonTree;
+
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
+        ("a".to_string(), JsonNode::new(JsonValue::Number(1.0))),
+        ("b".to_string(), JsonNode::new(JsonValue::Number(2.0))),
+        ("c".to_string(), JsonNode::new(JsonValue::Number(3.0))),
+    ])));
+    let mut state = EditorState::new(tree);
+
+    // Move to second element
+    state.cursor_mut().set_path(vec![1]);
+
+    // Delete it
+    let result = state.delete_node_at_cursor();
+    assert!(result.is_ok());
+    assert!(state.is_dirty());
+
+    // Verify only 2 lines remain
+    assert_eq!(state.tree_view().lines().len(), 2);
+
+    // Cursor should stay at index 1 (now pointing to "c")
+    assert_eq!(state.cursor().path(), &[1]);
+}
+
+#[test]
+fn test_delete_last_node_moves_cursor() {
+    use jeditor::document::node::{JsonNode, JsonValue};
+    use jeditor::document::tree::JsonTree;
+
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
+        ("a".to_string(), JsonNode::new(JsonValue::Number(1.0))),
+        ("b".to_string(), JsonNode::new(JsonValue::Number(2.0))),
+    ])));
+    let mut state = EditorState::new(tree);
+
+    // Move to last element
+    state.cursor_mut().set_path(vec![1]);
+
+    // Delete it
+    let result = state.delete_node_at_cursor();
+    assert!(result.is_ok());
+
+    // Cursor should move to previous line [0]
+    assert_eq!(state.cursor().path(), &[0]);
+}
+
+#[test]
+fn test_delete_root_fails() {
+    use jeditor::document::node::{JsonNode, JsonValue};
+    use jeditor::document::tree::JsonTree;
+
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![])));
+    let mut state = EditorState::new(tree);
+
+    // Cursor at root (empty path after tree_view initialization with no children)
+    // Since there are no lines, cursor will be at []
+    state.cursor_mut().set_path(vec![]);
+
+    let result = state.delete_node_at_cursor();
+    assert!(result.is_err());
+}

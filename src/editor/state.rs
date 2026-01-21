@@ -470,6 +470,37 @@ impl EditorState {
         self.tree_view.rebuild(&self.tree);
     }
 
+    /// Deletes the node at the current cursor position.
+    /// Adjusts the cursor position after deletion and rebuilds the tree view.
+    pub fn delete_node_at_cursor(&mut self) -> anyhow::Result<()> {
+        let path = self.cursor.path().to_vec();
+
+        // Find current line index before deletion
+        let lines = self.tree_view.lines();
+        let current_idx = lines.iter().position(|l| l.path == path);
+
+        // Delete the node
+        self.tree.delete_node(&path)?;
+        self.mark_dirty();
+        self.rebuild_tree_view();
+
+        // Adjust cursor position
+        let new_lines = self.tree_view.lines();
+        if new_lines.is_empty() {
+            // No lines left, cursor stays at root
+            self.cursor.set_path(vec![]);
+        } else if let Some(idx) = current_idx {
+            // Try to keep cursor at same visual position
+            let new_idx = idx.min(new_lines.len() - 1);
+            self.cursor.set_path(new_lines[new_idx].path.clone());
+        } else if !new_lines.is_empty() {
+            // Cursor wasn't found, move to first line
+            self.cursor.set_path(new_lines[0].path.clone());
+        }
+
+        Ok(())
+    }
+
     /// Moves the cursor down to the next visible line in the tree view.
     ///
     /// If the cursor is at the last line or the tree is empty, this does nothing.

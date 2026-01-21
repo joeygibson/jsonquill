@@ -292,7 +292,17 @@ impl InputHandler {
                 }
                 InputEvent::Delete => {
                     use crate::editor::state::MessageLevel;
-                    state.set_message("Delete operation not yet implemented".to_string(), MessageLevel::Error);
+                    match state.delete_node_at_cursor() {
+                        Ok(_) => {
+                            state.set_message("Node deleted".to_string(), MessageLevel::Info);
+                        }
+                        Err(e) => {
+                            state.set_message(
+                                format!("Delete failed: {}", e),
+                                MessageLevel::Error,
+                            );
+                        }
+                    }
                 }
                 InputEvent::Paste => {
                     use crate::editor::state::MessageLevel;

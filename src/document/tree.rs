@@ -193,7 +193,7 @@ impl JsonTree {
     /// Deletes the node at the given path.
     /// Returns an error if the path is empty (cannot delete root) or invalid.
     pub fn delete_node(&mut self, path: &[usize]) -> anyhow::Result<()> {
-        use anyhow::{anyhow, Context};
+        use anyhow::anyhow;
 
         if path.is_empty() {
             return Err(anyhow!("Cannot delete root node"));
