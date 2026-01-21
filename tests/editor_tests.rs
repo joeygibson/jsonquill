@@ -618,3 +618,102 @@ fn test_navigation_with_array() {
     state.move_cursor_up();
     assert_eq!(state.cursor().path(), &[1]);
 }
+
+// Edit buffer tests
+
+#[test]
+fn test_edit_buffer_starts_empty() {
+    use jeditor::document::node::{JsonNode, JsonValue};
+    use jeditor::document::tree::JsonTree;
+
+    let tree = JsonTree::new(JsonNode::new(JsonValue::String("test".to_string())));
+    let state = EditorState::new(tree);
+
+    assert_eq!(state.edit_buffer(), None);
+}
+
+#[test]
+fn test_start_editing_string_value() {
+    use jeditor::document::node::{JsonNode, JsonValue};
+    use jeditor::document::tree::JsonTree;
+
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
+        ("name".to_string(), JsonNode::new(JsonValue::String("Alice".to_string()))),
+    ])));
+    let mut state = EditorState::new(tree);
+
+    // Move cursor to first element
+    state.cursor_mut().set_path(vec![0]);
+
+    // Start editing
+    state.start_editing();
+
+    assert!(state.edit_buffer().is_some());
+    assert_eq!(state.edit_buffer().unwrap(), "Alice");
+}
+
+#[test]
+fn test_start_editing_number_value() {
+    use jeditor::document::node::{JsonNode, JsonValue};
+    use jeditor::document::tree::JsonTree;
+
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
+        ("count".to_string(), JsonNode::new(JsonValue::Number(42.0))),
+    ])));
+    let mut state = EditorState::new(tree);
+
+    state.cursor_mut().set_path(vec![0]);
+    state.start_editing();
+
+    assert_eq!(state.edit_buffer().unwrap(), "42");
+}
+
+#[test]
+fn test_start_editing_boolean_value() {
+    use jeditor::document::node::{JsonNode, JsonValue};
+    use jeditor::document::tree::JsonTree;
+
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
+        ("active".to_string(), JsonNode::new(JsonValue::Boolean(true))),
+    ])));
+    let mut state = EditorState::new(tree);
+
+    state.cursor_mut().set_path(vec![0]);
+    state.start_editing();
+
+    assert_eq!(state.edit_buffer().unwrap(), "true");
+}
+
+#[test]
+fn test_start_editing_null_value() {
+    use jeditor::document::node::{JsonNode, JsonValue};
+    use jeditor::document::tree::JsonTree;
+
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
+        ("data".to_string(), JsonNode::new(JsonValue::Null)),
+    ])));
+    let mut state = EditorState::new(tree);
+
+    state.cursor_mut().set_path(vec![0]);
+    state.start_editing();
+
+    assert_eq!(state.edit_buffer().unwrap(), "null");
+}
+
+#[test]
+fn test_cancel_editing() {
+    use jeditor::document::node::{JsonNode, JsonValue};
+    use jeditor::document::tree::JsonTree;
+
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
+        ("name".to_string(), JsonNode::new(JsonValue::String("Alice".to_string()))),
+    ])));
+    let mut state = EditorState::new(tree);
+
+    state.cursor_mut().set_path(vec![0]);
+    state.start_editing();
+    assert!(state.edit_buffer().is_some());
+
+    state.cancel_editing();
+    assert_eq!(state.edit_buffer(), None);
+}

@@ -110,6 +110,7 @@ pub struct EditorState {
     search_results: Vec<Vec<usize>>,
     search_index: usize,
     show_line_numbers: bool,
+    edit_buffer: Option<String>,
 }
 
 impl EditorState {
@@ -165,6 +166,7 @@ impl EditorState {
             search_results: Vec::new(),
             search_index: 0,
             show_line_numbers: true,
+            edit_buffer: None,
         }
     }
 
@@ -838,5 +840,60 @@ impl EditorState {
         };
 
         config.save()
+    }
+
+    /// Returns the current edit buffer content, if editing.
+    pub fn edit_buffer(&self) -> Option<&str> {
+        self.edit_buffer.as_deref()
+    }
+
+    /// Starts editing the node at the current cursor position.
+    /// Loads the node's value into the edit buffer as a string.
+    pub fn start_editing(&mut self) {
+        let path = self.cursor.path();
+        if let Some(node) = self.tree.get_node(path) {
+            let value_str = match node.value() {
+                crate::document::node::JsonValue::String(s) => s.clone(),
+                crate::document::node::JsonValue::Number(n) => {
+                    // Format number without unnecessary trailing zeros
+                    if n.fract() == 0.0 {
+                        format!("{:.0}", n)
+                    } else {
+                        n.to_string()
+                    }
+                }
+                crate::document::node::JsonValue::Boolean(b) => b.to_string(),
+                crate::document::node::JsonValue::Null => "null".to_string(),
+                crate::document::node::JsonValue::Object(_) => return, // Can't edit containers
+                crate::document::node::JsonValue::Array(_) => return,  // Can't edit containers
+            };
+            self.edit_buffer = Some(value_str);
+        }
+    }
+
+    /// Cancels editing and clears the edit buffer without saving changes.
+    pub fn cancel_editing(&mut self) {
+        self.edit_buffer = None;
+    }
+
+    /// Appends a character to the edit buffer.
+    pub fn push_to_edit_buffer(&mut self, ch: char) {
+        if let Some(ref mut buffer) = self.edit_buffer {
+            buffer.push(ch);
+        }
+    }
+
+    /// Removes the last character from the edit buffer.
+    pub fn pop_from_edit_buffer(&mut self) {
+        if let Some(ref mut buffer) = self.edit_buffer {
+            buffer.pop();
+        }
+    }
+
+    /// Clears the edit buffer entirely.
+    pub fn clear_edit_buffer(&mut self) {
+        if let Some(ref mut buffer) = self.edit_buffer {
+            buffer.clear();
+        }
     }
 }
