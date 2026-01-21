@@ -44,7 +44,8 @@
       "Bash(for dep in ratatui serde serde_json crossterm clap toml anyhow arboard dirs tempfile)",
       "Bash(do cargo metadata --format-version=1)",
       "Bash(done)",
-      "Bash(cargo license:*)"
+      "Bash(cargo license:*)",
+      "Skill(superpowers:test-driven-development)"
     ]
   }
 }
