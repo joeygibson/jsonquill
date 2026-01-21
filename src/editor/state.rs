@@ -848,26 +848,20 @@ impl EditorState {
     }
 
     /// Starts editing the node at the current cursor position.
-    /// Loads the node's value into the edit buffer as a string.
+    /// Starts with an empty buffer for typing a new value.
     pub fn start_editing(&mut self) {
         let path = self.cursor.path();
         if let Some(node) = self.tree.get_node(path) {
-            let value_str = match node.value() {
-                crate::document::node::JsonValue::String(s) => s.clone(),
-                crate::document::node::JsonValue::Number(n) => {
-                    // Format number without unnecessary trailing zeros
-                    if n.fract() == 0.0 {
-                        format!("{:.0}", n)
-                    } else {
-                        n.to_string()
-                    }
+            // Check if node is editable (not a container)
+            match node.value() {
+                crate::document::node::JsonValue::Object(_) | crate::document::node::JsonValue::Array(_) => {
+                    return; // Can't edit containers
                 }
-                crate::document::node::JsonValue::Boolean(b) => b.to_string(),
-                crate::document::node::JsonValue::Null => "null".to_string(),
-                crate::document::node::JsonValue::Object(_) => return, // Can't edit containers
-                crate::document::node::JsonValue::Array(_) => return,  // Can't edit containers
-            };
-            self.edit_buffer = Some(value_str);
+                _ => {
+                    // Start with empty buffer for inserting new value
+                    self.edit_buffer = Some(String::new());
+                }
+            }
         }
     }
 

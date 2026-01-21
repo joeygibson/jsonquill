@@ -649,7 +649,7 @@ fn test_start_editing_string_value() {
     state.start_editing();
 
     assert!(state.edit_buffer().is_some());
-    assert_eq!(state.edit_buffer().unwrap(), "Alice");
+    assert_eq!(state.edit_buffer().unwrap(), "");
 }
 
 #[test]
@@ -665,7 +665,7 @@ fn test_start_editing_number_value() {
     state.cursor_mut().set_path(vec![0]);
     state.start_editing();
 
-    assert_eq!(state.edit_buffer().unwrap(), "42");
+    assert_eq!(state.edit_buffer().unwrap(), "");
 }
 
 #[test]
@@ -681,7 +681,7 @@ fn test_start_editing_boolean_value() {
     state.cursor_mut().set_path(vec![0]);
     state.start_editing();
 
-    assert_eq!(state.edit_buffer().unwrap(), "true");
+    assert_eq!(state.edit_buffer().unwrap(), "");
 }
 
 #[test]
@@ -697,7 +697,7 @@ fn test_start_editing_null_value() {
     state.cursor_mut().set_path(vec![0]);
     state.start_editing();
 
-    assert_eq!(state.edit_buffer().unwrap(), "null");
+    assert_eq!(state.edit_buffer().unwrap(), "");
 }
 
 #[test]
@@ -733,8 +733,7 @@ fn test_commit_editing_string() {
     state.cursor_mut().set_path(vec![0]);
     state.start_editing();
 
-    // Modify the buffer
-    state.clear_edit_buffer();
+    // Type new value
     state.push_to_edit_buffer('B');
     state.push_to_edit_buffer('o');
     state.push_to_edit_buffer('b');
@@ -766,7 +765,6 @@ fn test_commit_editing_number() {
     state.cursor_mut().set_path(vec![0]);
     state.start_editing();
 
-    state.clear_edit_buffer();
     for ch in "123.45".chars() {
         state.push_to_edit_buffer(ch);
     }
@@ -794,7 +792,6 @@ fn test_commit_editing_boolean() {
     state.cursor_mut().set_path(vec![0]);
     state.start_editing();
 
-    state.clear_edit_buffer();
     for ch in "false".chars() {
         state.push_to_edit_buffer(ch);
     }
@@ -822,7 +819,6 @@ fn test_commit_editing_null() {
     state.cursor_mut().set_path(vec![0]);
     state.start_editing();
 
-    state.clear_edit_buffer();
     for ch in "null".chars() {
         state.push_to_edit_buffer(ch);
     }
@@ -847,7 +843,6 @@ fn test_commit_editing_invalid_number() {
     state.cursor_mut().set_path(vec![0]);
     state.start_editing();
 
-    state.clear_edit_buffer();
     for ch in "not-a-number".chars() {
         state.push_to_edit_buffer(ch);
     }
@@ -870,7 +865,6 @@ fn test_commit_editing_invalid_boolean() {
     state.cursor_mut().set_path(vec![0]);
     state.start_editing();
 
-    state.clear_edit_buffer();
     for ch in "maybe".chars() {
         state.push_to_edit_buffer(ch);
     }
