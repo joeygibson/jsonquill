@@ -7,6 +7,7 @@ pub mod status_line;
 pub mod tree_view;
 pub mod message_area;
 pub mod help_overlay;
+pub mod edit_prompt;
 
 use anyhow::Result;
 use ratatui::backend::Backend;
@@ -154,13 +155,23 @@ impl UI {
                 &self.theme.colors,
             );
 
-            // Message area
-            message_area::render_message_area(
-                f,
-                chunks[2],
-                state,
-                &self.theme.colors,
-            );
+            // Render edit prompt if in insert mode with active buffer, otherwise message area
+            if let Some(buffer) = state.edit_buffer() {
+                edit_prompt::render_edit_prompt(
+                    f,
+                    chunks[2],
+                    buffer,
+                    &self.theme.colors,
+                );
+            } else {
+                // Message area
+                message_area::render_message_area(
+                    f,
+                    chunks[2],
+                    state,
+                    &self.theme.colors,
+                );
+            }
 
             // Help overlay (rendered on top if visible)
             if state.show_help() {
