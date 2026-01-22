@@ -118,6 +118,31 @@ impl UndoTree {
     pub fn limit(&self) -> usize {
         self.limit
     }
+
+    /// Adds a new checkpoint to the undo tree.
+    ///
+    /// Creates a new node as a child of the current node. If the current node
+    /// already has children (from previous redos), this creates a branch.
+    ///
+    /// # Arguments
+    ///
+    /// * `snapshot` - The new state to checkpoint
+    pub fn add_checkpoint(&mut self, snapshot: EditorSnapshot) {
+        let seq = self.next_seq;
+        self.next_seq += 1;
+
+        let new_node = UndoNode::new(snapshot, Some(self.current), seq);
+        let new_index = self.nodes.len();
+
+        // Add new node as child of current
+        self.nodes[self.current].children.push(new_index);
+        self.nodes.push(new_node);
+
+        // Move current pointer to new node
+        self.current = new_index;
+
+        // TODO: Implement pruning when limit exceeded
+    }
 }
 
 #[cfg(test)]
@@ -153,5 +178,31 @@ mod tests {
         assert_eq!(undo_tree.current(), 0);
         assert_eq!(undo_tree.len(), 1);
         assert_eq!(undo_tree.limit(), 50);
+    }
+
+    #[test]
+    fn test_add_checkpoint() {
+        let tree = JsonTree::new(JsonNode::new(JsonValue::Null));
+        let snapshot1 = EditorSnapshot {
+            tree: tree.clone(),
+            cursor_path: vec![],
+        };
+
+        let mut undo_tree = UndoTree::new(snapshot1, 50);
+
+        let tree2 = JsonTree::new(JsonNode::new(JsonValue::Boolean(true)));
+        let snapshot2 = EditorSnapshot {
+            tree: tree2,
+            cursor_path: vec![0],
+        };
+
+        undo_tree.add_checkpoint(snapshot2);
+
+        assert_eq!(undo_tree.current(), 1);
+        assert_eq!(undo_tree.len(), 2);
+
+        // Verify parent-child relationship
+        assert_eq!(undo_tree.nodes[1].parent, Some(0));
+        assert_eq!(undo_tree.nodes[0].children, vec![1]);
     }
 }
