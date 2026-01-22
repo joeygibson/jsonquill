@@ -421,6 +421,15 @@ impl InputHandler {
                         state.set_message("Already at oldest change".to_string(), MessageLevel::Info);
                     }
                 }
+                InputEvent::Redo => {
+                    state.clear_pending_command();
+                    use crate::editor::state::MessageLevel;
+                    if state.redo() {
+                        state.set_message("Redo".to_string(), MessageLevel::Info);
+                    } else {
+                        state.set_message("Already at newest change".to_string(), MessageLevel::Info);
+                    }
+                }
                 InputEvent::InsertCharacter(_) | InputEvent::InsertBackspace | InputEvent::InsertEnter => {
                     state.clear_pending_command();
                     // These are handled earlier in insert mode, should never reach here

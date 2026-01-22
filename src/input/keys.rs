@@ -49,6 +49,8 @@ pub enum InputEvent {
     PageUp,
     /// Undo last change
     Undo,
+    /// Redo last undone change
+    Redo,
     /// Insert a character in insert mode
     InsertCharacter(char),
     /// Backspace in insert mode
@@ -96,6 +98,7 @@ pub fn map_key_event(key: KeyEvent, mode: &EditorMode) -> InputEvent {
                 match key.code {
                     KeyCode::Char('d') => return InputEvent::PageDown,
                     KeyCode::Char('u') => return InputEvent::PageUp,
+                    KeyCode::Char('r') => return InputEvent::Redo,
                     _ => {}
                 }
             }
