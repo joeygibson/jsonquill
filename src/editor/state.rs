@@ -1347,4 +1347,36 @@ impl EditorState {
         };
         self.undo_tree.add_checkpoint(snapshot);
     }
+
+    /// Undoes the last operation.
+    ///
+    /// Restores the editor to the previous checkpoint state, including both
+    /// the tree structure and cursor position. Returns true if undo succeeded,
+    /// false if already at the root state.
+    pub fn undo(&mut self) -> bool {
+        if let Some(snapshot) = self.undo_tree.undo() {
+            self.tree = snapshot.tree;
+            self.cursor.set_path(snapshot.cursor_path);
+            self.rebuild_tree_view();
+            true
+        } else {
+            false
+        }
+    }
+
+    /// Redoes the last undone operation.
+    ///
+    /// Restores the editor to the next checkpoint state (newest branch if multiple
+    /// exist), including both the tree structure and cursor position. Returns true
+    /// if redo succeeded, false if no redo history exists.
+    pub fn redo(&mut self) -> bool {
+        if let Some(snapshot) = self.undo_tree.redo() {
+            self.tree = snapshot.tree;
+            self.cursor.set_path(snapshot.cursor_path);
+            self.rebuild_tree_view();
+            true
+        } else {
+            false
+        }
+    }
 }
