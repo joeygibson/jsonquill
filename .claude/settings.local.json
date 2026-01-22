@@ -45,7 +45,15 @@
       "Bash(do cargo metadata --format-version=1)",
       "Bash(done)",
       "Bash(cargo license:*)",
-      "Skill(superpowers:test-driven-development)"
+      "Skill(superpowers:test-driven-development)",
+      "WebSearch",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:terminaltrove.com)",
+      "Bash(cargo audit:*)",
+      "Skill(domain-check)",
+      "Bash(nslookup:*)",
+      "Bash(bc:*)"
     ]
   }
 }
