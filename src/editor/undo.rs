@@ -157,6 +157,27 @@ impl UndoTree {
             None
         }
     }
+
+    /// Redoes to a child node.
+    ///
+    /// Follows the newest branch (child with highest sequence number).
+    /// Returns the snapshot to restore, or None if no children exist.
+    pub fn redo(&mut self) -> Option<EditorSnapshot> {
+        let current_node = &self.nodes[self.current];
+
+        if current_node.children.is_empty() {
+            return None;
+        }
+
+        // Find child with highest sequence number (newest branch)
+        let newest_child_idx = current_node.children.iter()
+            .max_by_key(|&&child_idx| self.nodes[child_idx].seq)
+            .copied()
+            .unwrap(); // Safe because we checked is_empty
+
+        self.current = newest_child_idx;
+        Some(self.nodes[newest_child_idx].snapshot.clone())
+    }
 }
 
 #[cfg(test)]
@@ -261,5 +282,87 @@ mod tests {
         let result = undo_tree.undo();
         assert!(result.is_none());
         assert_eq!(undo_tree.current(), 0);
+    }
+
+    #[test]
+    fn test_redo_basic() {
+        let tree = JsonTree::new(JsonNode::new(JsonValue::Null));
+        let snapshot1 = EditorSnapshot {
+            tree: tree.clone(),
+            cursor_path: vec![],
+        };
+
+        let mut undo_tree = UndoTree::new(snapshot1, 50);
+
+        // Add checkpoint then undo
+        let tree2 = JsonTree::new(JsonNode::new(JsonValue::Boolean(true)));
+        let snapshot2 = EditorSnapshot {
+            tree: tree2,
+            cursor_path: vec![0],
+        };
+        undo_tree.add_checkpoint(snapshot2);
+        undo_tree.undo();
+
+        // Now redo back to node 1
+        let result = undo_tree.redo();
+        assert!(result.is_some());
+        assert_eq!(undo_tree.current(), 1);
+
+        let snapshot = result.unwrap();
+        assert_eq!(snapshot.cursor_path, vec![0]);
+    }
+
+    #[test]
+    fn test_redo_with_no_children_returns_none() {
+        let tree = JsonTree::new(JsonNode::new(JsonValue::Null));
+        let snapshot = EditorSnapshot {
+            tree,
+            cursor_path: vec![],
+        };
+
+        let mut undo_tree = UndoTree::new(snapshot, 50);
+
+        // No children, cannot redo
+        let result = undo_tree.redo();
+        assert!(result.is_none());
+    }
+
+    #[test]
+    fn test_redo_chooses_newest_branch() {
+        let tree = JsonTree::new(JsonNode::new(JsonValue::Null));
+        let snapshot1 = EditorSnapshot {
+            tree: tree.clone(),
+            cursor_path: vec![],
+        };
+
+        let mut undo_tree = UndoTree::new(snapshot1, 50);
+
+        // Create first branch
+        let tree2 = JsonTree::new(JsonNode::new(JsonValue::Boolean(true)));
+        let snapshot2 = EditorSnapshot {
+            tree: tree2,
+            cursor_path: vec![0],
+        };
+        undo_tree.add_checkpoint(snapshot2);
+
+        // Undo and create second branch (newer)
+        undo_tree.undo();
+        let tree3 = JsonTree::new(JsonNode::new(JsonValue::Boolean(false)));
+        let snapshot3 = EditorSnapshot {
+            tree: tree3,
+            cursor_path: vec![1],
+        };
+        undo_tree.add_checkpoint(snapshot3);
+
+        // Undo again
+        undo_tree.undo();
+
+        // Redo should go to newest branch (node 2, not node 1)
+        let result = undo_tree.redo();
+        assert!(result.is_some());
+        assert_eq!(undo_tree.current(), 2);
+
+        let snapshot = result.unwrap();
+        assert_eq!(snapshot.cursor_path, vec![1]);
     }
 }
