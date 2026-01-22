@@ -22,7 +22,7 @@ use jeditor::ui::UI;
 #[command(version)]
 #[command(about = "A terminal-based JSON editor with vim-style keybindings", long_about = None)]
 struct Cli {
-    /// JSON file to edit (omit for empty document, use - for stdin)
+    /// JSON file to edit (omit to read from stdin if piped, or create empty document if interactive)
     file: Option<String>,
 
     /// Theme name (default: default-dark)
@@ -35,60 +35,52 @@ fn main() -> Result<()> {
 
     // Load file or create empty document BEFORE terminal setup
     // (stdin might be used for JSON data, so we need to read it before taking over the terminal)
-    let (tree, filename) = if let Some(file_path) = cli.file {
-        if file_path == "-" {
-            // Load from stdin
-            let tree = load_json_from_stdin()?;
-            (tree, None)
-        } else {
-            // Load from file
-            let tree = load_json_file(&file_path)?;
-            (tree, Some(file_path))
-        }
+    let (tree, filename, _stdin_was_piped) = if let Some(file_path) = cli.file {
+        // Load from file
+        let tree = load_json_file(&file_path)?;
+        (tree, Some(file_path), false)
     } else {
-        // Create sample document with nested structure
-        let user_obj = vec![
-            (
-                "name".to_string(),
-                JsonNode::new(JsonValue::String("Alice".to_string())),
-            ),
-            (
-                "email".to_string(),
-                JsonNode::new(JsonValue::String("alice@example.com".to_string())),
-            ),
-        ];
+        // No filename provided - check if stdin has piped data
+        if !io::stdin().is_terminal() {
+            // Stdin is piped - read JSON from it
+            let tree = load_json_from_stdin()?;
+            (tree, None, true)
+        } else {
+            // Interactive mode - create sample document with nested structure
+            let user_obj = vec![
+                (
+                    "name".to_string(),
+                    JsonNode::new(JsonValue::String("Alice".to_string())),
+                ),
+                (
+                    "email".to_string(),
+                    JsonNode::new(JsonValue::String("alice@example.com".to_string())),
+                ),
+            ];
 
-        let obj = vec![
-            (
-                "user".to_string(),
-                JsonNode::new(JsonValue::Object(user_obj)),
-            ),
-            (
-                "count".to_string(),
-                JsonNode::new(JsonValue::Number(42.0)),
-            ),
-            (
-                "active".to_string(),
-                JsonNode::new(JsonValue::Boolean(true)),
-            ),
-        ];
+            let obj = vec![
+                (
+                    "user".to_string(),
+                    JsonNode::new(JsonValue::Object(user_obj)),
+                ),
+                (
+                    "count".to_string(),
+                    JsonNode::new(JsonValue::Number(42.0)),
+                ),
+                (
+                    "active".to_string(),
+                    JsonNode::new(JsonValue::Boolean(true)),
+                ),
+            ];
 
-        let tree = JsonTree::new(JsonNode::new(JsonValue::Object(obj)));
-        (tree, None)
+            let tree = JsonTree::new(JsonNode::new(JsonValue::Object(obj)));
+            (tree, None, false)
+        }
     };
 
-    // Setup terminal AFTER loading data (so stdin is available for JSON if needed)
-    // Check if stdin is a terminal - if not, JSON was piped/redirected
-    if !io::stdin().is_terminal() {
-        anyhow::bail!(
-            "stdin is not a terminal (piped or redirected input detected).\n\n\
-             Piping or redirecting JSON via stdin is not supported.\n\
-             The TUI requires stdin for keyboard input, which conflicts with data input.\n\n\
-             Please pass the file path directly instead:\n   \
-                   jeditor foo.json"
-        );
-    }
-
+    // Setup terminal
+    // Note: On Unix systems, crossterm automatically uses /dev/tty for event reading
+    // when stdin is not a terminal, so piping JSON data works correctly
     enable_raw_mode()?;
     let mut stdout = io::stdout();
     execute!(stdout, EnterAlternateScreen)?;

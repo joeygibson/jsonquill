@@ -66,13 +66,13 @@ Implemented modules:
 - **src/input/** - Keyboard event handling and key mapping
 - **src/ui/** - Terminal UI rendering (tree view, status line, layout)
 - **src/theme/** - Color themes and theming system
-- **src/file/** - JSON file loading and saving (filesystem only, stdin piping not supported)
+- **src/file/** - JSON file loading and saving (filesystem and stdin piping supported)
 - **src/config/** - Configuration structures
 
 ## Current Status
 
 **Working Features:**
-- ✅ JSON file loading (filesystem paths only)
+- ✅ JSON file loading (filesystem paths and stdin piping supported)
 - ✅ Tree view rendering with expand/collapse and auto-expansion
 - ✅ Array indices displayed as `[0]`, `[1]`, `[2]` when expanded
 - ✅ Line numbers (enabled by default, toggle with `:set number`/`:set nonumber`)
@@ -114,7 +114,6 @@ Implemented modules:
 **Advanced Features:**
 - ❌ **No named registers** - `"ayy`, `"ap` for named register operations
 - ❌ **No structural search** - `:find`, `:path` for JSONPath-style queries
-- ❌ **Stdin piping not supported** - `cat file.json | jeditor` fails due to terminal I/O conflict
 - ❌ **No JSONL support** - Line-based JSON editing not implemented
 - ❌ **No format preservation** - Original formatting not preserved on save
 - ❌ **No lazy loading** - Large files (≥100MB) not optimized
@@ -126,6 +125,14 @@ Implemented modules:
 ```bash
 # Open a JSON file
 ./target/release/jeditor foo.json
+
+# Pipe JSON from stdin
+cat foo.json | ./target/release/jeditor
+echo '{"key": "value"}' | ./target/release/jeditor
+curl https://api.example.com/data | ./target/release/jeditor
+
+# Start with empty document (interactive mode)
+./target/release/jeditor
 
 # Navigation (NORMAL mode)
 j/k         - Move down/up
