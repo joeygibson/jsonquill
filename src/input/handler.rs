@@ -580,6 +580,22 @@ impl InputHandler {
             "q!" => {
                 return Ok(true);
             }
+            "undo" => {
+                if state.undo() {
+                    state.set_message("Undo".to_string(), MessageLevel::Info);
+                } else {
+                    state.set_message("Already at oldest change".to_string(), MessageLevel::Info);
+                }
+                return Ok(false);
+            }
+            "redo" => {
+                if state.redo() {
+                    state.set_message("Redo".to_string(), MessageLevel::Info);
+                } else {
+                    state.set_message("Already at newest change".to_string(), MessageLevel::Info);
+                }
+                return Ok(false);
+            }
             "w" => {
                 if let Some(filename) = state.filename().map(|s| s.to_string()) {
                     match save_json_file(&filename, state.tree(), 2, false) {
