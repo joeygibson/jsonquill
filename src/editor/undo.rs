@@ -143,6 +143,20 @@ impl UndoTree {
 
         // TODO: Implement pruning when limit exceeded
     }
+
+    /// Undoes to the parent node.
+    ///
+    /// Returns the snapshot to restore, or None if already at root.
+    pub fn undo(&mut self) -> Option<EditorSnapshot> {
+        let current_node = &self.nodes[self.current];
+
+        if let Some(parent_idx) = current_node.parent {
+            self.current = parent_idx;
+            Some(self.nodes[parent_idx].snapshot.clone())
+        } else {
+            None
+        }
+    }
 }
 
 #[cfg(test)]
@@ -204,5 +218,48 @@ mod tests {
         // Verify parent-child relationship
         assert_eq!(undo_tree.nodes[1].parent, Some(0));
         assert_eq!(undo_tree.nodes[0].children, vec![1]);
+    }
+
+    #[test]
+    fn test_undo_basic() {
+        let tree = JsonTree::new(JsonNode::new(JsonValue::Null));
+        let snapshot1 = EditorSnapshot {
+            tree: tree.clone(),
+            cursor_path: vec![],
+        };
+
+        let mut undo_tree = UndoTree::new(snapshot1, 50);
+
+        // Add a checkpoint
+        let tree2 = JsonTree::new(JsonNode::new(JsonValue::Boolean(true)));
+        let snapshot2 = EditorSnapshot {
+            tree: tree2,
+            cursor_path: vec![0],
+        };
+        undo_tree.add_checkpoint(snapshot2);
+
+        // Now at node 1, undo to node 0
+        let result = undo_tree.undo();
+        assert!(result.is_some());
+        assert_eq!(undo_tree.current(), 0);
+
+        let snapshot = result.unwrap();
+        assert_eq!(snapshot.cursor_path, Vec::<usize>::new());
+    }
+
+    #[test]
+    fn test_undo_at_root_returns_none() {
+        let tree = JsonTree::new(JsonNode::new(JsonValue::Null));
+        let snapshot = EditorSnapshot {
+            tree,
+            cursor_path: vec![],
+        };
+
+        let mut undo_tree = UndoTree::new(snapshot, 50);
+
+        // Already at root, cannot undo
+        let result = undo_tree.undo();
+        assert!(result.is_none());
+        assert_eq!(undo_tree.current(), 0);
     }
 }
