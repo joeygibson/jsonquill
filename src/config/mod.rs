@@ -38,7 +38,7 @@ use serde::{Deserialize, Serialize};
 /// * `auto_save` - Automatically save on changes (default: false)
 /// * `validation_mode` - JSON validation strictness: "strict", "permissive", or "none" (default: "strict")
 /// * `create_backup` - Create .bak files before saving (default: false)
-/// * `undo_limit` - Maximum number of undo operations to keep (default: 1000)
+/// * `undo_limit` - Maximum number of undo operations to keep (default: 50)
 /// * `sync_unnamed_register` - Sync unnamed register with system clipboard (default: true)
 /// * `lazy_load_threshold` - File size in bytes to trigger lazy loading (default: 100MB)
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -102,7 +102,7 @@ fn default_validation_mode() -> String {
 
 /// Returns the default undo limit.
 fn default_undo_limit() -> usize {
-    1000
+    50  // Changed from 1000
 }
 
 /// Returns the default for syncing unnamed register.
@@ -126,7 +126,7 @@ impl Default for Config {
     /// * `auto_save`: false
     /// * `validation_mode`: "strict"
     /// * `create_backup`: false
-    /// * `undo_limit`: 1000
+    /// * `undo_limit`: 50
     /// * `sync_unnamed_register`: true
     /// * `lazy_load_threshold`: 104,857,600 (100MB)
     ///

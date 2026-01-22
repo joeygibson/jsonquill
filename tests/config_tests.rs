@@ -29,7 +29,7 @@ fn test_all_default_values() {
     assert_eq!(config.validation_mode, "strict");
 
     // Performance settings
-    assert_eq!(config.undo_limit, 1000);
+    assert_eq!(config.undo_limit, 50);
     assert_eq!(config.lazy_load_threshold, 104_857_600); // 100MB
 }
 
@@ -69,7 +69,7 @@ fn test_serialize_default_config() {
     assert!(toml_str.contains("auto_save = false"));
     assert!(toml_str.contains("validation_mode = \"strict\""));
     assert!(toml_str.contains("create_backup = false"));
-    assert!(toml_str.contains("undo_limit = 1000"));
+    assert!(toml_str.contains("undo_limit = 50"));
     assert!(toml_str.contains("sync_unnamed_register = true"));
     assert!(toml_str.contains("lazy_load_threshold = 104857600"));
 }
@@ -120,7 +120,7 @@ fn test_deserialize_partial_config() {
     assert!(!config.auto_save);
     assert_eq!(config.validation_mode, "strict");
     assert!(!config.create_backup);
-    assert_eq!(config.undo_limit, 1000);
+    assert_eq!(config.undo_limit, 50);
     assert!(config.sync_unnamed_register);
     assert_eq!(config.lazy_load_threshold, 104_857_600);
 }
@@ -138,7 +138,7 @@ fn test_deserialize_empty_config() {
     assert!(!config.auto_save);
     assert_eq!(config.validation_mode, "strict");
     assert!(!config.create_backup);
-    assert_eq!(config.undo_limit, 1000);
+    assert_eq!(config.undo_limit, 50);
     assert!(config.sync_unnamed_register);
     assert_eq!(config.lazy_load_threshold, 104_857_600);
 }
@@ -209,4 +209,10 @@ fn test_config_debug() {
     assert!(debug_str.contains("Config"));
     assert!(debug_str.contains("theme"));
     assert!(debug_str.contains("indent_size"));
+}
+
+#[test]
+fn test_undo_limit_default_is_50() {
+    let config = Config::default();
+    assert_eq!(config.undo_limit, 50);
 }

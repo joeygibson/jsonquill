@@ -200,8 +200,8 @@ validation_mode = "strict"
 # Create .bak files before saving (default: false)
 create_backup = false
 
-# Maximum number of undo operations (default: 1000)
-undo_limit = 1000
+# Maximum number of undo operations (default: 50)
+undo_limit = 50
 
 # Sync unnamed register with system clipboard (default: true)
 sync_unnamed_register = true
