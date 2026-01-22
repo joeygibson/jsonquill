@@ -412,6 +412,15 @@ impl InputHandler {
                     state.clear_pending_command();
                     state.page_up();
                 }
+                InputEvent::Undo => {
+                    state.clear_pending_command();
+                    use crate::editor::state::MessageLevel;
+                    if state.undo() {
+                        state.set_message("Undo".to_string(), MessageLevel::Info);
+                    } else {
+                        state.set_message("Already at oldest change".to_string(), MessageLevel::Info);
+                    }
+                }
                 InputEvent::InsertCharacter(_) | InputEvent::InsertBackspace | InputEvent::InsertEnter => {
                     state.clear_pending_command();
                     // These are handled earlier in insert mode, should never reach here

@@ -47,6 +47,8 @@ pub enum InputEvent {
     PageDown,
     /// Page up (Ctrl-u)
     PageUp,
+    /// Undo last change
+    Undo,
     /// Insert a character in insert mode
     InsertCharacter(char),
     /// Backspace in insert mode
@@ -116,6 +118,7 @@ pub fn map_key_event(key: KeyEvent, mode: &EditorMode) -> InputEvent {
                 KeyCode::Char('Z') => InputEvent::SaveAndQuit,
                 KeyCode::Char('g') => InputEvent::JumpToTop,
                 KeyCode::Char('G') => InputEvent::JumpToBottom,
+                KeyCode::Char('u') => InputEvent::Undo,
                 KeyCode::Down => InputEvent::MoveDown,
                 KeyCode::Up => InputEvent::MoveUp,
                 KeyCode::Left => InputEvent::MoveLeft,
