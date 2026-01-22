@@ -60,6 +60,66 @@ impl UndoNode {
     }
 }
 
+/// Branching undo tree for managing edit history.
+///
+/// The undo tree stores all editor states as a tree structure where:
+/// - Root node is the initial state when file was opened
+/// - Each child represents a modification
+/// - Branching occurs when you undo then make a new edit
+/// - Current pointer tracks where we are in history
+///
+/// # Example
+///
+/// ```text
+///     0 (initial)
+///     |
+///     1 (edit A)
+///    / \
+///   2   3 (branching: undo, then two different edits)
+///   |
+///   4
+/// ```
+#[derive(Debug)]
+pub struct UndoTree {
+    pub nodes: Vec<UndoNode>,
+    current: usize,
+    next_seq: u64,
+    limit: usize,
+}
+
+impl UndoTree {
+    /// Creates a new undo tree with an initial snapshot.
+    ///
+    /// # Arguments
+    ///
+    /// * `initial_snapshot` - The starting state (root node)
+    /// * `limit` - Maximum number of nodes to keep
+    pub fn new(initial_snapshot: EditorSnapshot, limit: usize) -> Self {
+        let root = UndoNode::new(initial_snapshot, None, 0);
+        Self {
+            nodes: vec![root],
+            current: 0,
+            next_seq: 1,
+            limit,
+        }
+    }
+
+    /// Returns the current node index.
+    pub fn current(&self) -> usize {
+        self.current
+    }
+
+    /// Returns the number of nodes in the tree.
+    pub fn len(&self) -> usize {
+        self.nodes.len()
+    }
+
+    /// Returns the node limit.
+    pub fn limit(&self) -> usize {
+        self.limit
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -78,5 +138,20 @@ mod tests {
         assert_eq!(node.seq, 0);
         assert_eq!(node.parent, None);
         assert_eq!(node.children.len(), 0);
+    }
+
+    #[test]
+    fn test_undo_tree_initialization() {
+        let tree = JsonTree::new(JsonNode::new(JsonValue::Null));
+        let snapshot = EditorSnapshot {
+            tree,
+            cursor_path: vec![],
+        };
+
+        let undo_tree = UndoTree::new(snapshot, 50);
+
+        assert_eq!(undo_tree.current(), 0);
+        assert_eq!(undo_tree.len(), 1);
+        assert_eq!(undo_tree.limit(), 50);
     }
 }
