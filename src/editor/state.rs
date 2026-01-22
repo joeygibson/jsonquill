@@ -518,6 +518,7 @@ impl EditorState {
             self.cursor.set_path(new_lines[0].path.clone());
         }
 
+        self.checkpoint();
         Ok(())
     }
 
@@ -1017,6 +1018,7 @@ impl EditorState {
         new_cursor_path.push(insert_index);
         self.cursor.set_path(new_cursor_path);
 
+        self.checkpoint();
         Ok(())
     }
 
@@ -1109,6 +1111,7 @@ impl EditorState {
         new_cursor_path.push(insert_index);
         self.cursor.set_path(new_cursor_path);
 
+        self.checkpoint();
         Ok(())
     }
 
@@ -1297,6 +1300,7 @@ impl EditorState {
         self.mark_dirty();
         self.rebuild_tree_view();
 
+        self.checkpoint();
         Ok(())
     }
 
