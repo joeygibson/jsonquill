@@ -96,12 +96,12 @@ Implemented modules:
 - ✅ Page scrolling (`Ctrl-d` for half-page down, `Ctrl-u` for half-page up)
 - ✅ Save and quit (`ZZ` saves if dirty then quits)
 - ✅ Default dark theme (gray/black, not blue)
-- ✅ All 290 tests passing
+- ✅ Undo/redo (`u` to undo, `Ctrl-r` to redo, `:undo`, `:redo`)
+- ✅ All tests passing
 
 **Known Issues / TODO:**
 
 **High Priority (Core Editing):**
-- ❌ **No undo/redo** - `u` and `Ctrl-r` not implemented
 - ❌ **No add operations** - `a` (add field/element), `o/O` (add sibling) not implemented
 - ❌ **No rename operation** - `r` to rename object keys not implemented
 
@@ -116,6 +116,7 @@ Implemented modules:
 - ❌ **No JSONL support** - Line-based JSON editing not implemented
 - ❌ **No format preservation** - Original formatting not preserved on save
 - ❌ **No lazy loading** - Large files (≥100MB) not optimized
+- ❌ **No advanced undo** - `g-`/`g+`, `:earlier`/`:later`, `:undolist` not implemented
 
 
 ## Usage
@@ -163,12 +164,16 @@ Esc         - Cancel editing and return to NORMAL mode
 :set number   - Enable line numbers
 :set nonumber - Disable line numbers
 :set save     - Save settings to config file
+:undo         - Undo last change
+:redo         - Redo last undone change
 
 # Editing (NORMAL mode)
 yy          - Yank (copy) current node to clipboard
 dd          - Delete current node (removes from tree)
 p           - Paste clipboard content after current node
-              (generates unique key for objects, inserts after for arrays)
+P           - Paste clipboard content before current node
+u           - Undo last change
+Ctrl-r      - Redo last undone change
 
 # Help
 j/k or ↑/↓  - Scroll help when open
