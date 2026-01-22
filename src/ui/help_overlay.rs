@@ -94,6 +94,14 @@ pub fn render_help_overlay(f: &mut Frame, colors: &ThemeColors, scroll: usize) {
             Span::styled("  p/P           ", Style::default().fg(colors.number)),
             Span::raw("Paste after/before cursor"),
         ]),
+        Line::from(vec![
+            Span::styled("  u             ", Style::default().fg(colors.number)),
+            Span::raw("Undo last change"),
+        ]),
+        Line::from(vec![
+            Span::styled("  Ctrl-r        ", Style::default().fg(colors.number)),
+            Span::raw("Redo last undone change"),
+        ]),
         Line::from(""),
         Line::from(vec![
             Span::styled("Search", Style::default().fg(colors.key).add_modifier(Modifier::BOLD)),
@@ -145,6 +153,14 @@ pub fn render_help_overlay(f: &mut Frame, colors: &ThemeColors, scroll: usize) {
         Line::from(vec![
             Span::styled("  :set save     ", Style::default().fg(colors.number)),
             Span::raw("Save settings to config file"),
+        ]),
+        Line::from(vec![
+            Span::styled("  :undo         ", Style::default().fg(colors.number)),
+            Span::raw("Undo last change"),
+        ]),
+        Line::from(vec![
+            Span::styled("  :redo         ", Style::default().fg(colors.number)),
+            Span::raw("Redo last undone change"),
         ]),
         Line::from(""),
         Line::from(vec![
