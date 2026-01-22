@@ -1335,4 +1335,16 @@ impl EditorState {
     pub fn clear_pending_command(&mut self) {
         self.pending_command = None;
     }
+
+    /// Captures the current editor state as an undo checkpoint.
+    ///
+    /// This is called automatically before mutation operations to enable undo/redo.
+    /// Checkpoints capture both the tree structure and cursor position.
+    fn checkpoint(&mut self) {
+        let snapshot = super::undo::EditorSnapshot {
+            tree: self.tree.clone(),
+            cursor_path: self.cursor.path().to_vec(),
+        };
+        self.undo_tree.add_checkpoint(snapshot);
+    }
 }

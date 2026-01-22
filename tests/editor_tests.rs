@@ -1005,3 +1005,33 @@ fn test_paste_without_clipboard_fails() {
     let result = state.paste_node_at_cursor();
     assert!(result.is_err());
 }
+
+// Undo/redo tests
+
+#[test]
+fn test_checkpoint_captures_state() {
+    use jeditor::document::node::{JsonNode, JsonValue};
+    use jeditor::document::tree::JsonTree;
+
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
+        ("a".to_string(), JsonNode::new(JsonValue::Number(1.0))),
+        ("b".to_string(), JsonNode::new(JsonValue::Number(2.0))),
+    ])));
+    let mut state = EditorState::new(tree);
+
+    // Delete first node
+    state.cursor_mut().set_path(vec![0]);
+    let result = state.delete_node_at_cursor();
+    assert!(result.is_ok());
+    assert_eq!(state.tree_view().lines().len(), 1);
+
+    // Undo should restore deleted node
+    let undo_result = state.undo();
+    assert!(undo_result);
+    assert_eq!(state.tree_view().lines().len(), 2);
+
+    // Redo should delete it again
+    let redo_result = state.redo();
+    assert!(redo_result);
+    assert_eq!(state.tree_view().lines().len(), 1);
+}
