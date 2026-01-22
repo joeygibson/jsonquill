@@ -1,4 +1,4 @@
-use anyhow::Result;
+use anyhow::{Context, Result};
 use clap::Parser;
 use crossterm::{
     execute,
@@ -79,8 +79,40 @@ fn main() -> Result<()> {
     };
 
     // Setup terminal
-    // Note: On Unix systems, crossterm automatically uses /dev/tty for event reading
-    // when stdin is not a terminal, so piping JSON data works correctly
+    // When stdin was piped for data, we need to redirect stdin to /dev/tty for keyboard input
+    #[cfg(unix)]
+    {
+        if _stdin_was_piped {
+            use std::fs::File;
+            use std::os::unix::io::AsRawFd;
+
+            let tty = File::options()
+                .read(true)
+                .write(true)
+                .open("/dev/tty")
+                .context(
+                    "Failed to open /dev/tty for keyboard input.\n\
+                     When JSON is piped via stdin, jeditor requires a controlling terminal (/dev/tty) for keyboard input.\n\
+                     This error typically occurs when running in:\n\
+                     - Non-interactive shells or scripts\n\
+                     - CI/CD environments without a PTY\n\
+                     - Environments where the controlling terminal has been detached\n\n\
+                     Try running from an interactive terminal session."
+                )?;
+
+            // Redirect stdin (fd 0) to point to the TTY
+            // This allows crossterm to read keyboard events from the TTY
+            let tty_fd = tty.as_raw_fd();
+            unsafe {
+                if libc::dup2(tty_fd, 0) == -1 {
+                    anyhow::bail!("Failed to redirect stdin to /dev/tty");
+                }
+            }
+            // Keep tty alive until after dup2 completes
+            drop(tty);
+        }
+    }
+
     enable_raw_mode()?;
     let mut stdout = io::stdout();
     execute!(stdout, EnterAlternateScreen)?;
