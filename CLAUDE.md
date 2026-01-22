@@ -74,6 +74,7 @@ Implemented modules:
 **Working Features:**
 - ✅ JSON file loading (filesystem paths only)
 - ✅ Tree view rendering with expand/collapse and auto-expansion
+- ✅ Array indices displayed as `[0]`, `[1]`, `[2]` when expanded
 - ✅ Line numbers (enabled by default, toggle with `:set number`/`:set nonumber`)
 - ✅ Navigation (j/k/h/l, arrow keys)
 - ✅ Mode switching (i for INSERT, : for COMMAND, / for SEARCH, Esc to NORMAL)
@@ -95,6 +96,7 @@ Implemented modules:
 - ✅ Jump commands (`gg` for top, `G` for bottom)
 - ✅ Page scrolling (`Ctrl-d` for half-page down, `Ctrl-u` for half-page up)
 - ✅ Save and quit (`ZZ` saves if dirty then quits)
+- ✅ Quit with dirty check (`q` warns if unsaved, matching `:q` behavior)
 - ✅ Default dark theme (gray/black, not blue)
 - ✅ Undo/redo (`u` to undo, `Ctrl-r` to redo, `:undo`, `:redo`)
 - ✅ All tests passing
@@ -145,7 +147,7 @@ i           - Enter INSERT mode on current node
 /           - Enter SEARCH mode
 Esc         - Return to NORMAL mode
 ?           - Toggle help overlay
-q           - Quit (NORMAL mode only)
+q           - Quit (warns if unsaved, use :q! to force)
 
 # INSERT mode
 <chars>     - Type to edit the value

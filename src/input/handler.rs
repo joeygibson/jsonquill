@@ -234,6 +234,14 @@ impl InputHandler {
             match input_event {
                 InputEvent::Quit => {
                     state.clear_pending_command();
+                    if state.is_dirty() {
+                        use crate::editor::state::MessageLevel;
+                        state.set_message(
+                            "No write since last change (use :q! to force)".to_string(),
+                            MessageLevel::Error,
+                        );
+                        return Ok(false);
+                    }
                     return Ok(true);
                 }
                 InputEvent::EnterInsertMode => {
@@ -688,6 +696,29 @@ mod tests {
 
         let should_quit = handler.handle_event(event, &mut state).unwrap();
         assert!(should_quit);
+    }
+
+    #[test]
+    fn test_quit_blocked_when_dirty() {
+        let handler = InputHandler::new();
+        let tree = JsonTree::new(JsonNode::new(JsonValue::Null));
+        let mut state = EditorState::new(tree);
+
+        // Mark the file as dirty
+        state.mark_dirty();
+
+        let event = Event::Key(KeyEvent::new(KeyCode::Char('q'), KeyModifiers::NONE));
+        let should_quit = handler.handle_event(event, &mut state).unwrap();
+
+        // Should NOT quit when file is dirty
+        assert!(!should_quit);
+
+        // Should show error message
+        if let Some(msg) = state.message() {
+            assert!(msg.text.contains("No write since last change"));
+        } else {
+            panic!("Expected error message when trying to quit with unsaved changes");
+        }
     }
 
     #[test]

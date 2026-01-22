@@ -199,7 +199,7 @@ impl TreeViewState {
                     self.lines.push(TreeViewLine {
                         path: child_path.clone(),
                         depth,
-                        key: None,
+                        key: Some(format!("[{}]", i)),
                         value_type: ValueType::from_json_value(child.value()),
                         value_preview: self.get_value_preview(child.value()),
                         expandable: child.value().is_container(),
@@ -419,8 +419,10 @@ mod tests {
         state.rebuild(&tree);
 
         assert_eq!(state.lines().len(), 2);
-        assert_eq!(state.lines()[0].key, None);
+        assert_eq!(state.lines()[0].key, Some("[0]".to_string()));
         assert_eq!(state.lines()[0].value_preview, "1");
+        assert_eq!(state.lines()[1].key, Some("[1]".to_string()));
+        assert_eq!(state.lines()[1].value_preview, "2");
     }
 
     #[test]
