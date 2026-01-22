@@ -115,6 +115,8 @@ pub struct EditorState {
     pending_command: Option<char>,
     scroll_offset: usize,
     viewport_height: usize,
+    undo_tree: super::undo::UndoTree,
+    undo_limit: usize,
 }
 
 impl EditorState {
@@ -152,6 +154,14 @@ impl EditorState {
             cursor.set_path(first_line.path.clone());
         }
 
+        // Initialize undo tree with initial snapshot
+        let undo_limit = 50; // Default from Config
+        let initial_snapshot = super::undo::EditorSnapshot {
+            tree: tree.clone(),
+            cursor_path: cursor.path().to_vec(),
+        };
+        let undo_tree = super::undo::UndoTree::new(initial_snapshot, undo_limit);
+
         Self {
             tree,
             mode: EditorMode::Normal,
@@ -175,6 +185,8 @@ impl EditorState {
             pending_command: None,
             scroll_offset: 0,
             viewport_height: 20,
+            undo_tree,
+            undo_limit,
         }
     }
 
