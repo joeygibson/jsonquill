@@ -17,7 +17,8 @@ fn test_full_edit_workflow() {
     state.set_mode(EditorMode::Insert);
     state.start_editing();
 
-    // Edit the value
+    // Clear pre-populated value and type new value
+    state.clear_edit_buffer();
     for ch in "Bob".chars() {
         state.push_to_edit_buffer(ch);
     }

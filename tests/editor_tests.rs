@@ -649,7 +649,7 @@ fn test_start_editing_string_value() {
     state.start_editing();
 
     assert!(state.edit_buffer().is_some());
-    assert_eq!(state.edit_buffer().unwrap(), "");
+    assert_eq!(state.edit_buffer().unwrap(), "Alice");
 }
 
 #[test]
@@ -665,7 +665,7 @@ fn test_start_editing_number_value() {
     state.cursor_mut().set_path(vec![0]);
     state.start_editing();
 
-    assert_eq!(state.edit_buffer().unwrap(), "");
+    assert_eq!(state.edit_buffer().unwrap(), "42");
 }
 
 #[test]
@@ -681,7 +681,7 @@ fn test_start_editing_boolean_value() {
     state.cursor_mut().set_path(vec![0]);
     state.start_editing();
 
-    assert_eq!(state.edit_buffer().unwrap(), "");
+    assert_eq!(state.edit_buffer().unwrap(), "true");
 }
 
 #[test]
@@ -697,7 +697,7 @@ fn test_start_editing_null_value() {
     state.cursor_mut().set_path(vec![0]);
     state.start_editing();
 
-    assert_eq!(state.edit_buffer().unwrap(), "");
+    assert_eq!(state.edit_buffer().unwrap(), "null");
 }
 
 #[test]
@@ -733,7 +733,8 @@ fn test_commit_editing_string() {
     state.cursor_mut().set_path(vec![0]);
     state.start_editing();
 
-    // Type new value
+    // Clear pre-populated value and type new value
+    state.clear_edit_buffer();
     state.push_to_edit_buffer('B');
     state.push_to_edit_buffer('o');
     state.push_to_edit_buffer('b');
@@ -765,6 +766,8 @@ fn test_commit_editing_number() {
     state.cursor_mut().set_path(vec![0]);
     state.start_editing();
 
+    // Clear pre-populated value and type new value
+    state.clear_edit_buffer();
     for ch in "123.45".chars() {
         state.push_to_edit_buffer(ch);
     }
@@ -792,6 +795,8 @@ fn test_commit_editing_boolean() {
     state.cursor_mut().set_path(vec![0]);
     state.start_editing();
 
+    // Clear pre-populated value and type new value
+    state.clear_edit_buffer();
     for ch in "false".chars() {
         state.push_to_edit_buffer(ch);
     }
@@ -819,6 +824,8 @@ fn test_commit_editing_null() {
     state.cursor_mut().set_path(vec![0]);
     state.start_editing();
 
+    // Clear pre-populated value and type new value
+    state.clear_edit_buffer();
     for ch in "null".chars() {
         state.push_to_edit_buffer(ch);
     }

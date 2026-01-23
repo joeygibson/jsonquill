@@ -1230,9 +1230,26 @@ impl EditorState {
                 crate::document::node::JsonValue::Object(_) | crate::document::node::JsonValue::Array(_) => {
                     return; // Can't edit containers
                 }
-                _ => {
-                    // Start with empty buffer for inserting new value
-                    self.edit_buffer = Some(String::new());
+                crate::document::node::JsonValue::String(s) => {
+                    // Pre-populate with current string value (without JSON quotes)
+                    self.edit_buffer = Some(s.clone());
+                }
+                crate::document::node::JsonValue::Number(n) => {
+                    // Pre-populate with current number value
+                    let num_str = if n.fract() == 0.0 && n.is_finite() {
+                        format!("{:.0}", n)
+                    } else {
+                        n.to_string()
+                    };
+                    self.edit_buffer = Some(num_str);
+                }
+                crate::document::node::JsonValue::Boolean(b) => {
+                    // Pre-populate with current boolean value
+                    self.edit_buffer = Some(b.to_string());
+                }
+                crate::document::node::JsonValue::Null => {
+                    // Pre-populate with "null"
+                    self.edit_buffer = Some("null".to_string());
                 }
             }
         }

@@ -157,7 +157,8 @@ Esc         - Return to NORMAL mode
 q           - Quit (warns if unsaved, use :q! to force)
 
 # INSERT mode
-<chars>     - Type to edit the value
+When you press `i` to edit a value, the current value is pre-populated in the edit buffer.
+<chars>     - Type to edit the value (appends to existing content)
 Backspace   - Delete last character
 Enter       - Commit changes and return to NORMAL mode
 Esc         - Cancel editing and return to NORMAL mode

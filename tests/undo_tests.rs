@@ -133,7 +133,8 @@ fn test_undo_after_edit() {
     state.set_mode(jeditor::editor::mode::EditorMode::Insert);
     state.start_editing();
 
-    // Type new value
+    // Clear pre-populated value and type new value
+    state.clear_edit_buffer();
     for ch in "new".chars() {
         state.push_to_edit_buffer(ch);
     }
