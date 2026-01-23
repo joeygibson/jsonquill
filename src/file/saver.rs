@@ -3,6 +3,7 @@
 //! This module provides functions to save `JsonTree` structures to files with
 //! atomic write operations and optional backup creation.
 
+use crate::config::Config;
 use crate::document::node::{JsonNode, JsonValue};
 use crate::document::tree::JsonTree;
 use anyhow::{Context, Result};
@@ -16,12 +17,13 @@ use std::path::Path;
 /// then renames) to prevent data loss on crashes. Optionally creates a backup
 /// of the original file before writing.
 ///
+/// For JSONL documents (JsonValue::JsonlRoot), saves in line-by-line format.
+///
 /// # Arguments
 ///
 /// * `path` - The path where the JSON file should be saved
 /// * `tree` - The JSON tree to serialize and save
-/// * `indent` - Number of spaces to use for indentation (typically 2 or 4)
-/// * `create_backup` - If true and the file exists, creates a `.jsonquill.bak` backup
+/// * `config` - Configuration including indentation and backup settings
 ///
 /// # Returns
 ///
@@ -38,9 +40,11 @@ use std::path::Path;
 /// use jsonquill::file::saver::save_json_file;
 /// use jsonquill::document::node::{JsonNode, JsonValue};
 /// use jsonquill::document::tree::JsonTree;
+/// use jsonquill::config::Config;
 ///
 /// let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![])));
-/// save_json_file("output.json", &tree, 2, true).unwrap();
+/// let config = Config::default();
+/// save_json_file("output.json", &tree, &config).unwrap();
 /// ```
 ///
 /// # Errors
@@ -60,19 +64,23 @@ use std::path::Path;
 pub fn save_json_file<P: AsRef<Path>>(
     path: P,
     tree: &JsonTree,
-    indent: usize,
-    create_backup: bool,
+    config: &Config,
 ) -> Result<()> {
     let path = path.as_ref();
 
+    // Check if this is a JSONL document
+    if matches!(tree.root().value(), JsonValue::JsonlRoot(_)) {
+        return save_jsonl(path, tree, config);
+    }
+
     // Create backup if requested and file exists
-    if create_backup && path.exists() {
+    if config.create_backup && path.exists() {
         let backup_path = path.with_extension("jsonquill.bak");
         fs::copy(path, backup_path).context("Failed to create backup")?;
     }
 
     // Serialize to JSON
-    let json_str = serialize_node(tree.root(), indent, 0);
+    let json_str = serialize_node(tree.root(), config.indent_size, 0);
 
     // Write to temp file first (atomic save)
     let temp_path = path.with_extension("tmp");
@@ -82,6 +90,69 @@ pub fn save_json_file<P: AsRef<Path>>(
     fs::rename(&temp_path, path).context("Failed to rename temp file")?;
 
     Ok(())
+}
+
+/// Saves a JSONL document to a file.
+///
+/// Each line is saved as a separate JSON object (one per line).
+fn save_jsonl<P: AsRef<Path>>(
+    path: P,
+    tree: &JsonTree,
+    config: &Config,
+) -> Result<()> {
+    let path = path.as_ref();
+
+    // Create backup if requested and file exists
+    if config.create_backup && path.exists() {
+        let backup_path = path.with_extension("jsonquill.bak");
+        fs::copy(path, backup_path).context("Failed to create backup")?;
+    }
+
+    let mut output = String::new();
+
+    if let JsonValue::JsonlRoot(lines) = tree.root().value() {
+        for node in lines {
+            let json_value = node_to_serde_value(node);
+            let line = serde_json::to_string(&json_value)?;
+            output.push_str(&line);
+            output.push('\n');
+        }
+    }
+
+    // Write to temp file first (atomic save)
+    let temp_path = path.with_extension("tmp");
+    fs::write(&temp_path, output).context("Failed to write temp file")?;
+
+    // Rename temp to target (atomic operation)
+    fs::rename(&temp_path, path).context("Failed to rename temp file")?;
+
+    Ok(())
+}
+
+/// Converts a JsonNode to serde_json::Value for serialization.
+fn node_to_serde_value(node: &JsonNode) -> serde_json::Value {
+    match node.value() {
+        JsonValue::Null => serde_json::Value::Null,
+        JsonValue::Boolean(b) => serde_json::Value::Bool(*b),
+        JsonValue::Number(n) => {
+            serde_json::Number::from_f64(*n)
+                .map(serde_json::Value::Number)
+                .unwrap_or(serde_json::Value::Null)
+        }
+        JsonValue::String(s) => serde_json::Value::String(s.clone()),
+        JsonValue::Array(elements) | JsonValue::JsonlRoot(elements) => {
+            serde_json::Value::Array(
+                elements.iter().map(node_to_serde_value).collect()
+            )
+        }
+        JsonValue::Object(entries) => {
+            let map = entries
+                .iter()
+                .map(|(k, v)| (k.clone(), node_to_serde_value(v)))
+                .collect();
+            serde_json::Value::Object(map)
+        }
+    }
 }
 
 /// Recursively serializes a JSON node to a formatted string.

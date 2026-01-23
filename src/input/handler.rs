@@ -1,6 +1,7 @@
 //! Input event handler for polling and processing keyboard events.
 
 use super::keys::{map_key_event, InputEvent};
+use crate::config::Config;
 use crate::editor::state::EditorState;
 use crate::editor::mode::EditorMode;
 use anyhow::{Context, Result};
@@ -562,7 +563,7 @@ impl InputHandler {
                         // Save the file
                         if let Some(filename) = state.filename() {
                             use crate::file::saver::save_json_file;
-                            match save_json_file(filename, state.tree(), 2, false) {
+                            match save_json_file(filename, state.tree(), &Config::default()) {
                                 Ok(_) => {
                                     state.clear_dirty();
                                     return Ok(true); // Quit after saving
@@ -808,7 +809,7 @@ impl InputHandler {
                     return Ok(false);
                 }
 
-                match save_json_file(&filename, state.tree(), 2, false) {
+                match save_json_file(&filename, state.tree(), &Config::default()) {
                     Ok(_) => {
                         state.set_filename(filename.clone());
                         state.clear_dirty();
@@ -828,7 +829,7 @@ impl InputHandler {
             }
             "w" => {
                 if let Some(filename) = state.filename().map(|s| s.to_string()) {
-                    match save_json_file(&filename, state.tree(), 2, false) {
+                    match save_json_file(&filename, state.tree(), &Config::default()) {
                         Ok(_) => {
                             state.clear_dirty();
                             state.set_message(
@@ -867,7 +868,7 @@ impl InputHandler {
                     return Ok(false);
                 }
 
-                match save_json_file(&filename, state.tree(), 2, false) {
+                match save_json_file(&filename, state.tree(), &Config::default()) {
                     Ok(_) => {
                         state.set_filename(filename);
                         state.clear_dirty();
@@ -884,7 +885,7 @@ impl InputHandler {
             }
             "wq" | "x" => {
                 if let Some(filename) = state.filename().map(|s| s.to_string()) {
-                    match save_json_file(&filename, state.tree(), 2, false) {
+                    match save_json_file(&filename, state.tree(), &Config::default()) {
                         Ok(_) => {
                             state.clear_dirty();
                             return Ok(true);
