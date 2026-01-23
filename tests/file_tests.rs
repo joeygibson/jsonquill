@@ -106,8 +106,8 @@ fn test_save_simple_json_file() {
     let content = std::fs::read_to_string(temp_file.path()).unwrap();
     assert!(content.contains("\"name\""));
     assert!(content.contains("\"test\""));
-    assert!(content.contains("{\n"));
-    assert!(content.contains("\n}"));
+    // Small objects with scalar values use compact formatting
+    assert_eq!(content.trim(), "{\"name\": \"test\"}");
 }
 
 #[test]
@@ -160,9 +160,14 @@ fn test_save_complex_json_file() {
 
 #[test]
 fn test_save_with_different_indentation() {
+    // Use nested structure to ensure multi-line formatting
+    let inner = vec![(
+        "nested_key".to_string(),
+        JsonNode::new(JsonValue::String("nested_value".to_string())),
+    )];
     let obj = vec![(
         "key".to_string(),
-        JsonNode::new(JsonValue::String("value".to_string())),
+        JsonNode::new(JsonValue::Object(inner)),
     )];
     let tree = JsonTree::new(JsonNode::new(JsonValue::Object(obj)));
 

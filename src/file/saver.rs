@@ -90,6 +90,9 @@ pub fn save_json_file<P: AsRef<Path>>(
 /// with proper indentation and formatting. It handles all JSON value types
 /// including nested objects and arrays.
 ///
+/// For arrays and objects containing only scalar values, uses compact single-line
+/// formatting if the result would be reasonably short (< 80 characters).
+///
 /// # Arguments
 ///
 /// * `node` - The JSON node to serialize
@@ -113,6 +116,15 @@ fn serialize_node(
                 return "{}".to_string();
             }
 
+            // Try compact formatting for objects with only scalar values
+            if should_use_compact_format_object(entries) {
+                let compact = serialize_object_compact(entries);
+                if compact.len() <= 80 {
+                    return compact;
+                }
+            }
+
+            // Use multi-line formatting
             let mut result = "{\n".to_string();
             for (i, (key, value)) in entries.iter().enumerate() {
                 result.push_str(&next_indent);
@@ -136,6 +148,15 @@ fn serialize_node(
                 return "[]".to_string();
             }
 
+            // Try compact formatting for arrays with only scalar values
+            if should_use_compact_format_array(elements) {
+                let compact = serialize_array_compact(elements);
+                if compact.len() <= 80 {
+                    return compact;
+                }
+            }
+
+            // Use multi-line formatting
             let mut result = "[\n".to_string();
             for (i, element) in elements.iter().enumerate() {
                 result.push_str(&next_indent);
@@ -164,6 +185,67 @@ fn serialize_node(
         }
         JsonValue::Boolean(b) => b.to_string(),
         JsonValue::Null => "null".to_string(),
+    }
+}
+
+/// Checks if an object should use compact (single-line) formatting.
+///
+/// Returns true if all values in the object are scalar (not containers).
+fn should_use_compact_format_object(entries: &[(String, JsonNode)]) -> bool {
+    entries.iter().all(|(_, node)| !node.value().is_container())
+}
+
+/// Checks if an array should use compact (single-line) formatting.
+///
+/// Returns true if all elements in the array are scalar (not containers).
+fn should_use_compact_format_array(elements: &[JsonNode]) -> bool {
+    elements.iter().all(|node| !node.value().is_container())
+}
+
+/// Serializes an object in compact (single-line) format.
+///
+/// Example: `{"a": 1, "b": "hello", "c": true}`
+fn serialize_object_compact(entries: &[(String, JsonNode)]) -> String {
+    let parts: Vec<String> = entries
+        .iter()
+        .map(|(key, value)| {
+            format!(
+                "\"{}\": {}",
+                escape_json_string(key),
+                serialize_scalar(value.value())
+            )
+        })
+        .collect();
+    format!("{{{}}}", parts.join(", "))
+}
+
+/// Serializes an array in compact (single-line) format.
+///
+/// Example: `[1, 2, 3, 4, 5]`
+fn serialize_array_compact(elements: &[JsonNode]) -> String {
+    let parts: Vec<String> = elements
+        .iter()
+        .map(|node| serialize_scalar(node.value()))
+        .collect();
+    format!("[{}]", parts.join(", "))
+}
+
+/// Serializes a scalar value (not a container) to a string.
+///
+/// This is a simplified version of serialize_node for scalar values only.
+fn serialize_scalar(value: &JsonValue) -> String {
+    match value {
+        JsonValue::String(s) => format!("\"{}\"", escape_json_string(s)),
+        JsonValue::Number(n) => {
+            if n.fract() == 0.0 && n.is_finite() {
+                format!("{:.0}", n)
+            } else {
+                n.to_string()
+            }
+        }
+        JsonValue::Boolean(b) => b.to_string(),
+        JsonValue::Null => "null".to_string(),
+        _ => panic!("serialize_scalar called on non-scalar value"),
     }
 }
 
@@ -265,7 +347,8 @@ mod tests {
         )];
         let node = JsonNode::new(JsonValue::Object(obj));
         let result = serialize_node(&node, 2, 0);
-        assert_eq!(result, "{\n  \"name\": \"Alice\"\n}");
+        // Small scalar objects use compact formatting
+        assert_eq!(result, "{\"name\": \"Alice\"}");
     }
 
     #[test]
@@ -277,7 +360,8 @@ mod tests {
         ];
         let node = JsonNode::new(JsonValue::Array(arr));
         let result = serialize_node(&node, 2, 0);
-        assert_eq!(result, "[\n  1,\n  2,\n  3\n]");
+        // Small scalar arrays use compact formatting
+        assert_eq!(result, "[1, 2, 3]");
     }
 
     #[test]
@@ -292,7 +376,8 @@ mod tests {
         )];
         let node = JsonNode::new(JsonValue::Object(outer));
         let result = serialize_node(&node, 2, 0);
-        assert_eq!(result, "{\n  \"user\": {\n    \"age\": 30\n  }\n}");
+        // Inner object with single scalar value uses compact formatting
+        assert_eq!(result, "{\n  \"user\": {\"age\": 30}\n}");
     }
 
     #[test]
@@ -303,5 +388,54 @@ mod tests {
         assert_eq!(escape_json_string("hello\nworld"), "hello\\nworld");
         assert_eq!(escape_json_string("hello\tworld"), "hello\\tworld");
         assert_eq!(escape_json_string("hello\rworld"), "hello\\rworld");
+    }
+
+    #[test]
+    fn test_compact_array_with_scalars() {
+        let arr = vec![
+            JsonNode::new(JsonValue::Number(1.0)),
+            JsonNode::new(JsonValue::String("test".to_string())),
+            JsonNode::new(JsonValue::Boolean(true)),
+            JsonNode::new(JsonValue::Null),
+        ];
+        let node = JsonNode::new(JsonValue::Array(arr));
+        let result = serialize_node(&node, 2, 0);
+        assert_eq!(result, "[1, \"test\", true, null]");
+    }
+
+    #[test]
+    fn test_compact_object_with_scalars() {
+        let obj = vec![
+            ("a".to_string(), JsonNode::new(JsonValue::Number(1.0))),
+            ("b".to_string(), JsonNode::new(JsonValue::String("test".to_string()))),
+            ("c".to_string(), JsonNode::new(JsonValue::Boolean(false))),
+        ];
+        let node = JsonNode::new(JsonValue::Object(obj));
+        let result = serialize_node(&node, 2, 0);
+        assert_eq!(result, "{\"a\": 1, \"b\": \"test\", \"c\": false}");
+    }
+
+    #[test]
+    fn test_nested_containers_use_multiline() {
+        // Array containing an object should use multi-line formatting
+        let inner = vec![
+            ("key".to_string(), JsonNode::new(JsonValue::String("value".to_string()))),
+        ];
+        let arr = vec![JsonNode::new(JsonValue::Object(inner))];
+        let node = JsonNode::new(JsonValue::Array(arr));
+        let result = serialize_node(&node, 2, 0);
+        assert!(result.contains('\n'), "Nested containers should use multi-line formatting");
+    }
+
+    #[test]
+    fn test_long_compact_array_uses_multiline() {
+        // Create an array that would exceed 80 characters in compact format
+        let arr: Vec<JsonNode> = (0..30)
+            .map(|i| JsonNode::new(JsonValue::Number(i as f64)))
+            .collect();
+        let node = JsonNode::new(JsonValue::Array(arr));
+        let result = serialize_node(&node, 2, 0);
+        // Should fall back to multi-line because compact would be > 80 chars
+        assert!(result.contains('\n'), "Long arrays should use multi-line formatting");
     }
 }
