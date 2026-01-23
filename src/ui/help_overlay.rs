@@ -36,7 +36,7 @@ pub fn render_help_overlay(f: &mut Frame, colors: &ThemeColors, scroll: usize) {
         ]),
         Line::from(vec![
             Span::styled("  j/k           ", Style::default().fg(colors.number)),
-            Span::raw("Move cursor down/up"),
+            Span::raw("Move cursor down/up (prefix with count)"),
         ]),
         Line::from(vec![
             Span::styled("  h/l           ", Style::default().fg(colors.number)),
@@ -49,6 +49,10 @@ pub fn render_help_overlay(f: &mut Frame, colors: &ThemeColors, scroll: usize) {
         Line::from(vec![
             Span::styled("  G             ", Style::default().fg(colors.number)),
             Span::raw("Jump to bottom of document"),
+        ]),
+        Line::from(vec![
+            Span::styled("  <count>g      ", Style::default().fg(colors.number)),
+            Span::raw("Jump to line <count> (e.g., 5g)"),
         ]),
         Line::from(vec![
             Span::styled("  Ctrl-d        ", Style::default().fg(colors.number)),
@@ -84,11 +88,11 @@ pub fn render_help_overlay(f: &mut Frame, colors: &ThemeColors, scroll: usize) {
         ]),
         Line::from(vec![
             Span::styled("  dd            ", Style::default().fg(colors.number)),
-            Span::raw("Delete current node"),
+            Span::raw("Delete current node (prefix with count)"),
         ]),
         Line::from(vec![
             Span::styled("  yy            ", Style::default().fg(colors.number)),
-            Span::raw("Yank (copy) current node"),
+            Span::raw("Yank (copy) current node (prefix with count)"),
         ]),
         Line::from(vec![
             Span::styled("  p/P           ", Style::default().fg(colors.number)),
