@@ -620,3 +620,205 @@ fn test_add_to_root_scalar_fails() {
         panic!("Expected error message");
     }
 }
+
+#[test]
+fn test_add_field_preserves_sibling_expansion_state() {
+    use jeditor::editor::state::EditorState;
+    use jeditor::document::node::{JsonNode, JsonValue};
+    use jeditor::document::tree::JsonTree;
+
+    // Create a document with nested objects
+    let inner1 = vec![
+        ("x".to_string(), JsonNode::new(JsonValue::Number(1.0))),
+        ("y".to_string(), JsonNode::new(JsonValue::Number(2.0))),
+    ];
+    let inner2 = vec![
+        ("a".to_string(), JsonNode::new(JsonValue::Number(3.0))),
+        ("b".to_string(), JsonNode::new(JsonValue::Number(4.0))),
+    ];
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
+        ("first".to_string(), JsonNode::new(JsonValue::Object(inner1))),
+        ("second".to_string(), JsonNode::new(JsonValue::Object(inner2))),
+    ])));
+    let mut state = EditorState::new(tree);
+
+    // Expand both nested objects
+    if !state.tree_view().is_expanded(&[0]) {
+        state.tree_view_mut().toggle_expand(&[0]);
+    }
+    if !state.tree_view().is_expanded(&[1]) {
+        state.tree_view_mut().toggle_expand(&[1]);
+    }
+    state.rebuild_tree_view();
+
+    // Verify both are expanded
+    assert!(state.tree_view().is_expanded(&[0]));
+    assert!(state.tree_view().is_expanded(&[1]));
+
+    // Add a new field after "first" (between index 0 and 1)
+    state.cursor_mut().set_path(vec![0]);  // Position on "first"
+    state.start_add_operation();
+
+    // Enter key "middle"
+    for ch in "middle".chars() {
+        state.push_to_add_key_buffer(ch);
+    }
+    state.transition_add_to_value();
+
+    // Enter value "test"
+    for ch in "test".chars() {
+        state.push_to_edit_buffer(ch);
+    }
+
+    // Commit the add
+    let result = state.commit_add_operation();
+    assert!(result.is_ok());
+
+    // CRITICAL: Both sibling objects should still be expanded
+    // "first" stays at [0] - should still be expanded
+    assert!(
+        state.tree_view().is_expanded(&[0]),
+        "First object at [0] should still be expanded"
+    );
+
+    // "second" moved from [1] to [2] - should still be expanded
+    assert!(
+        state.tree_view().is_expanded(&[2]),
+        "Second object (now at [2]) should still be expanded after insertion"
+    );
+}
+
+#[test]
+fn test_add_field_preserves_child_expansion_state() {
+    use jeditor::editor::state::EditorState;
+    use jeditor::document::node::{JsonNode, JsonValue};
+    use jeditor::document::tree::JsonTree;
+
+    // Simulate the exact scenario: company with headquarters that has nested structure
+    let headquarters = vec![
+        ("address".to_string(), JsonNode::new(JsonValue::String("123 Main St".to_string()))),
+        ("city".to_string(), JsonNode::new(JsonValue::String("NYC".to_string()))),
+    ];
+    let company = vec![
+        ("headquarters".to_string(), JsonNode::new(JsonValue::Object(headquarters))),
+    ];
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
+        ("company".to_string(), JsonNode::new(JsonValue::Object(company))),
+    ])));
+    let mut state = EditorState::new(tree);
+
+    // Expand the nested structure:
+    // [0] = company object
+    // [0, 0] = headquarters object (child of company)
+    if !state.tree_view().is_expanded(&[0]) {
+        state.tree_view_mut().toggle_expand(&[0]);
+    }
+    if !state.tree_view().is_expanded(&[0, 0]) {
+        state.tree_view_mut().toggle_expand(&[0, 0]);
+    }
+    state.rebuild_tree_view();
+
+    // Verify headquarters is expanded before adding
+    assert!(state.tree_view().is_expanded(&[0, 0]), "headquarters should be expanded initially");
+
+    // Position cursor on headquarters (the first field of company)
+    state.cursor_mut().set_path(vec![0, 0]);
+
+    // Add "employees: 23" after headquarters
+    state.start_add_operation();
+
+    // Enter key "employees"
+    for ch in "employees".chars() {
+        state.push_to_add_key_buffer(ch);
+    }
+    state.transition_add_to_value();
+
+    // Enter value "23"
+    for ch in "23".chars() {
+        state.push_to_edit_buffer(ch);
+    }
+
+    // Commit the add
+    let result = state.commit_add_operation();
+    assert!(result.is_ok());
+
+    // Debug: print expanded paths before and after
+    println!("Expanded paths after commit:");
+    for path in &[vec![0], vec![0, 0], vec![0, 0, 0], vec![0, 1]] {
+        println!("  {:?}: {}", path, state.tree_view().is_expanded(path));
+    }
+
+    // CRITICAL: headquarters should STILL be expanded after adding employees
+    assert!(
+        state.tree_view().is_expanded(&[0, 0]),
+        "headquarters at [0, 0] should still be expanded after adding employees at [0, 1]"
+    );
+}
+
+#[test]
+fn test_add_field_with_detailed_expansion_tracking() {
+    use jeditor::editor::state::EditorState;
+    use jeditor::document::node::{JsonNode, JsonValue};
+    use jeditor::document::tree::JsonTree;
+
+    // Create a more complex structure to test
+    let address_obj = vec![
+        ("street".to_string(), JsonNode::new(JsonValue::String("123 Main".to_string()))),
+        ("city".to_string(), JsonNode::new(JsonValue::String("NYC".to_string()))),
+        ("zip".to_string(), JsonNode::new(JsonValue::String("10001".to_string()))),
+    ];
+    let headquarters = vec![
+        ("address".to_string(), JsonNode::new(JsonValue::Object(address_obj))),
+        ("phone".to_string(), JsonNode::new(JsonValue::String("555-1234".to_string()))),
+    ];
+    let company = vec![
+        ("name".to_string(), JsonNode::new(JsonValue::String("Acme Corp".to_string()))),
+        ("headquarters".to_string(), JsonNode::new(JsonValue::Object(headquarters))),
+    ];
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
+        ("company".to_string(), JsonNode::new(JsonValue::Object(company))),
+    ])));
+    let mut state = EditorState::new(tree);
+
+    // EditorState::new() auto-expands all nodes, so they should already be expanded
+    println!("Initial expansion state (should all be true):");
+    println!("  [0] (company): {}", state.tree_view().is_expanded(&[0]));
+    println!("  [0, 1] (headquarters): {}", state.tree_view().is_expanded(&[0, 1]));
+    println!("  [0, 1, 0] (address): {}", state.tree_view().is_expanded(&[0, 1, 0]));
+
+    println!("\n=== BEFORE adding employees ===");
+    println!("Tree structure:");
+    println!("[0] = company (expanded: {})", state.tree_view().is_expanded(&[0]));
+    println!("[0, 0] = name");
+    println!("[0, 1] = headquarters (expanded: {})", state.tree_view().is_expanded(&[0, 1]));
+    println!("[0, 1, 0] = address (expanded: {})", state.tree_view().is_expanded(&[0, 1, 0]));
+    println!("[0, 1, 1] = phone");
+
+    // Position on "headquarters" to add after it
+    state.cursor_mut().set_path(vec![0, 1]);
+
+    // Add "employees: 23"
+    state.start_add_operation();
+    for ch in "employees".chars() {
+        state.push_to_add_key_buffer(ch);
+    }
+    state.transition_add_to_value();
+    for ch in "23".chars() {
+        state.push_to_edit_buffer(ch);
+    }
+    state.commit_add_operation().unwrap();
+
+    println!("\n=== AFTER adding employees ===");
+    println!("Tree structure:");
+    println!("[0] = company (expanded: {})", state.tree_view().is_expanded(&[0]));
+    println!("[0, 0] = name");
+    println!("[0, 1] = headquarters (expanded: {})", state.tree_view().is_expanded(&[0, 1]));
+    println!("[0, 1, 0] = address (expanded: {})", state.tree_view().is_expanded(&[0, 1, 0]));
+    println!("[0, 1, 1] = phone");
+    println!("[0, 2] = employees (NEW)");
+
+    // Verify everything is still expanded
+    assert!(state.tree_view().is_expanded(&[0]), "company should be expanded");
+    assert!(state.tree_view().is_expanded(&[0, 1]), "headquarters should be expanded");
+    assert!(state.tree_view().is_expanded(&[0, 1, 0]), "address should be expanded");
+}
