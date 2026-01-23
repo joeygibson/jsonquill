@@ -162,8 +162,27 @@ impl UI {
                 &self.theme.colors,
             );
 
-            // Render edit prompt if in insert mode with active buffer, otherwise message area
-            if let Some(buffer) = state.edit_buffer() {
+            // Render key prompt if in AwaitingKey stage
+            use crate::editor::state::AddModeStage;
+            if matches!(state.add_mode_stage(), AddModeStage::AwaitingKey) {
+                // Render key prompt similar to command/search prompt
+                use ratatui::text::{Line, Span};
+                use ratatui::style::{Style, Modifier};
+                use ratatui::widgets::Paragraph;
+
+                let key_prompt = format!("Key: {}", state.add_key_buffer());
+                let key_line = Line::from(Span::styled(
+                    key_prompt,
+                    Style::default()
+                        .fg(self.theme.colors.foreground)
+                        .bg(self.theme.colors.background)
+                        .add_modifier(Modifier::BOLD),
+                ));
+                let key_paragraph = Paragraph::new(key_line)
+                    .style(Style::default().bg(self.theme.colors.background));
+                f.render_widget(key_paragraph, chunks[2]);
+            } else if let Some(buffer) = state.edit_buffer() {
+                // Render edit prompt if in insert mode with active buffer
                 edit_prompt::render_edit_prompt(
                     f,
                     chunks[2],
