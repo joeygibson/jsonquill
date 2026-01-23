@@ -134,7 +134,44 @@ impl TreeViewState {
     /// This should be called after the tree changes or expand/collapse state changes.
     pub fn rebuild(&mut self, tree: &JsonTree) {
         self.lines.clear();
-        self.build_lines(tree.root(), &[], 0);
+
+        // Handle JSONL root specially - render as flat list
+        match tree.root().value() {
+            JsonValue::JsonlRoot(lines) => {
+                self.render_jsonl_root(lines);
+            }
+            _ => {
+                self.build_lines(tree.root(), &[], 0);
+            }
+        }
+    }
+
+    /// Renders JSONL root as a flat list of collapsed lines.
+    ///
+    /// Each line in the JSONL document is shown at depth 0, collapsed by default.
+    /// Users can expand individual lines to see their contents.
+    fn render_jsonl_root(&mut self, lines: &[JsonNode]) {
+        for (idx, node) in lines.iter().enumerate() {
+            let path = vec![idx];
+            let is_expanded = self.is_expanded(&path);
+
+            // Show collapsed preview for the line itself
+            let preview = format_collapsed_preview(node, 60);
+            self.lines.push(TreeViewLine {
+                path: path.clone(),
+                depth: 0,
+                key: None,
+                value_type: ValueType::from_json_value(node.value()),
+                value_preview: preview,
+                expandable: true,
+                expanded: is_expanded,
+            });
+
+            // If expanded, render the contents of the line
+            if is_expanded {
+                self.build_lines(node, &path, 1);
+            }
+        }
     }
 
     /// Expands all container nodes (objects and arrays) in the tree.
@@ -901,5 +938,60 @@ mod tests {
         // This should also not panic
         let preview = format_collapsed_preview(&arr, 40);
         assert!(preview.contains("..."));
+    }
+
+    #[test]
+    fn test_render_jsonl_root() {
+        use crate::document::node::{JsonNode, JsonValue};
+        use crate::document::tree::JsonTree;
+
+        let lines = vec![
+            JsonNode::new(JsonValue::Object(vec![
+                ("id".to_string(), JsonNode::new(JsonValue::Number(1.0))),
+            ])),
+            JsonNode::new(JsonValue::Object(vec![
+                ("id".to_string(), JsonNode::new(JsonValue::Number(2.0))),
+            ])),
+        ];
+
+        let tree = JsonTree::new(JsonNode::new(JsonValue::JsonlRoot(lines)));
+        let mut state = TreeViewState::new();
+        state.rebuild(&tree);
+
+        // Should have 2 lines, both collapsed
+        assert_eq!(state.lines().len(), 2);
+        assert!(state.lines()[0].value_preview.contains("id: 1"));
+        assert_eq!(state.lines()[0].depth, 0);
+        assert!(state.lines()[0].expandable);
+        assert!(!state.lines()[0].expanded);
+    }
+
+    #[test]
+    fn test_expand_jsonl_line() {
+        use crate::document::node::{JsonNode, JsonValue};
+        use crate::document::tree::JsonTree;
+
+        let lines = vec![
+            JsonNode::new(JsonValue::Object(vec![
+                ("id".to_string(), JsonNode::new(JsonValue::Number(1.0))),
+                ("name".to_string(), JsonNode::new(JsonValue::String("Alice".to_string()))),
+            ])),
+        ];
+
+        let tree = JsonTree::new(JsonNode::new(JsonValue::JsonlRoot(lines)));
+        let mut state = TreeViewState::new();
+        state.rebuild(&tree);
+
+        // Initially collapsed
+        assert_eq!(state.lines().len(), 1);
+
+        // Expand first line
+        state.toggle_expand(&vec![0]);
+        state.rebuild(&tree);
+
+        // Should now show 3 lines: object + 2 fields
+        assert!(state.lines().len() > 1);
+        assert_eq!(state.lines()[0].depth, 0); // The JSONL line itself
+        assert!(state.lines()[0].expanded);
     }
 }
