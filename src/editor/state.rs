@@ -116,7 +116,6 @@ pub struct EditorState {
     scroll_offset: usize,
     viewport_height: usize,
     undo_tree: super::undo::UndoTree,
-    undo_limit: usize,
 }
 
 impl EditorState {
@@ -186,7 +185,6 @@ impl EditorState {
             scroll_offset: 0,
             viewport_height: 20,
             undo_tree,
-            undo_limit,
         }
     }
 
