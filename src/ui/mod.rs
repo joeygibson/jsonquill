@@ -32,15 +32,16 @@ use crate::theme::Theme;
 /// use jeditor::editor::state::EditorState;
 /// use jeditor::document::tree::JsonTree;
 /// use jeditor::document::node::{JsonNode, JsonValue};
-/// use ratatui::backend::CrosstermBackend;
+/// use ratatui::backend::TermionBackend;
 /// use ratatui::Terminal;
 /// use std::io;
+/// use termion::raw::IntoRawMode;
 ///
 /// let theme = get_builtin_theme("default-dark").unwrap();
 /// let ui = UI::new(theme);
 /// let tree = JsonTree::new(JsonNode::new(JsonValue::Null));
 /// let state = EditorState::new(tree);
-/// let backend = CrosstermBackend::new(io::stdout());
+/// let backend = TermionBackend::new(io::stdout().into_raw_mode().unwrap());
 /// let mut terminal = Terminal::new(backend).unwrap();
 /// // ui.render(&mut terminal, &state).unwrap();
 /// ```
@@ -110,15 +111,16 @@ impl UI {
     /// use jeditor::editor::state::EditorState;
     /// use jeditor::document::tree::JsonTree;
     /// use jeditor::document::node::{JsonNode, JsonValue};
-    /// use ratatui::backend::CrosstermBackend;
+    /// use ratatui::backend::TermionBackend;
     /// use ratatui::Terminal;
     /// use std::io;
+    /// use termion::raw::IntoRawMode;
     ///
     /// let theme = get_builtin_theme("default-dark").unwrap();
     /// let ui = UI::new(theme);
     /// let tree = JsonTree::new(JsonNode::new(JsonValue::Null));
     /// let mut state = EditorState::new(tree);
-    /// let backend = CrosstermBackend::new(io::stdout());
+    /// let backend = TermionBackend::new(io::stdout().into_raw_mode().unwrap());
     /// let mut terminal = Terminal::new(backend).unwrap();
     /// ui.render(&mut terminal, &mut state).unwrap();
     /// ```

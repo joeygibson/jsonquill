@@ -5,7 +5,7 @@ use crate::editor::state::EditorState;
 use crate::editor::mode::EditorMode;
 use anyhow::{Context, Result};
 use std::fs::File;
-use std::io::{self, Read};
+use std::io::{self};
 use std::time::Duration;
 use termion::event::{Event, Key};
 use termion::input::TermRead;
@@ -65,7 +65,7 @@ impl InputHandler {
     /// use jeditor::input::InputHandler;
     /// use std::time::Duration;
     ///
-    /// let handler = InputHandler::new();
+    /// let mut handler = InputHandler::new();
     /// let event = handler.poll_event(Duration::from_millis(100)).unwrap();
     /// ```
     pub fn poll_event(&mut self, _timeout: Duration) -> Result<Option<Event>> {
@@ -95,7 +95,7 @@ impl InputHandler {
     ///
     /// # Arguments
     ///
-    /// * `event` - The crossterm Event to handle
+    /// * `event` - The termion Event to handle
     /// * `state` - The editor state to update
     ///
     /// # Returns
@@ -113,12 +113,12 @@ impl InputHandler {
     /// use jeditor::editor::state::EditorState;
     /// use jeditor::document::tree::JsonTree;
     /// use jeditor::document::node::{JsonNode, JsonValue};
-    /// use crossterm::event::{Event, KeyCode, KeyEvent, KeyModifiers};
+    /// use termion::event::{Event, Key};
     ///
     /// let handler = InputHandler::new();
     /// let tree = JsonTree::new(JsonNode::new(JsonValue::Null));
     /// let mut state = EditorState::new(tree);
-    /// let event = Event::Key(KeyEvent::new(KeyCode::Char('q'), KeyModifiers::NONE));
+    /// let event = Event::Key(Key::Char('q'));
     /// let should_quit = handler.handle_event(event, &mut state).unwrap();
     /// assert!(should_quit);
     /// ```

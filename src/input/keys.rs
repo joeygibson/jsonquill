@@ -127,9 +127,9 @@ pub fn map_key_event(event: Event, mode: &EditorMode) -> InputEvent {
         },
         EditorMode::Insert => match key {
             Key::Esc => InputEvent::ExitMode,
-            Key::Char(c) => InputEvent::InsertCharacter(c),
-            Key::Backspace => InputEvent::InsertBackspace,
             Key::Char('\n') => InputEvent::InsertEnter,
+            Key::Backspace => InputEvent::InsertBackspace,
+            Key::Char(c) => InputEvent::InsertCharacter(c),
             _ => InputEvent::Unknown,
         },
         EditorMode::Command => match key {
