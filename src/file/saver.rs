@@ -21,7 +21,7 @@ use std::path::Path;
 /// * `path` - The path where the JSON file should be saved
 /// * `tree` - The JSON tree to serialize and save
 /// * `indent` - Number of spaces to use for indentation (typically 2 or 4)
-/// * `create_backup` - If true and the file exists, creates a `.jeditor.bak` backup
+/// * `create_backup` - If true and the file exists, creates a `.jsonquill.bak` backup
 ///
 /// # Returns
 ///
@@ -35,9 +35,9 @@ use std::path::Path;
 /// # Examples
 ///
 /// ```no_run
-/// use jeditor::file::saver::save_json_file;
-/// use jeditor::document::node::{JsonNode, JsonValue};
-/// use jeditor::document::tree::JsonTree;
+/// use jsonquill::file::saver::save_json_file;
+/// use jsonquill::document::node::{JsonNode, JsonValue};
+/// use jsonquill::document::tree::JsonTree;
 ///
 /// let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![])));
 /// save_json_file("output.json", &tree, 2, true).unwrap();
@@ -67,7 +67,7 @@ pub fn save_json_file<P: AsRef<Path>>(
 
     // Create backup if requested and file exists
     if create_backup && path.exists() {
-        let backup_path = path.with_extension("jeditor.bak");
+        let backup_path = path.with_extension("jsonquill.bak");
         fs::copy(path, backup_path).context("Failed to create backup")?;
     }
 

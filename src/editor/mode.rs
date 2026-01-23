@@ -13,7 +13,7 @@
 //! # Example
 //!
 //! ```
-//! use jeditor::editor::mode::EditorMode;
+//! use jsonquill::editor::mode::EditorMode;
 //!
 //! // Editor starts in Normal mode by default
 //! let mode = EditorMode::default();
@@ -45,7 +45,7 @@ use std::fmt;
 /// # Examples
 ///
 /// ```
-/// use jeditor::editor::mode::EditorMode;
+/// use jsonquill::editor::mode::EditorMode;
 ///
 /// let mode = EditorMode::Normal;
 /// assert_eq!(format!("{}", mode), "NORMAL");
@@ -71,7 +71,7 @@ impl fmt::Display for EditorMode {
     /// # Examples
     ///
     /// ```
-    /// use jeditor::editor::mode::EditorMode;
+    /// use jsonquill::editor::mode::EditorMode;
     ///
     /// assert_eq!(format!("{}", EditorMode::Normal), "NORMAL");
     /// assert_eq!(format!("{}", EditorMode::Insert), "INSERT");
@@ -95,7 +95,7 @@ impl Default for EditorMode {
     /// # Examples
     ///
     /// ```
-    /// use jeditor::editor::mode::EditorMode;
+    /// use jsonquill::editor::mode::EditorMode;
     ///
     /// let mode = EditorMode::default();
     /// assert_eq!(mode, EditorMode::Normal);

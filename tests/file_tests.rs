@@ -1,9 +1,9 @@
 //! Integration tests for file I/O operations.
 
-use jeditor::document::node::{JsonNode, JsonValue};
-use jeditor::document::tree::JsonTree;
-use jeditor::file::loader::load_json_file;
-use jeditor::file::saver::save_json_file;
+use jsonquill::document::node::{JsonNode, JsonValue};
+use jsonquill::document::tree::JsonTree;
+use jsonquill::file::loader::load_json_file;
+use jsonquill::file::saver::save_json_file;
 use std::io::Write;
 use tempfile::NamedTempFile;
 
@@ -208,7 +208,7 @@ fn test_save_creates_backup() {
     save_json_file(temp_file.path(), &tree, 2, true).unwrap();
 
     // Check backup exists
-    let backup_path = temp_file.path().with_extension("jeditor.bak");
+    let backup_path = temp_file.path().with_extension("jsonquill.bak");
     assert!(backup_path.exists());
 
     // Verify backup contains old content

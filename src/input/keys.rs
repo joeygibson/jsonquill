@@ -83,8 +83,8 @@ pub enum InputEvent {
 ///
 /// ```
 /// use termion::event::{Event, Key};
-/// use jeditor::editor::mode::EditorMode;
-/// use jeditor::input::keys::{map_key_event, InputEvent};
+/// use jsonquill::editor::mode::EditorMode;
+/// use jsonquill::input::keys::{map_key_event, InputEvent};
 ///
 /// let event = Event::Key(Key::Char('j'));
 /// let input_event = map_key_event(event, &EditorMode::Normal);

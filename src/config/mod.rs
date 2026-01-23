@@ -7,7 +7,7 @@
 //! # Example
 //!
 //! ```
-//! use jeditor::config::Config;
+//! use jsonquill::config::Config;
 //!
 //! // Use default configuration
 //! let config = Config::default();
@@ -133,7 +133,7 @@ impl Default for Config {
     /// # Example
     ///
     /// ```
-    /// use jeditor::config::Config;
+    /// use jsonquill::config::Config;
     ///
     /// let config = Config::default();
     /// assert_eq!(config.theme, "default-dark");
@@ -158,11 +158,11 @@ impl Default for Config {
 impl Config {
     /// Returns the path to the config file.
     ///
-    /// Uses `~/.config/jeditor/config.toml` on all platforms.
+    /// Uses `~/.config/jsonquill/config.toml` on all platforms.
     pub fn config_path() -> Option<std::path::PathBuf> {
         dirs::home_dir().map(|mut path| {
             path.push(".config");
-            path.push("jeditor");
+            path.push("jsonquill");
             path.push("config.toml");
             path
         })

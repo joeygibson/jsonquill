@@ -13,7 +13,7 @@
 //! # Example
 //!
 //! ```
-//! use jeditor::editor::mode::EditorMode;
+//! use jsonquill::editor::mode::EditorMode;
 //!
 //! // Editor starts in Normal mode
 //! let mode = EditorMode::default();

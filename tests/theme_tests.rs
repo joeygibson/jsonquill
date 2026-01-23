@@ -1,4 +1,4 @@
-use jeditor::theme::{get_builtin_theme, colors::ThemeColors};
+use jsonquill::theme::{get_builtin_theme, colors::ThemeColors};
 use ratatui::style::Color;
 
 // Tests for get_builtin_theme function

@@ -1,4 +1,4 @@
-use jeditor::config::Config;
+use jsonquill::config::Config;
 
 #[test]
 fn test_config_defaults() {

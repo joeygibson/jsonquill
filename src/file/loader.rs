@@ -29,7 +29,7 @@ use std::path::Path;
 /// # Examples
 ///
 /// ```no_run
-/// use jeditor::file::loader::load_json_file;
+/// use jsonquill::file::loader::load_json_file;
 ///
 /// let tree = load_json_file("config.json").unwrap();
 /// // tree is now ready for editing
@@ -65,7 +65,7 @@ pub fn load_json_file<P: AsRef<Path>>(path: P) -> Result<JsonTree> {
 /// # Examples
 ///
 /// ```no_run
-/// use jeditor::file::loader::load_json_from_stdin;
+/// use jsonquill::file::loader::load_json_from_stdin;
 ///
 /// // Usage: echo '{"key": "value"}' | cargo run -- -
 /// let tree = load_json_from_stdin().unwrap();

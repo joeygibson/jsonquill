@@ -6,19 +6,19 @@ use std::time::Duration;
 use termion::raw::IntoRawMode;
 use termion::screen::IntoAlternateScreen;
 
-use jeditor::document::node::{JsonNode, JsonValue};
-use jeditor::document::tree::JsonTree;
-use jeditor::editor::state::EditorState;
-use jeditor::file::loader::{load_json_file, load_json_from_stdin};
-use jeditor::input::InputHandler;
-use jeditor::theme::get_builtin_theme;
-use jeditor::ui::UI;
+use jsonquill::document::node::{JsonNode, JsonValue};
+use jsonquill::document::tree::JsonTree;
+use jsonquill::editor::state::EditorState;
+use jsonquill::file::loader::{load_json_file, load_json_from_stdin};
+use jsonquill::input::InputHandler;
+use jsonquill::theme::get_builtin_theme;
+use jsonquill::ui::UI;
 
-/// A terminal-based JSON editor with vim-style keybindings
+/// JSON Quill - A terminal-based JSON editor with vim-style keybindings
 #[derive(Parser)]
-#[command(name = "jeditor")]
+#[command(name = "jsonquill")]
 #[command(version)]
-#[command(about = "A terminal-based JSON editor with vim-style keybindings", long_about = None)]
+#[command(about = "JSON Quill - A terminal-based JSON editor with vim-style keybindings", long_about = None)]
 struct Cli {
     /// JSON file to edit (omit to read from stdin if piped, or create empty document if interactive)
     file: Option<String>,
@@ -89,7 +89,7 @@ fn main() -> Result<()> {
     terminal.clear()?;
 
     // Load config
-    use jeditor::config::Config;
+    use jsonquill::config::Config;
     let config = Config::load();
 
     // Initialize components

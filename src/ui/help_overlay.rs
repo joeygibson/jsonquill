@@ -23,7 +23,7 @@ pub fn render_help_overlay(f: &mut Frame, colors: &ThemeColors, scroll: usize) {
     f.render_widget(Clear, area);
 
     let block = Block::default()
-        .title(" jeditor Help ")
+        .title(" JSON Quill Help ")
         .title_alignment(Alignment::Center)
         .borders(Borders::ALL)
         .border_style(Style::default().fg(colors.info))

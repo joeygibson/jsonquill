@@ -54,8 +54,8 @@ impl ValueType {
     /// # Example
     ///
     /// ```
-    /// use jeditor::document::node::JsonValue;
-    /// use jeditor::ui::tree_view::ValueType;
+    /// use jsonquill::document::node::JsonValue;
+    /// use jsonquill::ui::tree_view::ValueType;
     ///
     /// let value = JsonValue::String("hello".to_string());
     /// assert_eq!(ValueType::from_json_value(&value), ValueType::String);
@@ -81,9 +81,9 @@ impl ValueType {
 /// # Example
 ///
 /// ```
-/// use jeditor::document::node::{JsonNode, JsonValue};
-/// use jeditor::document::tree::JsonTree;
-/// use jeditor::ui::tree_view::TreeViewState;
+/// use jsonquill::document::node::{JsonNode, JsonValue};
+/// use jsonquill::document::tree::JsonTree;
+/// use jsonquill::ui::tree_view::TreeViewState;
 ///
 /// let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
 ///     ("name".to_string(), JsonNode::new(JsonValue::String("Alice".to_string()))),
@@ -309,11 +309,11 @@ use crate::editor::cursor::Cursor;
 /// # Example
 ///
 /// ```no_run
-/// use jeditor::ui::tree_view::{render_tree_view, TreeViewState};
-/// use jeditor::editor::cursor::Cursor;
-/// use jeditor::theme::colors::ThemeColors;
-/// use jeditor::document::node::{JsonNode, JsonValue};
-/// use jeditor::document::tree::JsonTree;
+/// use jsonquill::ui::tree_view::{render_tree_view, TreeViewState};
+/// use jsonquill::editor::cursor::Cursor;
+/// use jsonquill::theme::colors::ThemeColors;
+/// use jsonquill::document::node::{JsonNode, JsonValue};
+/// use jsonquill::document::tree::JsonTree;
 /// use ratatui::backend::TestBackend;
 /// use ratatui::Terminal;
 /// use ratatui::layout::Rect;

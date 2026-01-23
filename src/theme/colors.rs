@@ -16,7 +16,7 @@ use ratatui::style::Color;
 /// # Examples
 ///
 /// ```
-/// use jeditor::theme::colors::ThemeColors;
+/// use jsonquill::theme::colors::ThemeColors;
 ///
 /// // Get the default dark theme colors
 /// let dark = ThemeColors::default_dark();
@@ -85,7 +85,7 @@ impl ThemeColors {
     /// # Examples
     ///
     /// ```
-    /// use jeditor::theme::colors::ThemeColors;
+    /// use jsonquill::theme::colors::ThemeColors;
     /// use ratatui::style::Color;
     ///
     /// let colors = ThemeColors::default_dark();
@@ -127,7 +127,7 @@ impl ThemeColors {
     /// # Examples
     ///
     /// ```
-    /// use jeditor::theme::colors::ThemeColors;
+    /// use jsonquill::theme::colors::ThemeColors;
     /// use ratatui::style::Color;
     ///
     /// let colors = ThemeColors::default_light();

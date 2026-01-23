@@ -31,17 +31,17 @@ use crate::theme::colors::ThemeColors;
 /// ```no_run
 /// use ratatui::Frame;
 /// use ratatui::layout::Rect;
-/// use jeditor::editor::state::EditorState;
-/// use jeditor::theme;
+/// use jsonquill::editor::state::EditorState;
+/// use jsonquill::theme;
 ///
 /// # fn example(f: &mut Frame, area: Rect) {
-/// let state = EditorState::new(jeditor::document::tree::JsonTree::new(
-///     jeditor::document::node::JsonNode::new(
-///         jeditor::document::node::JsonValue::Null
+/// let state = EditorState::new(jsonquill::document::tree::JsonTree::new(
+///     jsonquill::document::node::JsonNode::new(
+///         jsonquill::document::node::JsonValue::Null
 ///     )
 /// ));
 /// let theme = theme::get_builtin_theme("default-dark").unwrap();
-/// jeditor::ui::status_line::render_status_line(f, area, &state, &theme.colors);
+/// jsonquill::ui::status_line::render_status_line(f, area, &state, &theme.colors);
 /// # }
 /// ```
 pub fn render_status_line(

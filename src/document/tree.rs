@@ -8,8 +8,8 @@
 //! # Example
 //!
 //! ```
-//! use jeditor::document::tree::JsonTree;
-//! use jeditor::document::node::{JsonNode, JsonValue};
+//! use jsonquill::document::tree::JsonTree;
+//! use jsonquill::document::node::{JsonNode, JsonValue};
 //!
 //! // Create a simple tree
 //! let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
@@ -48,8 +48,8 @@ impl JsonTree {
     /// # Example
     ///
     /// ```
-    /// use jeditor::document::tree::JsonTree;
-    /// use jeditor::document::node::{JsonNode, JsonValue};
+    /// use jsonquill::document::tree::JsonTree;
+    /// use jsonquill::document::node::{JsonNode, JsonValue};
     ///
     /// let tree = JsonTree::new(JsonNode::new(JsonValue::Null));
     /// assert!(matches!(tree.root().value(), JsonValue::Null));
@@ -63,8 +63,8 @@ impl JsonTree {
     /// # Example
     ///
     /// ```
-    /// use jeditor::document::tree::JsonTree;
-    /// use jeditor::document::node::{JsonNode, JsonValue};
+    /// use jsonquill::document::tree::JsonTree;
+    /// use jsonquill::document::node::{JsonNode, JsonValue};
     ///
     /// let tree = JsonTree::new(JsonNode::new(JsonValue::Boolean(true)));
     /// assert!(matches!(tree.root().value(), JsonValue::Boolean(true)));
@@ -78,8 +78,8 @@ impl JsonTree {
     /// # Example
     ///
     /// ```
-    /// use jeditor::document::tree::JsonTree;
-    /// use jeditor::document::node::{JsonNode, JsonValue};
+    /// use jsonquill::document::tree::JsonTree;
+    /// use jsonquill::document::node::{JsonNode, JsonValue};
     ///
     /// let mut tree = JsonTree::new(JsonNode::new(JsonValue::Null));
     /// *tree.root_mut().value_mut() = JsonValue::Boolean(false);
@@ -103,8 +103,8 @@ impl JsonTree {
     /// # Example
     ///
     /// ```
-    /// use jeditor::document::tree::JsonTree;
-    /// use jeditor::document::node::{JsonNode, JsonValue};
+    /// use jsonquill::document::tree::JsonTree;
+    /// use jsonquill::document::node::{JsonNode, JsonValue};
     ///
     /// let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
     ///     ("items".to_string(), JsonNode::new(JsonValue::Array(vec![
@@ -153,8 +153,8 @@ impl JsonTree {
     /// # Example
     ///
     /// ```
-    /// use jeditor::document::tree::JsonTree;
-    /// use jeditor::document::node::{JsonNode, JsonValue};
+    /// use jsonquill::document::tree::JsonTree;
+    /// use jsonquill::document::node::{JsonNode, JsonValue};
     ///
     /// let mut tree = JsonTree::new(JsonNode::new(JsonValue::Array(vec![
     ///     JsonNode::new(JsonValue::String("old".to_string())),

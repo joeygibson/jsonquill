@@ -18,10 +18,10 @@
 //! # Example
 //!
 //! ```
-//! use jeditor::editor::state::EditorState;
-//! use jeditor::editor::mode::EditorMode;
-//! use jeditor::document::node::{JsonNode, JsonValue};
-//! use jeditor::document::tree::JsonTree;
+//! use jsonquill::editor::state::EditorState;
+//! use jsonquill::editor::mode::EditorMode;
+//! use jsonquill::document::node::{JsonNode, JsonValue};
+//! use jsonquill::document::tree::JsonTree;
 //!
 //! // Create an editor state with an empty object
 //! let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![])));
@@ -95,10 +95,10 @@ pub fn parse_scalar_value_for_test(input: &str) -> JsonValue {
 /// # Examples
 ///
 /// ```
-/// use jeditor::editor::state::EditorState;
-/// use jeditor::editor::mode::EditorMode;
-/// use jeditor::document::node::{JsonNode, JsonValue};
-/// use jeditor::document::tree::JsonTree;
+/// use jsonquill::editor::state::EditorState;
+/// use jsonquill::editor::mode::EditorMode;
+/// use jsonquill::document::node::{JsonNode, JsonValue};
+/// use jsonquill::document::tree::JsonTree;
 ///
 /// let tree = JsonTree::new(JsonNode::new(JsonValue::Null));
 /// let mut state = EditorState::new(tree);
@@ -186,9 +186,9 @@ impl EditorState {
     /// # Examples
     ///
     /// ```
-    /// use jeditor::editor::state::EditorState;
-    /// use jeditor::document::node::{JsonNode, JsonValue};
-    /// use jeditor::document::tree::JsonTree;
+    /// use jsonquill::editor::state::EditorState;
+    /// use jsonquill::document::node::{JsonNode, JsonValue};
+    /// use jsonquill::document::tree::JsonTree;
     ///
     /// let tree = JsonTree::new(JsonNode::new(JsonValue::Array(vec![])));
     /// let state = EditorState::new(tree);
@@ -255,9 +255,9 @@ impl EditorState {
     /// # Examples
     ///
     /// ```
-    /// use jeditor::editor::state::EditorState;
-    /// use jeditor::document::node::{JsonNode, JsonValue};
-    /// use jeditor::document::tree::JsonTree;
+    /// use jsonquill::editor::state::EditorState;
+    /// use jsonquill::document::node::{JsonNode, JsonValue};
+    /// use jsonquill::document::tree::JsonTree;
     ///
     /// let tree = JsonTree::new(JsonNode::new(JsonValue::Null));
     /// let state = EditorState::new(tree);
@@ -277,9 +277,9 @@ impl EditorState {
     /// # Example
     ///
     /// ```
-    /// # use jeditor::document::node::{JsonNode, JsonValue};
-    /// # use jeditor::document::tree::JsonTree;
-    /// # use jeditor::editor::state::EditorState;
+    /// # use jsonquill::document::node::{JsonNode, JsonValue};
+    /// # use jsonquill::document::tree::JsonTree;
+    /// # use jsonquill::editor::state::EditorState;
     /// # let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![])));
     /// # let mut state = EditorState::new(tree);
     /// // Modify the tree
@@ -298,10 +298,10 @@ impl EditorState {
     /// # Examples
     ///
     /// ```
-    /// use jeditor::editor::state::EditorState;
-    /// use jeditor::editor::mode::EditorMode;
-    /// use jeditor::document::node::{JsonNode, JsonValue};
-    /// use jeditor::document::tree::JsonTree;
+    /// use jsonquill::editor::state::EditorState;
+    /// use jsonquill::editor::mode::EditorMode;
+    /// use jsonquill::document::node::{JsonNode, JsonValue};
+    /// use jsonquill::document::tree::JsonTree;
     ///
     /// let tree = JsonTree::new(JsonNode::new(JsonValue::Null));
     /// let state = EditorState::new(tree);
@@ -321,10 +321,10 @@ impl EditorState {
     /// # Examples
     ///
     /// ```
-    /// use jeditor::editor::state::EditorState;
-    /// use jeditor::editor::mode::EditorMode;
-    /// use jeditor::document::node::{JsonNode, JsonValue};
-    /// use jeditor::document::tree::JsonTree;
+    /// use jsonquill::editor::state::EditorState;
+    /// use jsonquill::editor::mode::EditorMode;
+    /// use jsonquill::document::node::{JsonNode, JsonValue};
+    /// use jsonquill::document::tree::JsonTree;
     ///
     /// let tree = JsonTree::new(JsonNode::new(JsonValue::Null));
     /// let mut state = EditorState::new(tree);
@@ -344,9 +344,9 @@ impl EditorState {
     /// # Examples
     ///
     /// ```
-    /// use jeditor::editor::state::EditorState;
-    /// use jeditor::document::node::{JsonNode, JsonValue};
-    /// use jeditor::document::tree::JsonTree;
+    /// use jsonquill::editor::state::EditorState;
+    /// use jsonquill::document::node::{JsonNode, JsonValue};
+    /// use jsonquill::document::tree::JsonTree;
     ///
     /// let tree = JsonTree::new(JsonNode::new(JsonValue::Null));
     /// let state = EditorState::new(tree);
@@ -365,9 +365,9 @@ impl EditorState {
     /// # Examples
     ///
     /// ```
-    /// use jeditor::editor::state::EditorState;
-    /// use jeditor::document::node::{JsonNode, JsonValue};
-    /// use jeditor::document::tree::JsonTree;
+    /// use jsonquill::editor::state::EditorState;
+    /// use jsonquill::document::node::{JsonNode, JsonValue};
+    /// use jsonquill::document::tree::JsonTree;
     ///
     /// let tree = JsonTree::new(JsonNode::new(JsonValue::Null));
     /// let mut state = EditorState::new(tree);
@@ -384,9 +384,9 @@ impl EditorState {
     /// # Examples
     ///
     /// ```
-    /// use jeditor::editor::state::EditorState;
-    /// use jeditor::document::node::{JsonNode, JsonValue};
-    /// use jeditor::document::tree::JsonTree;
+    /// use jsonquill::editor::state::EditorState;
+    /// use jsonquill::document::node::{JsonNode, JsonValue};
+    /// use jsonquill::document::tree::JsonTree;
     ///
     /// let tree = JsonTree::new(JsonNode::new(JsonValue::Null));
     /// let state = EditorState::new(tree);
@@ -404,9 +404,9 @@ impl EditorState {
     /// # Examples
     ///
     /// ```
-    /// use jeditor::editor::state::EditorState;
-    /// use jeditor::document::node::{JsonNode, JsonValue};
-    /// use jeditor::document::tree::JsonTree;
+    /// use jsonquill::editor::state::EditorState;
+    /// use jsonquill::document::node::{JsonNode, JsonValue};
+    /// use jsonquill::document::tree::JsonTree;
     ///
     /// let tree = JsonTree::new(JsonNode::new(JsonValue::Null));
     /// let mut state = EditorState::new(tree);
@@ -425,9 +425,9 @@ impl EditorState {
     /// # Examples
     ///
     /// ```
-    /// use jeditor::editor::state::EditorState;
-    /// use jeditor::document::node::{JsonNode, JsonValue};
-    /// use jeditor::document::tree::JsonTree;
+    /// use jsonquill::editor::state::EditorState;
+    /// use jsonquill::document::node::{JsonNode, JsonValue};
+    /// use jsonquill::document::tree::JsonTree;
     ///
     /// let tree = JsonTree::new(JsonNode::new(JsonValue::Null));
     /// let mut state = EditorState::new(tree);
@@ -447,9 +447,9 @@ impl EditorState {
     /// # Examples
     ///
     /// ```
-    /// use jeditor::editor::state::EditorState;
-    /// use jeditor::document::node::{JsonNode, JsonValue};
-    /// use jeditor::document::tree::JsonTree;
+    /// use jsonquill::editor::state::EditorState;
+    /// use jsonquill::document::node::{JsonNode, JsonValue};
+    /// use jsonquill::document::tree::JsonTree;
     ///
     /// let tree = JsonTree::new(JsonNode::new(JsonValue::Null));
     /// let state = EditorState::new(tree);
@@ -469,9 +469,9 @@ impl EditorState {
     /// # Examples
     ///
     /// ```
-    /// use jeditor::editor::state::EditorState;
-    /// use jeditor::document::node::{JsonNode, JsonValue};
-    /// use jeditor::document::tree::JsonTree;
+    /// use jsonquill::editor::state::EditorState;
+    /// use jsonquill::document::node::{JsonNode, JsonValue};
+    /// use jsonquill::document::tree::JsonTree;
     ///
     /// let tree = JsonTree::new(JsonNode::new(JsonValue::Null));
     /// let mut state = EditorState::new(tree);
@@ -488,9 +488,9 @@ impl EditorState {
     /// # Examples
     ///
     /// ```
-    /// use jeditor::editor::state::EditorState;
-    /// use jeditor::document::node::{JsonNode, JsonValue};
-    /// use jeditor::document::tree::JsonTree;
+    /// use jsonquill::editor::state::EditorState;
+    /// use jsonquill::document::node::{JsonNode, JsonValue};
+    /// use jsonquill::document::tree::JsonTree;
     ///
     /// let tree = JsonTree::new(JsonNode::new(JsonValue::Null));
     /// let state = EditorState::new(tree);
@@ -510,9 +510,9 @@ impl EditorState {
     /// # Examples
     ///
     /// ```
-    /// use jeditor::editor::state::EditorState;
-    /// use jeditor::document::node::{JsonNode, JsonValue};
-    /// use jeditor::document::tree::JsonTree;
+    /// use jsonquill::editor::state::EditorState;
+    /// use jsonquill::document::node::{JsonNode, JsonValue};
+    /// use jsonquill::document::tree::JsonTree;
     ///
     /// let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
     ///     ("key".to_string(), JsonNode::new(JsonValue::Null)),
@@ -534,9 +534,9 @@ impl EditorState {
     /// # Example
     ///
     /// ```
-    /// use jeditor::document::node::{JsonNode, JsonValue};
-    /// use jeditor::document::tree::JsonTree;
-    /// use jeditor::editor::state::EditorState;
+    /// use jsonquill::document::node::{JsonNode, JsonValue};
+    /// use jsonquill::document::tree::JsonTree;
+    /// use jsonquill::editor::state::EditorState;
     ///
     /// let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![])));
     /// let mut state = EditorState::new(tree);
@@ -590,9 +590,9 @@ impl EditorState {
     /// # Examples
     ///
     /// ```
-    /// use jeditor::editor::state::EditorState;
-    /// use jeditor::document::node::{JsonNode, JsonValue};
-    /// use jeditor::document::tree::JsonTree;
+    /// use jsonquill::editor::state::EditorState;
+    /// use jsonquill::document::node::{JsonNode, JsonValue};
+    /// use jsonquill::document::tree::JsonTree;
     ///
     /// let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
     ///     ("a".to_string(), JsonNode::new(JsonValue::Number(1.0))),
@@ -639,9 +639,9 @@ impl EditorState {
     /// # Examples
     ///
     /// ```
-    /// use jeditor::editor::state::EditorState;
-    /// use jeditor::document::node::{JsonNode, JsonValue};
-    /// use jeditor::document::tree::JsonTree;
+    /// use jsonquill::editor::state::EditorState;
+    /// use jsonquill::document::node::{JsonNode, JsonValue};
+    /// use jsonquill::document::tree::JsonTree;
     ///
     /// let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
     ///     ("a".to_string(), JsonNode::new(JsonValue::Number(1.0))),
@@ -687,9 +687,9 @@ impl EditorState {
     /// # Examples
     ///
     /// ```
-    /// use jeditor::editor::state::EditorState;
-    /// use jeditor::document::node::{JsonNode, JsonValue};
-    /// use jeditor::document::tree::JsonTree;
+    /// use jsonquill::editor::state::EditorState;
+    /// use jsonquill::document::node::{JsonNode, JsonValue};
+    /// use jsonquill::document::tree::JsonTree;
     ///
     /// let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
     ///     ("user".to_string(), JsonNode::new(JsonValue::Object(vec![

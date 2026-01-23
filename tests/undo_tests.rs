@@ -1,6 +1,6 @@
-use jeditor::document::node::{JsonNode, JsonValue};
-use jeditor::document::tree::JsonTree;
-use jeditor::editor::state::EditorState;
+use jsonquill::document::node::{JsonNode, JsonValue};
+use jsonquill::document::tree::JsonTree;
+use jsonquill::editor::state::EditorState;
 
 #[test]
 fn test_undo_after_delete() {
@@ -130,7 +130,7 @@ fn test_undo_after_edit() {
 
     // Start editing
     state.cursor_mut().set_path(vec![]);
-    state.set_mode(jeditor::editor::mode::EditorMode::Insert);
+    state.set_mode(jsonquill::editor::mode::EditorMode::Insert);
     state.start_editing();
 
     // Clear pre-populated value and type new value

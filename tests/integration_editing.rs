@@ -1,7 +1,7 @@
-use jeditor::document::node::{JsonNode, JsonValue};
-use jeditor::document::tree::JsonTree;
-use jeditor::editor::state::EditorState;
-use jeditor::editor::mode::EditorMode;
+use jsonquill::document::node::{JsonNode, JsonValue};
+use jsonquill::document::tree::JsonTree;
+use jsonquill::editor::state::EditorState;
+use jsonquill::editor::mode::EditorMode;
 
 #[test]
 fn test_full_edit_workflow() {
@@ -314,9 +314,9 @@ fn test_cursor_position() {
 
 #[test]
 fn test_add_string_to_array() {
-    use jeditor::editor::state::EditorState;
-    use jeditor::document::node::{JsonNode, JsonValue};
-    use jeditor::document::tree::JsonTree;
+    use jsonquill::editor::state::EditorState;
+    use jsonquill::document::node::{JsonNode, JsonValue};
+    use jsonquill::document::tree::JsonTree;
 
     let tree = JsonTree::new(JsonNode::new(JsonValue::Array(vec![
         JsonNode::new(JsonValue::Number(1.0)),
@@ -356,9 +356,9 @@ fn test_add_string_to_array() {
 
 #[test]
 fn test_add_number_to_array() {
-    use jeditor::editor::state::EditorState;
-    use jeditor::document::node::{JsonNode, JsonValue};
-    use jeditor::document::tree::JsonTree;
+    use jsonquill::editor::state::EditorState;
+    use jsonquill::document::node::{JsonNode, JsonValue};
+    use jsonquill::document::tree::JsonTree;
 
     let tree = JsonTree::new(JsonNode::new(JsonValue::Array(vec![
         JsonNode::new(JsonValue::Number(1.0)),
@@ -385,9 +385,9 @@ fn test_add_number_to_array() {
 
 #[test]
 fn test_add_field_to_object() {
-    use jeditor::editor::state::EditorState;
-    use jeditor::document::node::{JsonNode, JsonValue};
-    use jeditor::document::tree::JsonTree;
+    use jsonquill::editor::state::EditorState;
+    use jsonquill::document::node::{JsonNode, JsonValue};
+    use jsonquill::document::tree::JsonTree;
 
     let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
         ("name".to_string(), JsonNode::new(JsonValue::String("Alice".to_string()))),
@@ -427,9 +427,9 @@ fn test_add_field_to_object() {
 
 #[test]
 fn test_add_with_empty_key_fails() {
-    use jeditor::editor::state::{EditorState, AddModeStage, MessageLevel};
-    use jeditor::document::node::{JsonNode, JsonValue};
-    use jeditor::document::tree::JsonTree;
+    use jsonquill::editor::state::{EditorState, AddModeStage, MessageLevel};
+    use jsonquill::document::node::{JsonNode, JsonValue};
+    use jsonquill::document::tree::JsonTree;
 
     let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
         ("name".to_string(), JsonNode::new(JsonValue::String("Alice".to_string()))),
@@ -459,10 +459,10 @@ fn test_add_with_empty_key_fails() {
 
 #[test]
 fn test_cancel_add_during_value_entry() {
-    use jeditor::editor::state::{EditorState, AddModeStage};
-    use jeditor::editor::mode::EditorMode;
-    use jeditor::document::node::{JsonNode, JsonValue};
-    use jeditor::document::tree::JsonTree;
+    use jsonquill::editor::state::{EditorState, AddModeStage};
+    use jsonquill::editor::mode::EditorMode;
+    use jsonquill::document::node::{JsonNode, JsonValue};
+    use jsonquill::document::tree::JsonTree;
 
     let tree = JsonTree::new(JsonNode::new(JsonValue::Array(vec![
         JsonNode::new(JsonValue::Number(1.0)),
@@ -492,9 +492,9 @@ fn test_cancel_add_during_value_entry() {
 
 #[test]
 fn test_add_boolean_to_array() {
-    use jeditor::editor::state::EditorState;
-    use jeditor::document::node::{JsonNode, JsonValue};
-    use jeditor::document::tree::JsonTree;
+    use jsonquill::editor::state::EditorState;
+    use jsonquill::document::node::{JsonNode, JsonValue};
+    use jsonquill::document::tree::JsonTree;
 
     let tree = JsonTree::new(JsonNode::new(JsonValue::Array(vec![
         JsonNode::new(JsonValue::Number(1.0)),
@@ -520,9 +520,9 @@ fn test_add_boolean_to_array() {
 
 #[test]
 fn test_add_null_to_array() {
-    use jeditor::editor::state::EditorState;
-    use jeditor::document::node::{JsonNode, JsonValue};
-    use jeditor::document::tree::JsonTree;
+    use jsonquill::editor::state::EditorState;
+    use jsonquill::document::node::{JsonNode, JsonValue};
+    use jsonquill::document::tree::JsonTree;
 
     let tree = JsonTree::new(JsonNode::new(JsonValue::Array(vec![
         JsonNode::new(JsonValue::Number(1.0)),
@@ -545,9 +545,9 @@ fn test_add_null_to_array() {
 
 #[test]
 fn test_add_creates_undo_checkpoint() {
-    use jeditor::editor::state::EditorState;
-    use jeditor::document::node::{JsonNode, JsonValue};
-    use jeditor::document::tree::JsonTree;
+    use jsonquill::editor::state::EditorState;
+    use jsonquill::document::node::{JsonNode, JsonValue};
+    use jsonquill::document::tree::JsonTree;
 
     let tree = JsonTree::new(JsonNode::new(JsonValue::Array(vec![
         JsonNode::new(JsonValue::Number(1.0)),
@@ -576,9 +576,9 @@ fn test_add_creates_undo_checkpoint() {
 
 #[test]
 fn test_cursor_moves_to_new_node() {
-    use jeditor::editor::state::EditorState;
-    use jeditor::document::node::{JsonNode, JsonValue};
-    use jeditor::document::tree::JsonTree;
+    use jsonquill::editor::state::EditorState;
+    use jsonquill::document::node::{JsonNode, JsonValue};
+    use jsonquill::document::tree::JsonTree;
 
     let tree = JsonTree::new(JsonNode::new(JsonValue::Array(vec![
         JsonNode::new(JsonValue::Number(1.0)),
@@ -602,9 +602,9 @@ fn test_cursor_moves_to_new_node() {
 
 #[test]
 fn test_add_to_root_scalar_fails() {
-    use jeditor::editor::state::{EditorState, MessageLevel};
-    use jeditor::document::node::{JsonNode, JsonValue};
-    use jeditor::document::tree::JsonTree;
+    use jsonquill::editor::state::{EditorState, MessageLevel};
+    use jsonquill::document::node::{JsonNode, JsonValue};
+    use jsonquill::document::tree::JsonTree;
 
     let tree = JsonTree::new(JsonNode::new(JsonValue::Number(42.0)));
     let mut state = EditorState::new(tree);
@@ -623,9 +623,9 @@ fn test_add_to_root_scalar_fails() {
 
 #[test]
 fn test_add_field_preserves_sibling_expansion_state() {
-    use jeditor::editor::state::EditorState;
-    use jeditor::document::node::{JsonNode, JsonValue};
-    use jeditor::document::tree::JsonTree;
+    use jsonquill::editor::state::EditorState;
+    use jsonquill::document::node::{JsonNode, JsonValue};
+    use jsonquill::document::tree::JsonTree;
 
     // Create a document with nested objects
     let inner1 = vec![
@@ -690,9 +690,9 @@ fn test_add_field_preserves_sibling_expansion_state() {
 
 #[test]
 fn test_add_field_preserves_child_expansion_state() {
-    use jeditor::editor::state::EditorState;
-    use jeditor::document::node::{JsonNode, JsonValue};
-    use jeditor::document::tree::JsonTree;
+    use jsonquill::editor::state::EditorState;
+    use jsonquill::document::node::{JsonNode, JsonValue};
+    use jsonquill::document::tree::JsonTree;
 
     // Simulate the exact scenario: company with headquarters that has nested structure
     let headquarters = vec![
@@ -757,9 +757,9 @@ fn test_add_field_preserves_child_expansion_state() {
 
 #[test]
 fn test_add_field_with_detailed_expansion_tracking() {
-    use jeditor::editor::state::EditorState;
-    use jeditor::document::node::{JsonNode, JsonValue};
-    use jeditor::document::tree::JsonTree;
+    use jsonquill::editor::state::EditorState;
+    use jsonquill::document::node::{JsonNode, JsonValue};
+    use jsonquill::document::tree::JsonTree;
 
     // Create a more complex structure to test
     let address_obj = vec![

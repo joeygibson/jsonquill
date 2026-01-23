@@ -14,7 +14,7 @@
 //! # Examples
 //!
 //! ```
-//! use jeditor::theme::get_builtin_theme;
+//! use jsonquill::theme::get_builtin_theme;
 //!
 //! // Load the default dark theme
 //! let theme = get_builtin_theme("default-dark").unwrap();
@@ -36,7 +36,7 @@ use colors::ThemeColors;
 /// # Examples
 ///
 /// ```
-/// use jeditor::theme::{Theme, get_builtin_theme};
+/// use jsonquill::theme::{Theme, get_builtin_theme};
 ///
 /// let theme = get_builtin_theme("default-dark").unwrap();
 /// assert_eq!(theme.name, "default-dark");
@@ -65,7 +65,7 @@ pub struct Theme {
 /// # Examples
 ///
 /// ```
-/// use jeditor::theme::get_builtin_theme;
+/// use jsonquill::theme::get_builtin_theme;
 ///
 /// // Get a valid theme
 /// let dark = get_builtin_theme("default-dark");
@@ -98,7 +98,7 @@ pub fn get_builtin_theme(name: &str) -> Option<Theme> {
 /// # Examples
 ///
 /// ```
-/// use jeditor::theme::list_builtin_themes;
+/// use jsonquill::theme::list_builtin_themes;
 ///
 /// let themes = list_builtin_themes();
 /// assert!(themes.contains(&"default-dark".to_string()));

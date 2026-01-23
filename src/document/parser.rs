@@ -8,7 +8,7 @@
 //! # Example
 //!
 //! ```
-//! use jeditor::document::parser::parse_json;
+//! use jsonquill::document::parser::parse_json;
 //!
 //! let json = r#"{"name": "Alice", "age": 30}"#;
 //! let tree = parse_json(json).unwrap();
@@ -47,8 +47,8 @@ use serde_json::Value as SerdeValue;
 /// # Example
 ///
 /// ```
-/// use jeditor::document::parser::parse_json;
-/// use jeditor::document::node::JsonValue;
+/// use jsonquill::document::parser::parse_json;
+/// use jsonquill::document::node::JsonValue;
 ///
 /// let json = r#"{"name": "Alice"}"#;
 /// let tree = parse_json(json).unwrap();
@@ -67,7 +67,7 @@ use serde_json::Value as SerdeValue;
 ///
 /// Parsing a simple object:
 /// ```
-/// use jeditor::document::parser::parse_json;
+/// use jsonquill::document::parser::parse_json;
 ///
 /// let json = r#"{"key": "value"}"#;
 /// let tree = parse_json(json).unwrap();
@@ -75,7 +75,7 @@ use serde_json::Value as SerdeValue;
 ///
 /// Parsing an array:
 /// ```
-/// use jeditor::document::parser::parse_json;
+/// use jsonquill::document::parser::parse_json;
 ///
 /// let json = r#"[1, 2, 3]"#;
 /// let tree = parse_json(json).unwrap();
@@ -83,7 +83,7 @@ use serde_json::Value as SerdeValue;
 ///
 /// Handling errors:
 /// ```
-/// use jeditor::document::parser::parse_json;
+/// use jsonquill::document::parser::parse_json;
 ///
 /// let invalid_json = r#"{"unclosed": "#;
 /// assert!(parse_json(invalid_json).is_err());

@@ -8,7 +8,7 @@
 //! # Example
 //!
 //! ```
-//! use jeditor::document::node::{JsonNode, JsonValue};
+//! use jsonquill::document::node::{JsonNode, JsonValue};
 //!
 //! // Create a simple string node
 //! let mut node = JsonNode::new(JsonValue::String("hello".to_string()));
@@ -77,7 +77,7 @@ impl JsonValue {
     /// # Example
     ///
     /// ```
-    /// use jeditor::document::node::JsonValue;
+    /// use jsonquill::document::node::JsonValue;
     ///
     /// let obj = JsonValue::Object(vec![]);
     /// assert!(obj.is_object());
@@ -94,7 +94,7 @@ impl JsonValue {
     /// # Example
     ///
     /// ```
-    /// use jeditor::document::node::JsonValue;
+    /// use jsonquill::document::node::JsonValue;
     ///
     /// let arr = JsonValue::Array(vec![]);
     /// assert!(arr.is_array());
@@ -111,7 +111,7 @@ impl JsonValue {
     /// # Example
     ///
     /// ```
-    /// use jeditor::document::node::JsonValue;
+    /// use jsonquill::document::node::JsonValue;
     ///
     /// let obj = JsonValue::Object(vec![]);
     /// assert!(obj.is_container());
@@ -136,7 +136,7 @@ impl JsonNode {
     /// # Example
     ///
     /// ```
-    /// use jeditor::document::node::{JsonNode, JsonValue};
+    /// use jsonquill::document::node::{JsonNode, JsonValue};
     ///
     /// let node = JsonNode::new(JsonValue::Number(42.0));
     /// assert!(node.is_modified());
@@ -156,7 +156,7 @@ impl JsonNode {
     /// # Example
     ///
     /// ```
-    /// use jeditor::document::node::{JsonNode, JsonValue};
+    /// use jsonquill::document::node::{JsonNode, JsonValue};
     ///
     /// let node = JsonNode::new(JsonValue::Boolean(true));
     /// assert!(matches!(node.value(), JsonValue::Boolean(true)));
@@ -173,7 +173,7 @@ impl JsonNode {
     /// # Example
     ///
     /// ```
-    /// use jeditor::document::node::{JsonNode, JsonValue};
+    /// use jsonquill::document::node::{JsonNode, JsonValue};
     ///
     /// let mut node = JsonNode::new(JsonValue::String("old".to_string()));
     /// *node.value_mut() = JsonValue::String("new".to_string());
@@ -192,7 +192,7 @@ impl JsonNode {
     /// # Example
     ///
     /// ```
-    /// use jeditor::document::node::{JsonNode, JsonValue};
+    /// use jsonquill::document::node::{JsonNode, JsonValue};
     ///
     /// let node = JsonNode::new(JsonValue::Null);
     /// assert!(node.is_modified());

@@ -25,7 +25,7 @@ impl InputHandler {
     /// # Example
     ///
     /// ```
-    /// use jeditor::input::InputHandler;
+    /// use jsonquill::input::InputHandler;
     ///
     /// let handler = InputHandler::new();
     /// ```
@@ -62,7 +62,7 @@ impl InputHandler {
     /// # Example
     ///
     /// ```no_run
-    /// use jeditor::input::InputHandler;
+    /// use jsonquill::input::InputHandler;
     /// use std::time::Duration;
     ///
     /// let mut handler = InputHandler::new();
@@ -109,10 +109,10 @@ impl InputHandler {
     /// # Example
     ///
     /// ```no_run
-    /// use jeditor::input::InputHandler;
-    /// use jeditor::editor::state::EditorState;
-    /// use jeditor::document::tree::JsonTree;
-    /// use jeditor::document::node::{JsonNode, JsonValue};
+    /// use jsonquill::input::InputHandler;
+    /// use jsonquill::editor::state::EditorState;
+    /// use jsonquill::document::tree::JsonTree;
+    /// use jsonquill::document::node::{JsonNode, JsonValue};
     /// use termion::event::{Event, Key};
     ///
     /// let handler = InputHandler::new();

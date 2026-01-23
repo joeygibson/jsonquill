@@ -1,11 +1,11 @@
 [package]
-name = "jeditor"
+name = "jsonquill"
 version = "0.1.0"
 edition = "2021"
 license = "MIT"
 authors = ["Joey Gibson"]
-description = "A terminal-based structural JSON editor with vim-style keybindings"
-repository = "https://github.com/joeygibson/jeditor"
+description = "JSON Quill - A terminal-based structural JSON editor with vim-style keybindings"
+repository = "https://github.com/joeygibson/jsonquill"
 readme = "README.md"
 keywords = ["json", "editor", "tui", "vim", "terminal"]
 categories = ["command-line-utilities", "text-editors"]

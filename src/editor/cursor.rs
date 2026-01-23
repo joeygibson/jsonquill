@@ -18,7 +18,7 @@
 //! # Example
 //!
 //! ```
-//! use jeditor::editor::cursor::Cursor;
+//! use jsonquill::editor::cursor::Cursor;
 //!
 //! // Start at root (empty path)
 //! let mut cursor = Cursor::new();
@@ -43,7 +43,7 @@
 /// # Examples
 ///
 /// ```
-/// use jeditor::editor::cursor::Cursor;
+/// use jsonquill::editor::cursor::Cursor;
 ///
 /// let mut cursor = Cursor::new();
 /// assert_eq!(cursor.path(), &[] as &[usize]);
@@ -66,7 +66,7 @@ impl Cursor {
     /// # Examples
     ///
     /// ```
-    /// use jeditor::editor::cursor::Cursor;
+    /// use jsonquill::editor::cursor::Cursor;
     ///
     /// let cursor = Cursor::new();
     /// assert_eq!(cursor.path(), &[] as &[usize]);
@@ -83,7 +83,7 @@ impl Cursor {
     /// # Examples
     ///
     /// ```
-    /// use jeditor::editor::cursor::Cursor;
+    /// use jsonquill::editor::cursor::Cursor;
     ///
     /// let mut cursor = Cursor::new();
     /// cursor.push(0);
@@ -105,7 +105,7 @@ impl Cursor {
     /// # Examples
     ///
     /// ```
-    /// use jeditor::editor::cursor::Cursor;
+    /// use jsonquill::editor::cursor::Cursor;
     ///
     /// let mut cursor = Cursor::new();
     /// cursor.push(0);
@@ -124,7 +124,7 @@ impl Cursor {
     /// # Examples
     ///
     /// ```
-    /// use jeditor::editor::cursor::Cursor;
+    /// use jsonquill::editor::cursor::Cursor;
     ///
     /// let mut cursor = Cursor::new();
     /// cursor.push(0);
@@ -154,7 +154,7 @@ impl Cursor {
     /// # Examples
     ///
     /// ```
-    /// use jeditor::editor::cursor::Cursor;
+    /// use jsonquill::editor::cursor::Cursor;
     ///
     /// let mut cursor = Cursor::new();
     /// cursor.set_path(vec![0, 1, 2]);

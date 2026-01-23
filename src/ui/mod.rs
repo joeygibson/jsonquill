@@ -27,11 +27,11 @@ use crate::theme::Theme;
 /// # Example
 ///
 /// ```no_run
-/// use jeditor::ui::UI;
-/// use jeditor::theme::get_builtin_theme;
-/// use jeditor::editor::state::EditorState;
-/// use jeditor::document::tree::JsonTree;
-/// use jeditor::document::node::{JsonNode, JsonValue};
+/// use jsonquill::ui::UI;
+/// use jsonquill::theme::get_builtin_theme;
+/// use jsonquill::editor::state::EditorState;
+/// use jsonquill::document::tree::JsonTree;
+/// use jsonquill::document::node::{JsonNode, JsonValue};
 /// use ratatui::backend::TermionBackend;
 /// use ratatui::Terminal;
 /// use std::io;
@@ -59,8 +59,8 @@ impl UI {
     /// # Example
     ///
     /// ```
-    /// use jeditor::ui::UI;
-    /// use jeditor::theme::get_builtin_theme;
+    /// use jsonquill::ui::UI;
+    /// use jsonquill::theme::get_builtin_theme;
     ///
     /// let theme = get_builtin_theme("default-dark").unwrap();
     /// let ui = UI::new(theme);
@@ -106,11 +106,11 @@ impl UI {
     /// # Example
     ///
     /// ```no_run
-    /// use jeditor::ui::UI;
-    /// use jeditor::theme::get_builtin_theme;
-    /// use jeditor::editor::state::EditorState;
-    /// use jeditor::document::tree::JsonTree;
-    /// use jeditor::document::node::{JsonNode, JsonValue};
+    /// use jsonquill::ui::UI;
+    /// use jsonquill::theme::get_builtin_theme;
+    /// use jsonquill::editor::state::EditorState;
+    /// use jsonquill::document::tree::JsonTree;
+    /// use jsonquill::document::node::{JsonNode, JsonValue};
     /// use ratatui::backend::TermionBackend;
     /// use ratatui::Terminal;
     /// use std::io;

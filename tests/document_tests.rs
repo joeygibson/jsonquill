@@ -1,5 +1,5 @@
 // tests/document_tests.rs
-use jeditor::document::node::{JsonNode, JsonValue};
+use jsonquill::document::node::{JsonNode, JsonValue};
 
 // ============================================================================
 // Basic Node Creation Tests
@@ -395,7 +395,7 @@ fn test_equality_empty_collections() {
 // Tree Structure Tests
 // ============================================================================
 
-use jeditor::document::tree::JsonTree;
+use jsonquill::document::tree::JsonTree;
 
 #[test]
 fn test_create_empty_object_tree() {
@@ -774,7 +774,7 @@ fn test_is_container() {
 // JSON Parser Tests
 // ============================================================================
 
-use jeditor::document::parser::parse_json;
+use jsonquill::document::parser::parse_json;
 
 #[test]
 fn test_parse_simple_object() {
@@ -805,7 +805,7 @@ fn test_parse_nested_structure() {
 
 #[test]
 fn test_delete_object_property() {
-    use jeditor::document::tree::JsonTree;
+    use jsonquill::document::tree::JsonTree;
 
     let mut tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
         ("a".to_string(), JsonNode::new(JsonValue::Number(1.0))),
@@ -830,7 +830,7 @@ fn test_delete_object_property() {
 
 #[test]
 fn test_delete_array_element() {
-    use jeditor::document::tree::JsonTree;
+    use jsonquill::document::tree::JsonTree;
 
     let mut tree = JsonTree::new(JsonNode::new(JsonValue::Array(vec![
         JsonNode::new(JsonValue::Number(10.0)),
@@ -861,7 +861,7 @@ fn test_delete_array_element() {
 
 #[test]
 fn test_delete_nested_node() {
-    use jeditor::document::tree::JsonTree;
+    use jsonquill::document::tree::JsonTree;
 
     let mut tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
         ("user".to_string(), JsonNode::new(JsonValue::Object(vec![
@@ -887,7 +887,7 @@ fn test_delete_nested_node() {
 
 #[test]
 fn test_delete_root_fails() {
-    use jeditor::document::tree::JsonTree;
+    use jsonquill::document::tree::JsonTree;
 
     let mut tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![])));
 
@@ -898,7 +898,7 @@ fn test_delete_root_fails() {
 
 #[test]
 fn test_delete_invalid_path() {
-    use jeditor::document::tree::JsonTree;
+    use jsonquill::document::tree::JsonTree;
 
     let mut tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
         ("a".to_string(), JsonNode::new(JsonValue::Number(1.0))),
@@ -915,7 +915,7 @@ fn test_delete_invalid_path() {
 
 #[test]
 fn test_insert_node_in_object() {
-    use jeditor::document::tree::JsonTree;
+    use jsonquill::document::tree::JsonTree;
 
     let mut tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
         ("a".to_string(), JsonNode::new(JsonValue::Number(1.0))),
@@ -941,7 +941,7 @@ fn test_insert_node_in_object() {
 
 #[test]
 fn test_insert_node_in_array() {
-    use jeditor::document::tree::JsonTree;
+    use jsonquill::document::tree::JsonTree;
 
     let mut tree = JsonTree::new(JsonNode::new(JsonValue::Array(vec![
         JsonNode::new(JsonValue::Number(10.0)),
@@ -976,7 +976,7 @@ fn test_insert_node_in_array() {
 
 #[test]
 fn test_insert_node_at_end() {
-    use jeditor::document::tree::JsonTree;
+    use jsonquill::document::tree::JsonTree;
 
     let mut tree = JsonTree::new(JsonNode::new(JsonValue::Array(vec![
         JsonNode::new(JsonValue::Number(1.0)),
