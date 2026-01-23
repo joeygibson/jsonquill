@@ -56,11 +56,27 @@ pub fn render_status_line(
 
     let left = format!("{} | {}{}", mode_text, filename, dirty_indicator);
 
-    // Pad with spaces to fill the entire width
-    let padded = format!("{:width$}", left, width = area.width as usize);
+    // Get cursor position
+    let (row, col) = state.cursor_position();
+    let total = state.total_lines();
+    let right = format!("{},{} {}/{}", row, col, row, total);
+
+    // Calculate padding to position right-aligned text
+    let total_width = area.width as usize;
+    let right_len = right.len();
+    let left_len = left.len();
+
+    // Ensure we don't overflow
+    let padding = if left_len + right_len + 1 < total_width {
+        total_width - left_len - right_len
+    } else {
+        1
+    };
+
+    let content = format!("{}{}{}", left, " ".repeat(padding), right);
 
     let line = Line::from(Span::styled(
-        padded,
+        content,
         Style::default()
             .fg(colors.status_line_fg)
             .bg(colors.status_line_bg),

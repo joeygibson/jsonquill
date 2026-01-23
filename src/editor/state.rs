@@ -116,6 +116,7 @@ pub struct EditorState {
     cursor_visible: bool,
     cursor_blink_ticks: u8,
     pending_command: Option<char>,
+    pending_count: Option<u32>,
     scroll_offset: usize,
     viewport_height: usize,
     undo_tree: super::undo::UndoTree,
@@ -188,6 +189,7 @@ impl EditorState {
             cursor_visible: true,
             cursor_blink_ticks: 0,
             pending_command: None,
+            pending_count: None,
             scroll_offset: 0,
             viewport_height: 20,
             undo_tree,
@@ -712,6 +714,21 @@ impl EditorState {
         let lines = self.tree_view.lines();
         if let Some(last_line) = lines.last() {
             self.cursor.set_path(last_line.path.clone());
+        }
+    }
+
+    /// Jumps to a specific line number (1-based).
+    ///
+    /// If the line number is valid, moves the cursor to that line.
+    /// If the line number is out of bounds, does nothing.
+    pub fn jump_to_line(&mut self, line_num: usize) {
+        let lines = self.tree_view.lines();
+        if line_num == 0 || line_num > lines.len() {
+            return;
+        }
+        let idx = line_num - 1; // Convert to 0-based index
+        if let Some(line) = lines.get(idx) {
+            self.cursor.set_path(line.path.clone());
         }
     }
 
@@ -1450,6 +1467,58 @@ impl EditorState {
     /// Clears the pending command.
     pub fn clear_pending_command(&mut self) {
         self.pending_command = None;
+    }
+
+    /// Returns the current pending count, defaulting to 1 if none.
+    pub fn get_count(&self) -> u32 {
+        self.pending_count.unwrap_or(1)
+    }
+
+    /// Returns the raw pending count (None if no count entered).
+    pub fn pending_count(&self) -> Option<u32> {
+        self.pending_count
+    }
+
+    /// Adds a digit to the pending count.
+    /// First digit starts the count, subsequent digits multiply by 10 and add.
+    pub fn push_count_digit(&mut self, digit: u32) {
+        if let Some(count) = self.pending_count {
+            self.pending_count = Some(count.saturating_mul(10).saturating_add(digit));
+        } else {
+            self.pending_count = Some(digit);
+        }
+    }
+
+    /// Clears the pending count.
+    pub fn clear_pending_count(&mut self) {
+        self.pending_count = None;
+    }
+
+    /// Clears both pending command and count (used together often).
+    pub fn clear_pending(&mut self) {
+        self.pending_command = None;
+        self.pending_count = None;
+    }
+
+    /// Returns the current cursor position as (row, col) where row is 1-based line number.
+    ///
+    /// Returns (0, 0) if the cursor is not found in the tree view.
+    pub fn cursor_position(&self) -> (usize, usize) {
+        let lines = self.tree_view.lines();
+        let current_path = self.cursor.path();
+
+        if let Some(idx) = lines.iter().position(|l| l.path == current_path) {
+            let row = idx + 1; // 1-based line number
+            let col = 1; // Tree view doesn't have horizontal position
+            (row, col)
+        } else {
+            (0, 0)
+        }
+    }
+
+    /// Returns the total number of lines in the tree view.
+    pub fn total_lines(&self) -> usize {
+        self.tree_view.lines().len()
     }
 
     /// Captures the current editor state as an undo checkpoint.

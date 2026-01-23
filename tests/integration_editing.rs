@@ -101,3 +101,213 @@ fn test_edit_cancel_workflow() {
     }
     assert!(!state.is_dirty());
 }
+
+#[test]
+fn test_count_accumulation() {
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Null));
+    let mut state = EditorState::new(tree);
+
+    // Initially no count
+    assert_eq!(state.pending_count(), None);
+    assert_eq!(state.get_count(), 1);
+
+    // Push single digit
+    state.push_count_digit(3);
+    assert_eq!(state.pending_count(), Some(3));
+    assert_eq!(state.get_count(), 3);
+
+    // Push more digits
+    state.push_count_digit(5);
+    assert_eq!(state.pending_count(), Some(35));
+    assert_eq!(state.get_count(), 35);
+
+    // Clear count
+    state.clear_pending_count();
+    assert_eq!(state.pending_count(), None);
+    assert_eq!(state.get_count(), 1);
+}
+
+#[test]
+fn test_count_with_delete() {
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Array(vec![
+        JsonNode::new(JsonValue::Number(1.0)),
+        JsonNode::new(JsonValue::Number(2.0)),
+        JsonNode::new(JsonValue::Number(3.0)),
+        JsonNode::new(JsonValue::Number(4.0)),
+        JsonNode::new(JsonValue::Number(5.0)),
+    ])));
+    let mut state = EditorState::new(tree);
+
+    // Cursor starts at root, move to first element
+    state.move_cursor_down();
+
+    // Set count to 3
+    state.push_count_digit(3);
+    assert_eq!(state.get_count(), 3);
+
+    // Simulate dd - first 'd' sets pending command
+    state.set_pending_command('d');
+
+    // Count should still be there
+    assert_eq!(state.get_count(), 3);
+
+    // Simulate second 'd' - this would trigger deletion
+    // We'll manually do what the handler does
+    let count = state.get_count();
+    state.clear_pending();
+
+    for _ in 0..count {
+        state.yank_node();
+        let _ = state.delete_node_at_cursor();
+    }
+
+    // Should have deleted 3 elements, leaving 2
+    assert_eq!(state.tree_view().lines().len(), 2);
+}
+
+#[test]
+fn test_count_with_yank() {
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
+        ("a".to_string(), JsonNode::new(JsonValue::Number(1.0))),
+        ("b".to_string(), JsonNode::new(JsonValue::Number(2.0))),
+        ("c".to_string(), JsonNode::new(JsonValue::Number(3.0))),
+    ])));
+    let mut state = EditorState::new(tree);
+
+    // Move to first node
+    state.move_cursor_down();
+
+    // Set count to 2
+    state.push_count_digit(2);
+
+    // Simulate yy
+    state.set_pending_command('y');
+
+    let count = state.get_count();
+    state.clear_pending();
+
+    for _ in 0..count {
+        state.yank_node();
+        state.move_cursor_down();
+    }
+
+    // Should have yanked (clipboard should have content)
+    assert!(state.has_clipboard());
+}
+
+#[test]
+fn test_count_with_movement_down() {
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Array(vec![
+        JsonNode::new(JsonValue::Number(1.0)),
+        JsonNode::new(JsonValue::Number(2.0)),
+        JsonNode::new(JsonValue::Number(3.0)),
+        JsonNode::new(JsonValue::Number(4.0)),
+        JsonNode::new(JsonValue::Number(5.0)),
+    ])));
+    let mut state = EditorState::new(tree);
+
+    // Cursor starts at first element [0]
+    assert_eq!(state.cursor().path(), &[0]);
+
+    // Move down 3 times with count
+    state.push_count_digit(3);
+    let count = state.get_count();
+    state.clear_pending();
+
+    for _ in 0..count {
+        state.move_cursor_down();
+    }
+
+    // Should be at element 3 (0-indexed)
+    assert_eq!(state.cursor().path(), &[3]);
+}
+
+#[test]
+fn test_count_with_movement_up() {
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Array(vec![
+        JsonNode::new(JsonValue::Number(1.0)),
+        JsonNode::new(JsonValue::Number(2.0)),
+        JsonNode::new(JsonValue::Number(3.0)),
+        JsonNode::new(JsonValue::Number(4.0)),
+        JsonNode::new(JsonValue::Number(5.0)),
+    ])));
+    let mut state = EditorState::new(tree);
+
+    // Move to last element
+    state.jump_to_bottom();
+    assert_eq!(state.cursor().path(), &[4]);
+
+    // Move up 2 times with count
+    state.push_count_digit(2);
+    let count = state.get_count();
+    state.clear_pending();
+
+    for _ in 0..count {
+        state.move_cursor_up();
+    }
+
+    // Should be at element 2 (0-indexed)
+    assert_eq!(state.cursor().path(), &[2]);
+}
+
+#[test]
+fn test_jump_to_line() {
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Array(vec![
+        JsonNode::new(JsonValue::Number(1.0)),
+        JsonNode::new(JsonValue::Number(2.0)),
+        JsonNode::new(JsonValue::Number(3.0)),
+        JsonNode::new(JsonValue::Number(4.0)),
+        JsonNode::new(JsonValue::Number(5.0)),
+    ])));
+    let mut state = EditorState::new(tree);
+
+    // Jump to line 3 (1-based, so element at index 2)
+    state.jump_to_line(3);
+    assert_eq!(state.cursor().path(), &[2]);
+
+    // Jump to line 1 (first element)
+    state.jump_to_line(1);
+    assert_eq!(state.cursor().path(), &[0]);
+
+    // Jump to line 5 (last element)
+    state.jump_to_line(5);
+    assert_eq!(state.cursor().path(), &[4]);
+
+    // Jump to invalid line (0) should do nothing
+    state.jump_to_line(0);
+    assert_eq!(state.cursor().path(), &[4]); // Still at line 5
+
+    // Jump to invalid line (beyond end) should do nothing
+    state.jump_to_line(100);
+    assert_eq!(state.cursor().path(), &[4]); // Still at line 5
+}
+
+#[test]
+fn test_cursor_position() {
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Array(vec![
+        JsonNode::new(JsonValue::Number(1.0)),
+        JsonNode::new(JsonValue::Number(2.0)),
+        JsonNode::new(JsonValue::Number(3.0)),
+    ])));
+    let mut state = EditorState::new(tree);
+
+    // Cursor starts at first line (0-indexed element 0 = 1-indexed line 1)
+    let (row, col) = state.cursor_position();
+    assert_eq!(row, 1);
+    assert_eq!(col, 1);
+
+    // Move to second line
+    state.move_cursor_down();
+    let (row, col) = state.cursor_position();
+    assert_eq!(row, 2);
+    assert_eq!(col, 1);
+
+    // Move to third line
+    state.move_cursor_down();
+    let (row, col) = state.cursor_position();
+    assert_eq!(row, 3);
+    assert_eq!(col, 1);
+
+    // Total lines
+    assert_eq!(state.total_lines(), 3);
+}

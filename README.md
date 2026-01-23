@@ -70,11 +70,13 @@ curl https://api.example.com/data | ./target/release/jeditor
 ```
 
 Basic keybindings:
-- `j/k` or arrow keys: Navigate
+- `j/k` or arrow keys: Navigate (supports count prefix: `3j` moves down 3 lines)
 - `h/l`: Collapse/expand nodes
+- `gg/G`: Jump to top/bottom
+- `<count>g`: Jump to line number (e.g., `10g` goes to line 10)
 - `i`: Edit value
-- `yy`: Copy node
-- `dd`: Delete node
+- `yy`: Copy node (supports count: `3yy` copies 3 nodes)
+- `dd`: Delete node (supports count: `3dd` deletes 3 nodes)
 - `p`: Paste
 - `u`: Undo
 - `Ctrl-r`: Redo

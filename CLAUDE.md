@@ -76,9 +76,9 @@ Implemented modules:
 - ✅ Tree view rendering with expand/collapse and auto-expansion
 - ✅ Array indices displayed as `[0]`, `[1]`, `[2]` when expanded
 - ✅ Line numbers (enabled by default, toggle with `:set number`/`:set nonumber`)
-- ✅ Navigation (j/k/h/l, arrow keys)
+- ✅ Navigation (j/k/h/l, arrow keys) with count prefix support (e.g., `3j`, `5k`)
 - ✅ Mode switching (i for INSERT, : for COMMAND, / for SEARCH, Esc to NORMAL)
-- ✅ Status line showing current mode and filename
+- ✅ Status line showing current mode, filename, and cursor position (row,col row/total)
 - ✅ Command mode with visible prompt and input buffer
 - ✅ Command execution (`:w`, `:q`, `:q!`, `:wq`, `:x`)
 - ✅ Save functionality (`:w` writes changes to disk atomically)
@@ -93,7 +93,7 @@ Implemented modules:
 - ✅ Paste operation (`p` inserts yanked nodes after, `P` inserts before)
 - ✅ Insert mode for editing values (strings, numbers, booleans, null)
 - ✅ Viewport scrolling (automatically scrolls when navigating off-screen)
-- ✅ Jump commands (`gg` for top, `G` for bottom)
+- ✅ Jump commands (`gg` for top, `G` for bottom, `<count>g` for specific line)
 - ✅ Page scrolling (`Ctrl-d` for half-page down, `Ctrl-u` for half-page up)
 - ✅ Save and quit (`ZZ` saves if dirty then quits)
 - ✅ Quit with dirty check (`q` warns if unsaved, matching `:q` behavior)
@@ -135,10 +135,13 @@ curl https://api.example.com/data | ./target/release/jeditor
 ./target/release/jeditor
 
 # Navigation (NORMAL mode)
+Movement commands can be prefixed with a count (e.g., `3j` to move down 3 lines, `5k` to move up 5 lines).
+
 j/k         - Move down/up
 h/l         - Collapse/expand node
 gg          - Jump to top of document
 G           - Jump to bottom of document
+<count>g    - Jump to specific line number (e.g., `10g` goes to line 10)
 Ctrl-d      - Page down (half page)
 Ctrl-u      - Page up (half page)
 Arrow keys  - Also work for navigation
@@ -193,12 +196,23 @@ Esc         - Cancel editing and return to NORMAL mode
 :redo         - Redo last undone change
 
 # Editing (NORMAL mode)
+Commands can be prefixed with a count (e.g., `3dd` to delete 3 nodes, `5yy` to yank 5 nodes).
+
 yy          - Yank (copy) current node to clipboard
 dd          - Delete current node (removes from tree)
 p           - Paste clipboard content after current node
 P           - Paste clipboard content before current node
 u           - Undo last change
 Ctrl-r      - Redo last undone change
+
+Count Prefix:
+1-9         - Start accumulating a count
+0-9         - Continue accumulating count (after first digit)
+<count>j/k  - Move down/up <count> lines (e.g., 3j moves down 3 lines)
+<count>h/l  - Collapse/expand <count> times
+<count>g    - Jump to line <count> (e.g., 10g jumps to line 10)
+<count>dd   - Delete <count> nodes (e.g., 3dd deletes 3 nodes)
+<count>yy   - Yank <count> nodes (e.g., 5yy yanks 5 nodes)
 
 # Help
 j/k or ↑/↓  - Scroll help when open

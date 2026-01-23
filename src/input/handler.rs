@@ -283,11 +283,26 @@ impl InputHandler {
                 }
             }
 
+            // Handle digit input in Normal mode for count prefix
+            if *state.mode() == EditorMode::Normal {
+                if let Key::Char(c) = key {
+                    if c.is_ascii_digit() {
+                        let digit = c.to_digit(10).unwrap();
+                        // '0' can only be part of count if count already started
+                        // '0' by itself would be a command (go to start of line in vim)
+                        if digit > 0 || state.pending_count().is_some() {
+                            state.push_count_digit(digit);
+                            return Ok(false);
+                        }
+                    }
+                }
+            }
+
             let input_event = map_key_event(Event::Key(key), state.mode());
 
             match input_event {
                 InputEvent::Quit => {
-                    state.clear_pending_command();
+                    state.clear_pending();
                     if state.is_dirty() {
                         use crate::editor::state::MessageLevel;
                         state.set_message(
@@ -299,7 +314,7 @@ impl InputHandler {
                     return Ok(true);
                 }
                 InputEvent::EnterInsertMode => {
-                    state.clear_pending_command();
+                    state.clear_pending();
                     use crate::editor::state::MessageLevel;
                     state.start_editing();
                     if state.edit_buffer().is_some() {
@@ -310,17 +325,17 @@ impl InputHandler {
                     }
                 }
                 InputEvent::EnterCommandMode => {
-                    state.clear_pending_command();
+                    state.clear_pending();
                     state.clear_command_buffer();
                     state.set_mode(EditorMode::Command);
                 }
                 InputEvent::EnterSearchMode => {
-                    state.clear_pending_command();
+                    state.clear_pending();
                     state.clear_search_buffer();
                     state.set_mode(EditorMode::Search);
                 }
                 InputEvent::NextSearchResult => {
-                    state.clear_pending_command();
+                    state.clear_pending();
                     use crate::editor::state::MessageLevel;
                     if state.next_search_result() {
                         if let Some((current, total)) = state.search_results_info() {
@@ -337,32 +352,64 @@ impl InputHandler {
                     }
                 }
                 InputEvent::ExitMode => {
-                    state.clear_pending_command();
+                    state.clear_pending();
                     state.set_mode(EditorMode::Normal);
                 }
                 InputEvent::MoveDown => {
-                    state.clear_pending_command();
-                    state.move_cursor_down();
+                    let count = state.get_count();
+                    state.clear_pending();
+                    for _ in 0..count {
+                        state.move_cursor_down();
+                    }
                 }
                 InputEvent::MoveUp => {
-                    state.clear_pending_command();
-                    state.move_cursor_up();
+                    let count = state.get_count();
+                    state.clear_pending();
+                    for _ in 0..count {
+                        state.move_cursor_up();
+                    }
                 }
                 InputEvent::MoveRight => {
-                    state.clear_pending_command();
-                    state.toggle_expand_at_cursor();
+                    let count = state.get_count();
+                    state.clear_pending();
+                    for _ in 0..count {
+                        state.toggle_expand_at_cursor();
+                    }
                 }
                 InputEvent::MoveLeft => {
-                    state.clear_pending_command();
-                    state.toggle_expand_at_cursor();
+                    let count = state.get_count();
+                    state.clear_pending();
+                    for _ in 0..count {
+                        state.toggle_expand_at_cursor();
+                    }
                 }
                 InputEvent::Yank => {
                     use crate::editor::state::MessageLevel;
                     // Check if this is the second 'y' press
                     if state.pending_command() == Some('y') {
-                        state.clear_pending_command();
-                        if state.yank_node() {
-                            state.set_message("Node yanked".to_string(), MessageLevel::Info);
+                        let count = state.get_count();
+                        state.clear_pending();
+
+                        let mut yanked = false;
+                        for _ in 0..count {
+                            if state.yank_node() {
+                                yanked = true;
+                                // Move down for next iteration (except last)
+                                state.move_cursor_down();
+                            } else {
+                                break;
+                            }
+                        }
+
+                        if yanked {
+                            if count > 1 {
+                                state.set_message(
+                                    format!("{} nodes yanked", count),
+                                    MessageLevel::Info,
+                                );
+                            } else {
+                                state.set_message("Node yanked".to_string(), MessageLevel::Info);
+                            }
                         } else {
                             state.set_message("Nothing to yank".to_string(), MessageLevel::Error);
                         }
@@ -375,18 +422,41 @@ impl InputHandler {
                     use crate::editor::state::MessageLevel;
                     // Check if this is the second 'd' press
                     if state.pending_command() == Some('d') {
-                        state.clear_pending_command();
-                        // Yank before deleting (like vim's dd)
-                        state.yank_node();
-                        match state.delete_node_at_cursor() {
-                            Ok(_) => {
-                                state.set_message("Node deleted (yanked)".to_string(), MessageLevel::Info);
+                        let count = state.get_count();
+                        state.clear_pending();
+
+                        let mut deleted_count = 0;
+                        let mut had_error = false;
+
+                        for _ in 0..count {
+                            // Yank before deleting (like vim's dd)
+                            state.yank_node();
+                            match state.delete_node_at_cursor() {
+                                Ok(_) => {
+                                    deleted_count += 1;
+                                    // Don't move cursor - deleting moves us to next node automatically
+                                }
+                                Err(e) => {
+                                    if deleted_count == 0 {
+                                        state.set_message(
+                                            format!("Delete failed: {}", e),
+                                            MessageLevel::Error,
+                                        );
+                                    }
+                                    had_error = true;
+                                    break;
+                                }
                             }
-                            Err(e) => {
+                        }
+
+                        if !had_error && deleted_count > 0 {
+                            if deleted_count > 1 {
                                 state.set_message(
-                                    format!("Delete failed: {}", e),
-                                    MessageLevel::Error,
+                                    format!("{} nodes deleted (yanked)", deleted_count),
+                                    MessageLevel::Info,
                                 );
+                            } else {
+                                state.set_message("Node deleted (yanked)".to_string(), MessageLevel::Info);
                             }
                         }
                     } else {
@@ -395,7 +465,7 @@ impl InputHandler {
                     }
                 }
                 InputEvent::Paste => {
-                    state.clear_pending_command();
+                    state.clear_pending();
                     use crate::editor::state::MessageLevel;
                     match state.paste_node_at_cursor() {
                         Ok(_) => {
@@ -410,7 +480,7 @@ impl InputHandler {
                     }
                 }
                 InputEvent::PasteBefore => {
-                    state.clear_pending_command();
+                    state.clear_pending();
                     use crate::editor::state::MessageLevel;
                     match state.paste_node_before_cursor() {
                         Ok(_) => {
@@ -428,7 +498,7 @@ impl InputHandler {
                     use crate::editor::state::MessageLevel;
                     // Check if this is the second 'Z' press
                     if state.pending_command() == Some('Z') {
-                        state.clear_pending_command();
+                        state.clear_pending();
                         // Save the file
                         if let Some(filename) = state.filename() {
                             use crate::file::saver::save_json_file;
@@ -453,9 +523,14 @@ impl InputHandler {
                     }
                 }
                 InputEvent::JumpToTop => {
-                    // Check if this is the second 'g' press (gg)
-                    if state.pending_command() == Some('g') {
-                        state.clear_pending_command();
+                    // If there's a pending count, jump to that line number
+                    if state.pending_count().is_some() {
+                        let line_num = state.get_count();
+                        state.clear_pending();
+                        state.jump_to_line(line_num as usize);
+                    } else if state.pending_command() == Some('g') {
+                        // Second 'g' press (gg) - jump to top
+                        state.clear_pending();
                         state.jump_to_top();
                     } else {
                         // First 'g' press - set pending
@@ -463,19 +538,19 @@ impl InputHandler {
                     }
                 }
                 InputEvent::JumpToBottom => {
-                    state.clear_pending_command();
+                    state.clear_pending();
                     state.jump_to_bottom();
                 }
                 InputEvent::PageDown => {
-                    state.clear_pending_command();
+                    state.clear_pending();
                     state.page_down();
                 }
                 InputEvent::PageUp => {
-                    state.clear_pending_command();
+                    state.clear_pending();
                     state.page_up();
                 }
                 InputEvent::Undo => {
-                    state.clear_pending_command();
+                    state.clear_pending();
                     use crate::editor::state::MessageLevel;
                     if state.undo() {
                         state.set_message("Undo".to_string(), MessageLevel::Info);
@@ -484,7 +559,7 @@ impl InputHandler {
                     }
                 }
                 InputEvent::Redo => {
-                    state.clear_pending_command();
+                    state.clear_pending();
                     use crate::editor::state::MessageLevel;
                     if state.redo() {
                         state.set_message("Redo".to_string(), MessageLevel::Info);
@@ -493,11 +568,11 @@ impl InputHandler {
                     }
                 }
                 InputEvent::InsertCharacter(_) | InputEvent::InsertBackspace | InputEvent::InsertEnter => {
-                    state.clear_pending_command();
+                    state.clear_pending();
                     // These are handled earlier in insert mode, should never reach here
                 }
                 InputEvent::Unknown => {
-                    state.clear_pending_command();
+                    state.clear_pending();
                     // Ignore unknown keys
                 }
             }
