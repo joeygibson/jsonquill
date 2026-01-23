@@ -164,9 +164,11 @@ Esc         - Cancel editing and return to NORMAL mode
 
 # Commands (in COMMAND mode)
 :w          - Save file
+:w <file>   - Save to new file and update current filename
 :q          - Quit (warns if unsaved)
 :q!         - Force quit without saving
 :wq / :x    - Save and quit
+:wq <file>  - Save to new file and quit
 :theme      - List available themes
 :theme <name> - Switch to theme
 :set          - Show current settings

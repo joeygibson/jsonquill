@@ -634,6 +634,35 @@ impl InputHandler {
                 }
                 return Ok(false);
             }
+            cmd if cmd.starts_with("w ") => {
+                // :w filename - save to new file and update internal filename
+                let filename = cmd[2..].trim().to_string();
+                if filename.is_empty() {
+                    state.set_message(
+                        "No file name specified".to_string(),
+                        MessageLevel::Error,
+                    );
+                    return Ok(false);
+                }
+
+                match save_json_file(&filename, state.tree(), 2, false) {
+                    Ok(_) => {
+                        state.set_filename(filename.clone());
+                        state.clear_dirty();
+                        state.set_message(
+                            format!("\"{}\" written", filename),
+                            MessageLevel::Info,
+                        );
+                    }
+                    Err(e) => {
+                        state.set_message(
+                            format!("Error saving file: {}", e),
+                            MessageLevel::Error,
+                        );
+                    }
+                }
+                return Ok(false);
+            }
             "w" => {
                 if let Some(filename) = state.filename().map(|s| s.to_string()) {
                     match save_json_file(&filename, state.tree(), 2, false) {
@@ -658,6 +687,37 @@ impl InputHandler {
                     );
                 }
                 return Ok(false);
+            }
+            cmd if cmd.starts_with("wq ") || cmd.starts_with("x ") => {
+                // :wq filename or :x filename - save to new file, update filename, and quit
+                let filename = if cmd.starts_with("wq ") {
+                    cmd[3..].trim().to_string()
+                } else {
+                    cmd[2..].trim().to_string()
+                };
+
+                if filename.is_empty() {
+                    state.set_message(
+                        "No file name specified".to_string(),
+                        MessageLevel::Error,
+                    );
+                    return Ok(false);
+                }
+
+                match save_json_file(&filename, state.tree(), 2, false) {
+                    Ok(_) => {
+                        state.set_filename(filename);
+                        state.clear_dirty();
+                        return Ok(true);
+                    }
+                    Err(e) => {
+                        state.set_message(
+                            format!("Error saving file: {}", e),
+                            MessageLevel::Error,
+                        );
+                        return Ok(false);
+                    }
+                }
             }
             "wq" | "x" => {
                 if let Some(filename) = state.filename().map(|s| s.to_string()) {
@@ -800,5 +860,78 @@ mod tests {
         let should_quit = handler.handle_event(event, &mut state).unwrap();
 
         assert!(!should_quit);
+    }
+
+    #[test]
+    fn test_write_with_new_filename() {
+        use tempfile::TempDir;
+        use std::fs;
+
+        let handler = InputHandler::new();
+        let tree = JsonTree::new(JsonNode::new(JsonValue::Number(42.0)));
+        let mut state = EditorState::new(tree);
+
+        // Create a temporary directory
+        let temp_dir = TempDir::new().unwrap();
+        let file_path = temp_dir.path().join("test_output.json");
+        let file_path_str = file_path.to_str().unwrap();
+
+        // Initially no filename is set
+        assert_eq!(state.filename(), None);
+
+        // Simulate entering command mode and typing `:w <filename>`
+        state.set_mode(EditorMode::Command);
+        state.set_command_buffer(format!("w {}", file_path_str));
+
+        // Execute the command by simulating Enter key
+        let event = Event::Key(Key::Char('\n'));
+        let result = handler.handle_event(event, &mut state);
+        assert!(result.is_ok());
+        assert!(!result.unwrap()); // should_quit = false
+
+        // Verify the file was created
+        assert!(file_path.exists());
+
+        // Verify the content
+        let content = fs::read_to_string(&file_path).unwrap();
+        assert_eq!(content.trim(), "42");
+
+        // Verify the internal filename was updated
+        assert_eq!(state.filename(), Some(file_path_str));
+
+        // Verify dirty flag was cleared
+        assert!(!state.is_dirty());
+    }
+
+    #[test]
+    fn test_wq_with_new_filename() {
+        use tempfile::TempDir;
+        use std::fs;
+
+        let handler = InputHandler::new();
+        let tree = JsonTree::new(JsonNode::new(JsonValue::String("test".to_string())));
+        let mut state = EditorState::new(tree);
+
+        // Create a temporary directory
+        let temp_dir = TempDir::new().unwrap();
+        let file_path = temp_dir.path().join("test_wq.json");
+        let file_path_str = file_path.to_str().unwrap();
+
+        // Simulate entering command mode and typing `:wq <filename>`
+        state.set_mode(EditorMode::Command);
+        state.set_command_buffer(format!("wq {}", file_path_str));
+
+        // Execute the command - should save and quit
+        let event = Event::Key(Key::Char('\n'));
+        let result = handler.handle_event(event, &mut state);
+        assert!(result.is_ok());
+        assert!(result.unwrap()); // should_quit = true
+
+        // Verify the file was created
+        assert!(file_path.exists());
+
+        // Verify the content
+        let content = fs::read_to_string(&file_path).unwrap();
+        assert_eq!(content.trim(), "\"test\"");
     }
 }

@@ -78,7 +78,7 @@ Basic keybindings:
 - `p`: Paste
 - `u`: Undo
 - `Ctrl-r`: Redo
-- `:w`: Save
+- `:w`: Save (`:w filename` to save as new file)
 - `:q`: Quit
 - `?`: Help
 
