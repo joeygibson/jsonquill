@@ -311,3 +311,116 @@ fn test_cursor_position() {
     // Total lines
     assert_eq!(state.total_lines(), 3);
 }
+
+#[test]
+fn test_add_string_to_array() {
+    use jeditor::editor::state::EditorState;
+    use jeditor::document::node::{JsonNode, JsonValue};
+    use jeditor::document::tree::JsonTree;
+
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Array(vec![
+        JsonNode::new(JsonValue::Number(1.0)),
+        JsonNode::new(JsonValue::Number(2.0)),
+    ])));
+    let mut state = EditorState::new(tree);
+
+    // Move cursor to first element
+    state.cursor_mut().set_path(vec![0]);
+
+    // Start add operation
+    state.start_add_operation();
+
+    // Type "hello" in edit buffer
+    state.clear_edit_buffer();
+    for ch in "hello".chars() {
+        state.push_to_edit_buffer(ch);
+    }
+
+    // Commit the add
+    let result = state.commit_add_operation();
+    assert!(result.is_ok());
+
+    // Verify new element exists at position 1
+    let node = state.tree().get_node(&[1]).unwrap();
+    match node.value() {
+        JsonValue::String(s) => assert_eq!(s, "hello"),
+        _ => panic!("Expected string"),
+    }
+
+    // Verify cursor moved to new element
+    assert_eq!(state.cursor().path(), &[1]);
+
+    // Verify tree is dirty
+    assert!(state.is_dirty());
+}
+
+#[test]
+fn test_add_number_to_array() {
+    use jeditor::editor::state::EditorState;
+    use jeditor::document::node::{JsonNode, JsonValue};
+    use jeditor::document::tree::JsonTree;
+
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Array(vec![
+        JsonNode::new(JsonValue::Number(1.0)),
+    ])));
+    let mut state = EditorState::new(tree);
+
+    state.cursor_mut().set_path(vec![0]);
+    state.start_add_operation();
+
+    state.clear_edit_buffer();
+    for ch in "42".chars() {
+        state.push_to_edit_buffer(ch);
+    }
+
+    state.commit_add_operation().unwrap();
+
+    // Verify it's a number, not a string
+    let node = state.tree().get_node(&[1]).unwrap();
+    match node.value() {
+        JsonValue::Number(n) => assert_eq!(*n, 42.0),
+        _ => panic!("Expected number"),
+    }
+}
+
+#[test]
+fn test_add_field_to_object() {
+    use jeditor::editor::state::EditorState;
+    use jeditor::document::node::{JsonNode, JsonValue};
+    use jeditor::document::tree::JsonTree;
+
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
+        ("name".to_string(), JsonNode::new(JsonValue::String("Alice".to_string()))),
+    ])));
+    let mut state = EditorState::new(tree);
+
+    state.cursor_mut().set_path(vec![0]);
+    state.start_add_operation();
+
+    // Type key "email"
+    for ch in "email".chars() {
+        state.push_to_add_key_buffer(ch);
+    }
+
+    // Transition to value stage (simulating Enter key - will be handled by input handler)
+    state.transition_add_to_value();
+
+    // Type value "test@example.com"
+    state.clear_edit_buffer();
+    for ch in "test@example.com".chars() {
+        state.push_to_edit_buffer(ch);
+    }
+
+    // Commit
+    state.commit_add_operation().unwrap();
+
+    // Verify new field exists
+    let node = state.tree().get_node(&[1]).unwrap();
+    match node.value() {
+        JsonValue::String(s) => assert_eq!(s, "test@example.com"),
+        _ => panic!("Expected string"),
+    }
+
+    // Verify cursor moved
+    assert_eq!(state.cursor().path(), &[1]);
+}

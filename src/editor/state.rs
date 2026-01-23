@@ -1745,4 +1745,110 @@ impl EditorState {
             }
         }
     }
+
+    /// Commits the add operation by creating and inserting the new node.
+    ///
+    /// Parses the edit buffer value, creates a JsonNode, inserts it at the
+    /// add_insertion_point, creates an undo checkpoint, and moves cursor to
+    /// the new node.
+    pub fn commit_add_operation(&mut self) -> anyhow::Result<()> {
+        use anyhow::anyhow;
+
+        // Verify we're in AwaitingValue stage
+        if !matches!(self.add_mode_stage, AddModeStage::AwaitingValue) {
+            return Err(anyhow!("Not in AwaitingValue stage"));
+        }
+
+        // Get the value from edit buffer
+        let value_str = self.edit_buffer.as_ref()
+            .ok_or_else(|| anyhow!("No edit buffer"))?;
+
+        // Parse the value
+        let value = parse_scalar_value(value_str);
+        let node = JsonNode::new(value);
+
+        // Get insertion point
+        let insertion_path = self.add_insertion_point.as_ref()
+            .ok_or_else(|| anyhow!("No insertion point set"))?
+            .clone();
+
+        // Determine parent type and insert
+        let parent_path = if insertion_path.is_empty() {
+            &[]
+        } else {
+            &insertion_path[..insertion_path.len() - 1]
+        };
+
+        let parent = if parent_path.is_empty() {
+            self.tree.root()
+        } else {
+            self.tree.get_node(parent_path)
+                .ok_or_else(|| anyhow!("Parent node not found"))?
+        };
+
+        match parent.value() {
+            JsonValue::Array(_) => {
+                self.tree.insert_node_in_array(&insertion_path, node)?;
+                self.set_message("Added element".to_string(), MessageLevel::Info);
+            }
+            JsonValue::Object(_) => {
+                let key = self.add_key_buffer.clone();
+                self.tree.insert_node_in_object(&insertion_path, key.clone(), node)?;
+                self.set_message(
+                    format!("Added field '{}'", key),
+                    MessageLevel::Info,
+                );
+            }
+            _ => {
+                return Err(anyhow!("Parent is not a container"));
+            }
+        }
+
+        // Rebuild tree view to show new node
+        self.rebuild_tree_view();
+
+        // Move cursor to newly created node
+        self.cursor.set_path(insertion_path.clone());
+
+        // Mark dirty and create undo checkpoint
+        self.mark_dirty();
+        self.checkpoint();
+
+        // Clear add operation state
+        self.cancel_add_operation();
+
+        Ok(())
+    }
+
+    /// Transitions from AwaitingKey to AwaitingValue stage.
+    ///
+    /// Called when user presses Enter after typing object key.
+    pub fn transition_add_to_value(&mut self) {
+        if matches!(self.add_mode_stage, AddModeStage::AwaitingKey) {
+            // Check for empty key
+            if self.add_key_buffer.is_empty() {
+                self.set_message(
+                    "Key cannot be empty".to_string(),
+                    MessageLevel::Error,
+                );
+                return;
+            }
+
+            // Transition to value stage
+            self.add_mode_stage = AddModeStage::AwaitingValue;
+
+            // Enter Insert mode
+            self.edit_buffer = Some(String::new());
+            self.edit_cursor = 0;
+            self.set_mode(EditorMode::Insert);
+            self.reset_cursor_blink();
+        }
+    }
+
+    /// Cancels the add operation and clears all related state.
+    pub fn cancel_add_operation(&mut self) {
+        self.add_mode_stage = AddModeStage::None;
+        self.add_key_buffer.clear();
+        self.add_insertion_point = None;
+    }
 }
