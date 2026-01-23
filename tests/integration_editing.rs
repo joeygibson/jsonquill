@@ -456,3 +456,36 @@ fn test_add_with_empty_key_fails() {
         panic!("Expected error message");
     }
 }
+
+#[test]
+fn test_cancel_add_during_value_entry() {
+    use jeditor::editor::state::{EditorState, AddModeStage};
+    use jeditor::editor::mode::EditorMode;
+    use jeditor::document::node::{JsonNode, JsonValue};
+    use jeditor::document::tree::JsonTree;
+
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Array(vec![
+        JsonNode::new(JsonValue::Number(1.0)),
+    ])));
+    let mut state = EditorState::new(tree);
+
+    state.cursor_mut().set_path(vec![0]);
+    state.start_add_operation();
+
+    // Type some value
+    for ch in "hello".chars() {
+        state.push_to_edit_buffer(ch);
+    }
+
+    // Cancel
+    state.cancel_editing();
+    state.cancel_add_operation();
+    state.set_mode(EditorMode::Normal);
+
+    // Verify state cleared
+    assert!(matches!(state.add_mode_stage(), &AddModeStage::None));
+    assert_eq!(state.mode(), &EditorMode::Normal);
+
+    // Verify no new element was created (still just 1 element)
+    assert_eq!(state.tree_view().lines().len(), 1);
+}

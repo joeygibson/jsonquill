@@ -128,18 +128,37 @@ impl InputHandler {
             if *state.mode() == EditorMode::Insert {
                 match key {
                     Key::Char('\n') => {
-                        // Commit the edit
-                        use crate::editor::state::MessageLevel;
-                        match state.commit_editing() {
-                            Ok(_) => {
-                                state.set_mode(EditorMode::Normal);
-                                state.set_message("Value updated".to_string(), MessageLevel::Info);
+                        // Check if we're in add operation
+                        use crate::editor::state::AddModeStage;
+                        if matches!(state.add_mode_stage(), &AddModeStage::AwaitingValue) {
+                            // Commit add operation
+                            match state.commit_add_operation() {
+                                Ok(_) => {
+                                    state.set_mode(EditorMode::Normal);
+                                }
+                                Err(e) => {
+                                    use crate::editor::state::MessageLevel;
+                                    state.set_message(
+                                        format!("Add failed: {}", e),
+                                        MessageLevel::Error,
+                                    );
+                                    state.cancel_add_operation();
+                                }
                             }
-                            Err(e) => {
-                                state.set_message(
-                                    format!("Invalid value: {}", e),
-                                    MessageLevel::Error,
-                                );
+                        } else {
+                            // Normal commit editing
+                            use crate::editor::state::MessageLevel;
+                            match state.commit_editing() {
+                                Ok(_) => {
+                                    state.set_mode(EditorMode::Normal);
+                                    state.set_message("Value updated".to_string(), MessageLevel::Info);
+                                }
+                                Err(e) => {
+                                    state.set_message(
+                                        format!("Invalid value: {}", e),
+                                        MessageLevel::Error,
+                                    );
+                                }
                             }
                         }
                         return Ok(false);
@@ -177,7 +196,16 @@ impl InputHandler {
                         return Ok(false);
                     }
                     Key::Esc => {
-                        state.cancel_editing();
+                        // Check if we're in add operation
+                        use crate::editor::state::AddModeStage;
+                        if matches!(state.add_mode_stage(), &AddModeStage::AwaitingValue) {
+                            // Cancel add operation
+                            state.cancel_editing();
+                            state.cancel_add_operation();
+                        } else {
+                            // Normal cancel editing
+                            state.cancel_editing();
+                        }
                         state.set_mode(EditorMode::Normal);
                         use crate::editor::state::MessageLevel;
                         state.set_message("Edit cancelled".to_string(), MessageLevel::Info);
