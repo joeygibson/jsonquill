@@ -96,23 +96,23 @@ impl ThemeColors {
     /// ```
     pub fn default_dark() -> Self {
         Self {
-            key: Color::LightBlue,      // ANSI 12 (jless LIGHT_BLUE)
-            string: Color::Green,        // ANSI 2
-            number: Color::Magenta,      // ANSI 5
-            boolean: Color::Yellow,      // ANSI 3
-            null: Color::DarkGray,       // ANSI 8 (jless LIGHT_BLACK)
+            key: Color::LightBlue,  // ANSI 12 (jless LIGHT_BLUE)
+            string: Color::Green,   // ANSI 2
+            number: Color::Magenta, // ANSI 5
+            boolean: Color::Yellow, // ANSI 3
+            null: Color::DarkGray,  // ANSI 8 (jless LIGHT_BLACK)
 
-            background: Color::Reset,    // Use terminal's default background
-            foreground: Color::Gray,     // ANSI 7 (terminal default light)
-            cursor: Color::LightBlue,    // ANSI 12 (match key color)
+            background: Color::Reset, // Use terminal's default background
+            foreground: Color::Gray,  // ANSI 7 (terminal default light)
+            cursor: Color::LightBlue, // ANSI 12 (match key color)
             status_line_bg: Color::White, // White status bar like jless
             status_line_fg: Color::Black, // Black text on white
 
-            error: Color::Red,           // ANSI 1
-            warning: Color::Yellow,      // ANSI 3
-            info: Color::LightBlue,      // ANSI 12
+            error: Color::Red,               // ANSI 1
+            warning: Color::Yellow,          // ANSI 3
+            info: Color::LightBlue,          // ANSI 12
             search_highlight: Color::Yellow, // ANSI 3 (jless uses yellow for search)
-            preview: Color::Cyan,        // ANSI 6 (for collapsed previews)
+            preview: Color::Cyan,            // ANSI 6 (for collapsed previews)
         }
     }
 

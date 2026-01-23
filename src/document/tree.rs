@@ -204,20 +204,29 @@ impl JsonTree {
         let index = path[path.len() - 1];
 
         // Get mutable reference to parent node
-        let parent = self.get_node_mut(parent_path)
+        let parent = self
+            .get_node_mut(parent_path)
             .ok_or_else(|| anyhow!("Parent node not found"))?;
 
         // Delete from parent based on its type
         match parent.value_mut() {
             JsonValue::Object(entries) => {
                 if index >= entries.len() {
-                    return Err(anyhow!("Index {} out of bounds for object with {} entries", index, entries.len()));
+                    return Err(anyhow!(
+                        "Index {} out of bounds for object with {} entries",
+                        index,
+                        entries.len()
+                    ));
                 }
                 entries.remove(index);
             }
             JsonValue::Array(elements) | JsonValue::JsonlRoot(elements) => {
                 if index >= elements.len() {
-                    return Err(anyhow!("Index {} out of bounds for array with {} elements", index, elements.len()));
+                    return Err(anyhow!(
+                        "Index {} out of bounds for array with {} elements",
+                        index,
+                        elements.len()
+                    ));
                 }
                 elements.remove(index);
             }
@@ -245,7 +254,11 @@ impl JsonTree {
         } else {
             &path[..path.len() - 1]
         };
-        let index = if path.is_empty() { 0 } else { path[path.len() - 1] };
+        let index = if path.is_empty() {
+            0
+        } else {
+            path[path.len() - 1]
+        };
 
         // Get mutable reference to parent (or root if path is empty)
         let target = if parent_path.is_empty() {
@@ -259,7 +272,11 @@ impl JsonTree {
         match target.value_mut() {
             JsonValue::Object(entries) => {
                 if index > entries.len() {
-                    return Err(anyhow!("Index {} out of bounds for object with {} entries", index, entries.len()));
+                    return Err(anyhow!(
+                        "Index {} out of bounds for object with {} entries",
+                        index,
+                        entries.len()
+                    ));
                 }
                 entries.insert(index, (key, node));
             }
@@ -272,11 +289,7 @@ impl JsonTree {
     }
 
     /// Inserts a node into an array at the specified path and index.
-    pub fn insert_node_in_array(
-        &mut self,
-        path: &[usize],
-        node: JsonNode,
-    ) -> anyhow::Result<()> {
+    pub fn insert_node_in_array(&mut self, path: &[usize], node: JsonNode) -> anyhow::Result<()> {
         use anyhow::anyhow;
 
         // Get parent path (all but last index)
@@ -285,7 +298,11 @@ impl JsonTree {
         } else {
             &path[..path.len() - 1]
         };
-        let index = if path.is_empty() { 0 } else { path[path.len() - 1] };
+        let index = if path.is_empty() {
+            0
+        } else {
+            path[path.len() - 1]
+        };
 
         // Get mutable reference to parent (or root if path is empty)
         let target = if parent_path.is_empty() {
@@ -299,7 +316,11 @@ impl JsonTree {
         match target.value_mut() {
             JsonValue::Array(elements) | JsonValue::JsonlRoot(elements) => {
                 if index > elements.len() {
-                    return Err(anyhow!("Index {} out of bounds for array with {} elements", index, elements.len()));
+                    return Err(anyhow!(
+                        "Index {} out of bounds for array with {} elements",
+                        index,
+                        elements.len()
+                    ));
                 }
                 elements.insert(index, node);
             }

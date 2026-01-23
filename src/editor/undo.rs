@@ -170,7 +170,9 @@ impl UndoTree {
         }
 
         // Find child with highest sequence number (newest branch)
-        let newest_child_idx = current_node.children.iter()
+        let newest_child_idx = current_node
+            .children
+            .iter()
             .max_by_key(|&&child_idx| self.nodes[child_idx].seq)
             .copied()
             .unwrap(); // Safe because we checked is_empty

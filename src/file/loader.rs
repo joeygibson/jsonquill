@@ -52,8 +52,7 @@ pub fn load_json_file<P: AsRef<Path>>(path: P) -> Result<JsonTree> {
     }
 
     // Regular JSON
-    let content =
-        fs::read_to_string(path_ref).context("Failed to read file")?;
+    let content = fs::read_to_string(path_ref).context("Failed to read file")?;
 
     parse_json(&content).context("Failed to parse JSON")
 }
@@ -104,8 +103,7 @@ pub fn load_json_from_stdin() -> Result<JsonTree> {
 pub fn load_jsonl_file<P: AsRef<Path>>(path: P) -> Result<JsonTree> {
     use crate::document::node::{JsonNode, JsonValue};
 
-    let content = fs::read_to_string(path.as_ref())
-        .context("Failed to read JSONL file")?;
+    let content = fs::read_to_string(path.as_ref()).context("Failed to read JSONL file")?;
 
     let mut lines = Vec::new();
 

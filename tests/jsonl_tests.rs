@@ -1,8 +1,8 @@
+use jsonquill::config::Config;
 use jsonquill::document::node::{JsonNode, JsonValue};
 use jsonquill::document::tree::JsonTree;
 use jsonquill::file::loader::load_json_file;
 use jsonquill::file::saver::save_json_file;
-use jsonquill::config::Config;
 use std::fs;
 use tempfile::tempdir;
 
@@ -82,11 +82,17 @@ fn test_save_jsonl_format() {
     let lines = vec![
         JsonNode::new(JsonValue::Object(vec![
             ("id".to_string(), JsonNode::new(JsonValue::Number(1.0))),
-            ("name".to_string(), JsonNode::new(JsonValue::String("Alice".to_string()))),
+            (
+                "name".to_string(),
+                JsonNode::new(JsonValue::String("Alice".to_string())),
+            ),
         ])),
         JsonNode::new(JsonValue::Object(vec![
             ("id".to_string(), JsonNode::new(JsonValue::Number(2.0))),
-            ("name".to_string(), JsonNode::new(JsonValue::String("Bob".to_string()))),
+            (
+                "name".to_string(),
+                JsonNode::new(JsonValue::String("Bob".to_string())),
+            ),
         ])),
     ];
 

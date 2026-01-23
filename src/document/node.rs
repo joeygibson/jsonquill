@@ -125,7 +125,10 @@ impl JsonValue {
     /// assert!(!num.is_container());
     /// ```
     pub fn is_container(&self) -> bool {
-        matches!(self, JsonValue::Object(_) | JsonValue::Array(_) | JsonValue::JsonlRoot(_))
+        matches!(
+            self,
+            JsonValue::Object(_) | JsonValue::Array(_) | JsonValue::JsonlRoot(_)
+        )
     }
 }
 

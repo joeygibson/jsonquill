@@ -89,8 +89,7 @@ use serde_json::Value as SerdeValue;
 /// assert!(parse_json(invalid_json).is_err());
 /// ```
 pub fn parse_json(json_str: &str) -> Result<JsonTree> {
-    let serde_value: SerdeValue =
-        serde_json::from_str(json_str).context("Failed to parse JSON")?;
+    let serde_value: SerdeValue = serde_json::from_str(json_str).context("Failed to parse JSON")?;
 
     let root = convert_serde_value(serde_value, Some(json_str.to_string()));
     Ok(JsonTree::new(root))

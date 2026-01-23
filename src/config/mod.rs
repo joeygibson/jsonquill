@@ -102,7 +102,7 @@ fn default_validation_mode() -> String {
 
 /// Returns the default undo limit.
 fn default_undo_limit() -> usize {
-    50  // Changed from 1000
+    50 // Changed from 1000
 }
 
 /// Returns the default for syncing unnamed register.
@@ -182,9 +182,7 @@ impl Config {
         }
 
         match std::fs::read_to_string(&config_path) {
-            Ok(contents) => {
-                toml::from_str(&contents).unwrap_or_else(|_| Self::default())
-            }
+            Ok(contents) => toml::from_str(&contents).unwrap_or_else(|_| Self::default()),
             Err(_) => Self::default(),
         }
     }

@@ -1,7 +1,7 @@
-use jsonquill::editor::mode::EditorMode;
-use jsonquill::editor::state::EditorState;
 use jsonquill::document::node::{JsonNode, JsonValue};
 use jsonquill::document::tree::JsonTree;
+use jsonquill::editor::mode::EditorMode;
+use jsonquill::editor::state::EditorState;
 
 #[test]
 fn test_mode_starts_normal() {
@@ -324,9 +324,10 @@ fn test_tree_view_initialized() {
     use jsonquill::document::node::{JsonNode, JsonValue};
     use jsonquill::document::tree::JsonTree;
 
-    let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
-        ("test".to_string(), JsonNode::new(JsonValue::String("value".to_string()))),
-    ])));
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![(
+        "test".to_string(),
+        JsonNode::new(JsonValue::String("value".to_string())),
+    )])));
 
     let state = EditorState::new(tree);
 
@@ -340,11 +341,13 @@ fn test_tree_view_mut_toggle() {
     use jsonquill::document::node::{JsonNode, JsonValue};
     use jsonquill::document::tree::JsonTree;
 
-    let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
-        ("nested".to_string(), JsonNode::new(JsonValue::Object(vec![
-            ("inner".to_string(), JsonNode::new(JsonValue::Number(42.0))),
-        ]))),
-    ])));
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![(
+        "nested".to_string(),
+        JsonNode::new(JsonValue::Object(vec![(
+            "inner".to_string(),
+            JsonNode::new(JsonValue::Number(42.0)),
+        )])),
+    )])));
 
     let mut state = EditorState::new(tree);
 
@@ -499,11 +502,13 @@ fn test_toggle_expand_at_cursor_expandable() {
     use jsonquill::document::tree::JsonTree;
 
     // Create nested object
-    let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
-        ("user".to_string(), JsonNode::new(JsonValue::Object(vec![
-            ("name".to_string(), JsonNode::new(JsonValue::String("Alice".to_string()))),
-        ]))),
-    ])));
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![(
+        "user".to_string(),
+        JsonNode::new(JsonValue::Object(vec![(
+            "name".to_string(),
+            JsonNode::new(JsonValue::String("Alice".to_string())),
+        )])),
+    )])));
 
     let mut state = EditorState::new(tree);
 
@@ -530,7 +535,10 @@ fn test_toggle_expand_at_cursor_non_expandable() {
     use jsonquill::document::tree::JsonTree;
 
     let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
-        ("name".to_string(), JsonNode::new(JsonValue::String("Alice".to_string()))),
+        (
+            "name".to_string(),
+            JsonNode::new(JsonValue::String("Alice".to_string())),
+        ),
         ("age".to_string(), JsonNode::new(JsonValue::Number(30.0))),
     ])));
 
@@ -553,10 +561,19 @@ fn test_navigation_with_nested_expanded_tree() {
 
     // Create nested structure
     let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
-        ("user".to_string(), JsonNode::new(JsonValue::Object(vec![
-            ("name".to_string(), JsonNode::new(JsonValue::String("Alice".to_string()))),
-            ("email".to_string(), JsonNode::new(JsonValue::String("alice@example.com".to_string()))),
-        ]))),
+        (
+            "user".to_string(),
+            JsonNode::new(JsonValue::Object(vec![
+                (
+                    "name".to_string(),
+                    JsonNode::new(JsonValue::String("Alice".to_string())),
+                ),
+                (
+                    "email".to_string(),
+                    JsonNode::new(JsonValue::String("alice@example.com".to_string())),
+                ),
+            ])),
+        ),
         ("count".to_string(), JsonNode::new(JsonValue::Number(42.0))),
     ])));
 
@@ -637,9 +654,10 @@ fn test_start_editing_string_value() {
     use jsonquill::document::node::{JsonNode, JsonValue};
     use jsonquill::document::tree::JsonTree;
 
-    let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
-        ("name".to_string(), JsonNode::new(JsonValue::String("Alice".to_string()))),
-    ])));
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![(
+        "name".to_string(),
+        JsonNode::new(JsonValue::String("Alice".to_string())),
+    )])));
     let mut state = EditorState::new(tree);
 
     // Move cursor to first element
@@ -657,9 +675,10 @@ fn test_start_editing_number_value() {
     use jsonquill::document::node::{JsonNode, JsonValue};
     use jsonquill::document::tree::JsonTree;
 
-    let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
-        ("count".to_string(), JsonNode::new(JsonValue::Number(42.0))),
-    ])));
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![(
+        "count".to_string(),
+        JsonNode::new(JsonValue::Number(42.0)),
+    )])));
     let mut state = EditorState::new(tree);
 
     state.cursor_mut().set_path(vec![0]);
@@ -673,9 +692,10 @@ fn test_start_editing_boolean_value() {
     use jsonquill::document::node::{JsonNode, JsonValue};
     use jsonquill::document::tree::JsonTree;
 
-    let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
-        ("active".to_string(), JsonNode::new(JsonValue::Boolean(true))),
-    ])));
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![(
+        "active".to_string(),
+        JsonNode::new(JsonValue::Boolean(true)),
+    )])));
     let mut state = EditorState::new(tree);
 
     state.cursor_mut().set_path(vec![0]);
@@ -689,9 +709,10 @@ fn test_start_editing_null_value() {
     use jsonquill::document::node::{JsonNode, JsonValue};
     use jsonquill::document::tree::JsonTree;
 
-    let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
-        ("data".to_string(), JsonNode::new(JsonValue::Null)),
-    ])));
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![(
+        "data".to_string(),
+        JsonNode::new(JsonValue::Null),
+    )])));
     let mut state = EditorState::new(tree);
 
     state.cursor_mut().set_path(vec![0]);
@@ -705,9 +726,10 @@ fn test_cancel_editing() {
     use jsonquill::document::node::{JsonNode, JsonValue};
     use jsonquill::document::tree::JsonTree;
 
-    let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
-        ("name".to_string(), JsonNode::new(JsonValue::String("Alice".to_string()))),
-    ])));
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![(
+        "name".to_string(),
+        JsonNode::new(JsonValue::String("Alice".to_string())),
+    )])));
     let mut state = EditorState::new(tree);
 
     state.cursor_mut().set_path(vec![0]);
@@ -725,9 +747,10 @@ fn test_commit_editing_string() {
     use jsonquill::document::node::{JsonNode, JsonValue};
     use jsonquill::document::tree::JsonTree;
 
-    let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
-        ("name".to_string(), JsonNode::new(JsonValue::String("Alice".to_string()))),
-    ])));
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![(
+        "name".to_string(),
+        JsonNode::new(JsonValue::String("Alice".to_string())),
+    )])));
     let mut state = EditorState::new(tree);
 
     state.cursor_mut().set_path(vec![0]);
@@ -758,9 +781,10 @@ fn test_commit_editing_number() {
     use jsonquill::document::node::{JsonNode, JsonValue};
     use jsonquill::document::tree::JsonTree;
 
-    let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
-        ("count".to_string(), JsonNode::new(JsonValue::Number(42.0))),
-    ])));
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![(
+        "count".to_string(),
+        JsonNode::new(JsonValue::Number(42.0)),
+    )])));
     let mut state = EditorState::new(tree);
 
     state.cursor_mut().set_path(vec![0]);
@@ -787,9 +811,10 @@ fn test_commit_editing_boolean() {
     use jsonquill::document::node::{JsonNode, JsonValue};
     use jsonquill::document::tree::JsonTree;
 
-    let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
-        ("active".to_string(), JsonNode::new(JsonValue::Boolean(true))),
-    ])));
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![(
+        "active".to_string(),
+        JsonNode::new(JsonValue::Boolean(true)),
+    )])));
     let mut state = EditorState::new(tree);
 
     state.cursor_mut().set_path(vec![0]);
@@ -816,9 +841,10 @@ fn test_commit_editing_null() {
     use jsonquill::document::node::{JsonNode, JsonValue};
     use jsonquill::document::tree::JsonTree;
 
-    let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
-        ("data".to_string(), JsonNode::new(JsonValue::String("old".to_string()))),
-    ])));
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![(
+        "data".to_string(),
+        JsonNode::new(JsonValue::String("old".to_string())),
+    )])));
     let mut state = EditorState::new(tree);
 
     state.cursor_mut().set_path(vec![0]);
@@ -842,9 +868,10 @@ fn test_commit_editing_invalid_number() {
     use jsonquill::document::node::{JsonNode, JsonValue};
     use jsonquill::document::tree::JsonTree;
 
-    let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
-        ("count".to_string(), JsonNode::new(JsonValue::Number(42.0))),
-    ])));
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![(
+        "count".to_string(),
+        JsonNode::new(JsonValue::Number(42.0)),
+    )])));
     let mut state = EditorState::new(tree);
 
     state.cursor_mut().set_path(vec![0]);
@@ -864,9 +891,10 @@ fn test_commit_editing_invalid_boolean() {
     use jsonquill::document::node::{JsonNode, JsonValue};
     use jsonquill::document::tree::JsonTree;
 
-    let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
-        ("active".to_string(), JsonNode::new(JsonValue::Boolean(true))),
-    ])));
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![(
+        "active".to_string(),
+        JsonNode::new(JsonValue::Boolean(true)),
+    )])));
     let mut state = EditorState::new(tree);
 
     state.cursor_mut().set_path(vec![0]);
@@ -878,7 +906,10 @@ fn test_commit_editing_invalid_boolean() {
 
     let result = state.commit_editing();
     assert!(result.is_err());
-    assert!(result.unwrap_err().to_string().contains("must be true or false"));
+    assert!(result
+        .unwrap_err()
+        .to_string()
+        .contains("must be true or false"));
 }
 
 // Delete node tests
@@ -1003,9 +1034,10 @@ fn test_paste_without_clipboard_fails() {
     use jsonquill::document::node::{JsonNode, JsonValue};
     use jsonquill::document::tree::JsonTree;
 
-    let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
-        ("a".to_string(), JsonNode::new(JsonValue::Number(1.0))),
-    ])));
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![(
+        "a".to_string(),
+        JsonNode::new(JsonValue::Number(1.0)),
+    )])));
     let mut state = EditorState::new(tree);
 
     // Try to paste without yanking first
@@ -1226,9 +1258,9 @@ fn test_edit_kill_to_end() {
 
 #[test]
 fn test_add_mode_stage_default() {
-    use jsonquill::editor::state::{EditorState, AddModeStage};
     use jsonquill::document::node::{JsonNode, JsonValue};
     use jsonquill::document::tree::JsonTree;
+    use jsonquill::editor::state::{AddModeStage, EditorState};
 
     let tree = JsonTree::new(JsonNode::new(JsonValue::Null));
     let state = EditorState::new(tree);
@@ -1238,9 +1270,9 @@ fn test_add_mode_stage_default() {
 
 #[test]
 fn test_add_key_buffer_operations() {
-    use jsonquill::editor::state::EditorState;
     use jsonquill::document::node::{JsonNode, JsonValue};
     use jsonquill::document::tree::JsonTree;
+    use jsonquill::editor::state::EditorState;
 
     let tree = JsonTree::new(JsonNode::new(JsonValue::Null));
     let mut state = EditorState::new(tree);
@@ -1271,13 +1303,28 @@ fn test_parse_scalar_value() {
     use jsonquill::editor::state::parse_scalar_value_for_test;
 
     // Booleans
-    assert!(matches!(parse_scalar_value_for_test("true"), JsonValue::Boolean(true)));
-    assert!(matches!(parse_scalar_value_for_test("false"), JsonValue::Boolean(false)));
-    assert!(matches!(parse_scalar_value_for_test("  true  "), JsonValue::Boolean(true)));
+    assert!(matches!(
+        parse_scalar_value_for_test("true"),
+        JsonValue::Boolean(true)
+    ));
+    assert!(matches!(
+        parse_scalar_value_for_test("false"),
+        JsonValue::Boolean(false)
+    ));
+    assert!(matches!(
+        parse_scalar_value_for_test("  true  "),
+        JsonValue::Boolean(true)
+    ));
 
     // Null
-    assert!(matches!(parse_scalar_value_for_test("null"), JsonValue::Null));
-    assert!(matches!(parse_scalar_value_for_test("  null  "), JsonValue::Null));
+    assert!(matches!(
+        parse_scalar_value_for_test("null"),
+        JsonValue::Null
+    ));
+    assert!(matches!(
+        parse_scalar_value_for_test("  null  "),
+        JsonValue::Null
+    ));
 
     // Numbers
     match parse_scalar_value_for_test("42") {
@@ -1318,10 +1365,10 @@ fn test_parse_scalar_value() {
 
 #[test]
 fn test_start_add_in_array() {
-    use jsonquill::editor::state::{EditorState, AddModeStage};
-    use jsonquill::editor::mode::EditorMode;
     use jsonquill::document::node::{JsonNode, JsonValue};
     use jsonquill::document::tree::JsonTree;
+    use jsonquill::editor::mode::EditorMode;
+    use jsonquill::editor::state::{AddModeStage, EditorState};
 
     let tree = JsonTree::new(JsonNode::new(JsonValue::Array(vec![
         JsonNode::new(JsonValue::Number(1.0)),
@@ -1336,7 +1383,10 @@ fn test_start_add_in_array() {
     state.start_add_operation();
 
     // Should be in AwaitingValue stage (arrays skip key prompt)
-    assert!(matches!(state.add_mode_stage(), &AddModeStage::AwaitingValue));
+    assert!(matches!(
+        state.add_mode_stage(),
+        &AddModeStage::AwaitingValue
+    ));
     // Should have entered Insert mode
     assert_eq!(state.mode(), &EditorMode::Insert);
     // Edit buffer should be empty
@@ -1345,14 +1395,15 @@ fn test_start_add_in_array() {
 
 #[test]
 fn test_start_add_in_object() {
-    use jsonquill::editor::state::{EditorState, AddModeStage};
-    use jsonquill::editor::mode::EditorMode;
     use jsonquill::document::node::{JsonNode, JsonValue};
     use jsonquill::document::tree::JsonTree;
+    use jsonquill::editor::mode::EditorMode;
+    use jsonquill::editor::state::{AddModeStage, EditorState};
 
-    let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
-        ("name".to_string(), JsonNode::new(JsonValue::String("Alice".to_string()))),
-    ])));
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![(
+        "name".to_string(),
+        JsonNode::new(JsonValue::String("Alice".to_string())),
+    )])));
     let mut state = EditorState::new(tree);
 
     // Move cursor to first field
@@ -1369,10 +1420,10 @@ fn test_start_add_in_object() {
 
 #[test]
 fn test_start_add_in_root_array() {
-    use jsonquill::editor::state::{EditorState, AddModeStage};
-    use jsonquill::editor::mode::EditorMode;
     use jsonquill::document::node::{JsonNode, JsonValue};
     use jsonquill::document::tree::JsonTree;
+    use jsonquill::editor::mode::EditorMode;
+    use jsonquill::editor::state::{AddModeStage, EditorState};
 
     let tree = JsonTree::new(JsonNode::new(JsonValue::Array(vec![])));
     let mut state = EditorState::new(tree);
@@ -1384,7 +1435,10 @@ fn test_start_add_in_root_array() {
     state.start_add_operation();
 
     // Should be in AwaitingValue stage (arrays skip key prompt)
-    assert!(matches!(state.add_mode_stage(), &AddModeStage::AwaitingValue));
+    assert!(matches!(
+        state.add_mode_stage(),
+        &AddModeStage::AwaitingValue
+    ));
     // Should have entered Insert mode
     assert_eq!(state.mode(), &EditorMode::Insert);
     // Edit buffer should be empty
@@ -1393,10 +1447,10 @@ fn test_start_add_in_root_array() {
 
 #[test]
 fn test_start_add_in_root_object() {
-    use jsonquill::editor::state::{EditorState, AddModeStage};
-    use jsonquill::editor::mode::EditorMode;
     use jsonquill::document::node::{JsonNode, JsonValue};
     use jsonquill::document::tree::JsonTree;
+    use jsonquill::editor::mode::EditorMode;
+    use jsonquill::editor::state::{AddModeStage, EditorState};
 
     let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![])));
     let mut state = EditorState::new(tree);
@@ -1415,10 +1469,10 @@ fn test_start_add_in_root_object() {
 
 #[test]
 fn test_start_add_at_root_scalar_fails() {
-    use jsonquill::editor::state::{EditorState, AddModeStage, MessageLevel};
-    use jsonquill::editor::mode::EditorMode;
     use jsonquill::document::node::{JsonNode, JsonValue};
     use jsonquill::document::tree::JsonTree;
+    use jsonquill::editor::mode::EditorMode;
+    use jsonquill::editor::state::{AddModeStage, EditorState, MessageLevel};
 
     let tree = JsonTree::new(JsonNode::new(JsonValue::Number(42.0)));
     let mut state = EditorState::new(tree);

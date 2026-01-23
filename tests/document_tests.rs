@@ -45,7 +45,10 @@ fn test_create_null_node() {
 #[test]
 fn test_create_object_node() {
     let object = JsonNode::new(JsonValue::Object(vec![
-        ("name".to_string(), JsonNode::new(JsonValue::String("jeditor".to_string()))),
+        (
+            "name".to_string(),
+            JsonNode::new(JsonValue::String("jeditor".to_string())),
+        ),
         ("version".to_string(), JsonNode::new(JsonValue::Number(1.0))),
     ]));
 
@@ -72,8 +75,14 @@ fn test_create_empty_object() {
 #[test]
 fn test_object_with_nested_values() {
     let nested = JsonNode::new(JsonValue::Object(vec![
-        ("name".to_string(), JsonNode::new(JsonValue::String("test".to_string()))),
-        ("enabled".to_string(), JsonNode::new(JsonValue::Boolean(true))),
+        (
+            "name".to_string(),
+            JsonNode::new(JsonValue::String("test".to_string())),
+        ),
+        (
+            "enabled".to_string(),
+            JsonNode::new(JsonValue::Boolean(true)),
+        ),
         ("count".to_string(), JsonNode::new(JsonValue::Number(5.0))),
         ("data".to_string(), JsonNode::new(JsonValue::Null)),
     ]));
@@ -150,11 +159,17 @@ fn test_objects_in_arrays() {
     let array_of_objects = JsonNode::new(JsonValue::Array(vec![
         JsonNode::new(JsonValue::Object(vec![
             ("id".to_string(), JsonNode::new(JsonValue::Number(1.0))),
-            ("name".to_string(), JsonNode::new(JsonValue::String("first".to_string()))),
+            (
+                "name".to_string(),
+                JsonNode::new(JsonValue::String("first".to_string())),
+            ),
         ])),
         JsonNode::new(JsonValue::Object(vec![
             ("id".to_string(), JsonNode::new(JsonValue::Number(2.0))),
-            ("name".to_string(), JsonNode::new(JsonValue::String("second".to_string()))),
+            (
+                "name".to_string(),
+                JsonNode::new(JsonValue::String("second".to_string())),
+            ),
         ])),
     ]));
 
@@ -175,14 +190,20 @@ fn test_objects_in_arrays() {
 #[test]
 fn test_arrays_in_objects() {
     let object_with_arrays = JsonNode::new(JsonValue::Object(vec![
-        ("numbers".to_string(), JsonNode::new(JsonValue::Array(vec![
-            JsonNode::new(JsonValue::Number(1.0)),
-            JsonNode::new(JsonValue::Number(2.0)),
-        ]))),
-        ("strings".to_string(), JsonNode::new(JsonValue::Array(vec![
-            JsonNode::new(JsonValue::String("a".to_string())),
-            JsonNode::new(JsonValue::String("b".to_string())),
-        ]))),
+        (
+            "numbers".to_string(),
+            JsonNode::new(JsonValue::Array(vec![
+                JsonNode::new(JsonValue::Number(1.0)),
+                JsonNode::new(JsonValue::Number(2.0)),
+            ])),
+        ),
+        (
+            "strings".to_string(),
+            JsonNode::new(JsonValue::Array(vec![
+                JsonNode::new(JsonValue::String("a".to_string())),
+                JsonNode::new(JsonValue::String("b".to_string())),
+            ])),
+        ),
     ]));
 
     if let JsonValue::Object(fields) = object_with_arrays.value() {
@@ -198,13 +219,16 @@ fn test_arrays_in_objects() {
 
 #[test]
 fn test_deeply_nested_structure() {
-    let deeply_nested = JsonNode::new(JsonValue::Object(vec![
-        ("level1".to_string(), JsonNode::new(JsonValue::Object(vec![
-            ("level2".to_string(), JsonNode::new(JsonValue::Object(vec![
-                ("level3".to_string(), JsonNode::new(JsonValue::String("deep".to_string()))),
-            ]))),
-        ]))),
-    ]));
+    let deeply_nested = JsonNode::new(JsonValue::Object(vec![(
+        "level1".to_string(),
+        JsonNode::new(JsonValue::Object(vec![(
+            "level2".to_string(),
+            JsonNode::new(JsonValue::Object(vec![(
+                "level3".to_string(),
+                JsonNode::new(JsonValue::String("deep".to_string())),
+            )])),
+        )])),
+    )]));
 
     if let JsonValue::Object(l1) = deeply_nested.value() {
         if let JsonValue::Object(l2) = l1[0].1.value() {
@@ -307,12 +331,13 @@ fn test_clone_is_independent() {
 
 #[test]
 fn test_clone_complex_structure() {
-    let original = JsonNode::new(JsonValue::Object(vec![
-        ("array".to_string(), JsonNode::new(JsonValue::Array(vec![
+    let original = JsonNode::new(JsonValue::Object(vec![(
+        "array".to_string(),
+        JsonNode::new(JsonValue::Array(vec![
             JsonNode::new(JsonValue::Number(1.0)),
             JsonNode::new(JsonValue::Number(2.0)),
-        ]))),
-    ]));
+        ])),
+    )]));
 
     let cloned = original.clone();
     assert_eq!(original, cloned);
@@ -350,12 +375,18 @@ fn test_equality_different_types() {
 fn test_equality_complex_structures() {
     let obj1 = JsonNode::new(JsonValue::Object(vec![
         ("a".to_string(), JsonNode::new(JsonValue::Number(1.0))),
-        ("b".to_string(), JsonNode::new(JsonValue::String("test".to_string()))),
+        (
+            "b".to_string(),
+            JsonNode::new(JsonValue::String("test".to_string())),
+        ),
     ]));
 
     let obj2 = JsonNode::new(JsonValue::Object(vec![
         ("a".to_string(), JsonNode::new(JsonValue::Number(1.0))),
-        ("b".to_string(), JsonNode::new(JsonValue::String("test".to_string()))),
+        (
+            "b".to_string(),
+            JsonNode::new(JsonValue::String("test".to_string())),
+        ),
     ]));
 
     assert_eq!(obj1, obj2);
@@ -405,9 +436,10 @@ fn test_create_empty_object_tree() {
 
 #[test]
 fn test_tree_get_child() {
-    let obj = vec![
-        ("name".to_string(), JsonNode::new(JsonValue::String("Alice".to_string())))
-    ];
+    let obj = vec![(
+        "name".to_string(),
+        JsonNode::new(JsonValue::String("Alice".to_string())),
+    )];
 
     let tree = JsonTree::new(JsonNode::new(JsonValue::Object(obj)));
     let path = vec![0]; // First child
@@ -450,9 +482,18 @@ fn test_tree_get_empty_path() {
 #[test]
 fn test_tree_navigate_object() {
     let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
-        ("first".to_string(), JsonNode::new(JsonValue::String("a".to_string()))),
-        ("second".to_string(), JsonNode::new(JsonValue::String("b".to_string()))),
-        ("third".to_string(), JsonNode::new(JsonValue::String("c".to_string()))),
+        (
+            "first".to_string(),
+            JsonNode::new(JsonValue::String("a".to_string())),
+        ),
+        (
+            "second".to_string(),
+            JsonNode::new(JsonValue::String("b".to_string())),
+        ),
+        (
+            "third".to_string(),
+            JsonNode::new(JsonValue::String("c".to_string())),
+        ),
     ])));
 
     // Test accessing each field by index
@@ -500,15 +541,17 @@ fn test_tree_navigate_array() {
 #[test]
 fn test_tree_navigate_nested() {
     // Create: {"data": {"items": [1, 2, 3]}}
-    let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
-        ("data".to_string(), JsonNode::new(JsonValue::Object(vec![
-            ("items".to_string(), JsonNode::new(JsonValue::Array(vec![
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![(
+        "data".to_string(),
+        JsonNode::new(JsonValue::Object(vec![(
+            "items".to_string(),
+            JsonNode::new(JsonValue::Array(vec![
                 JsonNode::new(JsonValue::Number(1.0)),
                 JsonNode::new(JsonValue::Number(2.0)),
                 JsonNode::new(JsonValue::Number(3.0)),
-            ]))),
-        ]))),
-    ])));
+            ])),
+        )])),
+    )])));
 
     // Navigate: root -> "data" (0) -> "items" (0) -> element 1 (1)
     let path = vec![0, 0, 1];
@@ -524,15 +567,19 @@ fn test_tree_navigate_nested() {
 #[test]
 fn test_tree_navigate_deeply_nested() {
     // Create: {"a": {"b": {"c": {"d": "deep"}}}}
-    let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
-        ("a".to_string(), JsonNode::new(JsonValue::Object(vec![
-            ("b".to_string(), JsonNode::new(JsonValue::Object(vec![
-                ("c".to_string(), JsonNode::new(JsonValue::Object(vec![
-                    ("d".to_string(), JsonNode::new(JsonValue::String("deep".to_string()))),
-                ]))),
-            ]))),
-        ]))),
-    ])));
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![(
+        "a".to_string(),
+        JsonNode::new(JsonValue::Object(vec![(
+            "b".to_string(),
+            JsonNode::new(JsonValue::Object(vec![(
+                "c".to_string(),
+                JsonNode::new(JsonValue::Object(vec![(
+                    "d".to_string(),
+                    JsonNode::new(JsonValue::String("deep".to_string())),
+                )])),
+            )])),
+        )])),
+    )])));
 
     // Navigate through all levels: each level has index 0
     let path = vec![0, 0, 0, 0];
@@ -547,9 +594,9 @@ fn test_tree_navigate_deeply_nested() {
 
 #[test]
 fn test_tree_get_node_out_of_bounds() {
-    let tree = JsonTree::new(JsonNode::new(JsonValue::Array(vec![
-        JsonNode::new(JsonValue::Number(1.0)),
-    ])));
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Array(vec![JsonNode::new(
+        JsonValue::Number(1.0),
+    )])));
 
     // Array has only 1 element (index 0), try to access index 1
     let node = tree.get_node(&[1]);
@@ -562,9 +609,10 @@ fn test_tree_get_node_out_of_bounds() {
 
 #[test]
 fn test_tree_get_node_invalid_path_non_container() {
-    let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
-        ("value".to_string(), JsonNode::new(JsonValue::Number(42.0))),
-    ])));
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![(
+        "value".to_string(),
+        JsonNode::new(JsonValue::Number(42.0)),
+    )])));
 
     // Try to navigate into a Number (which is not a container)
     let path = vec![0, 0]; // First field, then try to index into the number
@@ -584,9 +632,10 @@ fn test_tree_get_node_invalid_path_through_string() {
 
 #[test]
 fn test_tree_get_node_mut() {
-    let mut tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
-        ("name".to_string(), JsonNode::new(JsonValue::String("Alice".to_string()))),
-    ])));
+    let mut tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![(
+        "name".to_string(),
+        JsonNode::new(JsonValue::String("Alice".to_string())),
+    )])));
 
     // Modify the first field
     let path = vec![0];
@@ -605,12 +654,13 @@ fn test_tree_get_node_mut() {
 
 #[test]
 fn test_tree_get_node_mut_nested() {
-    let mut tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
-        ("data".to_string(), JsonNode::new(JsonValue::Array(vec![
+    let mut tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![(
+        "data".to_string(),
+        JsonNode::new(JsonValue::Array(vec![
             JsonNode::new(JsonValue::Number(1.0)),
             JsonNode::new(JsonValue::Number(2.0)),
-        ]))),
-    ])));
+        ])),
+    )])));
 
     // Modify nested array element
     let path = vec![0, 1]; // "data" field, second array element
@@ -629,9 +679,9 @@ fn test_tree_get_node_mut_nested() {
 
 #[test]
 fn test_tree_get_node_mut_out_of_bounds() {
-    let mut tree = JsonTree::new(JsonNode::new(JsonValue::Array(vec![
-        JsonNode::new(JsonValue::Number(1.0)),
-    ])));
+    let mut tree = JsonTree::new(JsonNode::new(JsonValue::Array(vec![JsonNode::new(
+        JsonValue::Number(1.0),
+    )])));
 
     // Try to mutate out of bounds
     let path = vec![5];
@@ -641,9 +691,10 @@ fn test_tree_get_node_mut_out_of_bounds() {
 
 #[test]
 fn test_tree_get_node_mut_invalid_path() {
-    let mut tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
-        ("value".to_string(), JsonNode::new(JsonValue::Boolean(true))),
-    ])));
+    let mut tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![(
+        "value".to_string(),
+        JsonNode::new(JsonValue::Boolean(true)),
+    )])));
 
     // Try to navigate through a non-container
     let path = vec![0, 0];
@@ -653,9 +704,10 @@ fn test_tree_get_node_mut_invalid_path() {
 
 #[test]
 fn test_tree_clone() {
-    let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
-        ("name".to_string(), JsonNode::new(JsonValue::String("original".to_string()))),
-    ])));
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![(
+        "name".to_string(),
+        JsonNode::new(JsonValue::String("original".to_string())),
+    )])));
 
     let mut cloned = tree.clone();
 
@@ -683,31 +735,46 @@ fn test_tree_clone() {
 
 #[test]
 fn test_tree_with_mixed_array_in_object() {
-    let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
-        ("values".to_string(), JsonNode::new(JsonValue::Array(vec![
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![(
+        "values".to_string(),
+        JsonNode::new(JsonValue::Array(vec![
             JsonNode::new(JsonValue::String("text".to_string())),
             JsonNode::new(JsonValue::Number(123.0)),
             JsonNode::new(JsonValue::Boolean(false)),
             JsonNode::new(JsonValue::Null),
-        ]))),
-    ])));
+        ])),
+    )])));
 
     // Access each type in the array
-    assert!(matches!(tree.get_node(&[0, 0]).unwrap().value(), JsonValue::String(_)));
-    assert!(matches!(tree.get_node(&[0, 1]).unwrap().value(), JsonValue::Number(_)));
-    assert!(matches!(tree.get_node(&[0, 2]).unwrap().value(), JsonValue::Boolean(false)));
-    assert!(matches!(tree.get_node(&[0, 3]).unwrap().value(), JsonValue::Null));
+    assert!(matches!(
+        tree.get_node(&[0, 0]).unwrap().value(),
+        JsonValue::String(_)
+    ));
+    assert!(matches!(
+        tree.get_node(&[0, 1]).unwrap().value(),
+        JsonValue::Number(_)
+    ));
+    assert!(matches!(
+        tree.get_node(&[0, 2]).unwrap().value(),
+        JsonValue::Boolean(false)
+    ));
+    assert!(matches!(
+        tree.get_node(&[0, 3]).unwrap().value(),
+        JsonValue::Null
+    ));
 }
 
 #[test]
 fn test_tree_with_array_of_objects() {
     let tree = JsonTree::new(JsonNode::new(JsonValue::Array(vec![
-        JsonNode::new(JsonValue::Object(vec![
-            ("id".to_string(), JsonNode::new(JsonValue::Number(1.0))),
-        ])),
-        JsonNode::new(JsonValue::Object(vec![
-            ("id".to_string(), JsonNode::new(JsonValue::Number(2.0))),
-        ])),
+        JsonNode::new(JsonValue::Object(vec![(
+            "id".to_string(),
+            JsonNode::new(JsonValue::Number(1.0)),
+        )])),
+        JsonNode::new(JsonValue::Object(vec![(
+            "id".to_string(),
+            JsonNode::new(JsonValue::Number(2.0)),
+        )])),
     ])));
 
     // Navigate to second object's id field
@@ -863,12 +930,16 @@ fn test_delete_array_element() {
 fn test_delete_nested_node() {
     use jsonquill::document::tree::JsonTree;
 
-    let mut tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
-        ("user".to_string(), JsonNode::new(JsonValue::Object(vec![
-            ("name".to_string(), JsonNode::new(JsonValue::String("Alice".to_string()))),
+    let mut tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![(
+        "user".to_string(),
+        JsonNode::new(JsonValue::Object(vec![
+            (
+                "name".to_string(),
+                JsonNode::new(JsonValue::String("Alice".to_string())),
+            ),
             ("age".to_string(), JsonNode::new(JsonValue::Number(30.0))),
-        ]))),
-    ])));
+        ])),
+    )])));
 
     // Delete nested property at path [0, 1] (user.age)
     let result = tree.delete_node(&[0, 1]);
@@ -900,9 +971,10 @@ fn test_delete_root_fails() {
 fn test_delete_invalid_path() {
     use jsonquill::document::tree::JsonTree;
 
-    let mut tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
-        ("a".to_string(), JsonNode::new(JsonValue::Number(1.0))),
-    ])));
+    let mut tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![(
+        "a".to_string(),
+        JsonNode::new(JsonValue::Number(1.0)),
+    )])));
 
     // Try to delete non-existent path
     let result = tree.delete_node(&[99]);
@@ -978,9 +1050,9 @@ fn test_insert_node_in_array() {
 fn test_insert_node_at_end() {
     use jsonquill::document::tree::JsonTree;
 
-    let mut tree = JsonTree::new(JsonNode::new(JsonValue::Array(vec![
-        JsonNode::new(JsonValue::Number(1.0)),
-    ])));
+    let mut tree = JsonTree::new(JsonNode::new(JsonValue::Array(vec![JsonNode::new(
+        JsonValue::Number(1.0),
+    )])));
 
     // Insert at end (index 1, which equals length)
     let new_node = JsonNode::new(JsonValue::Number(2.0));

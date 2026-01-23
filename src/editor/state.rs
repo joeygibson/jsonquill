@@ -42,8 +42,8 @@
 
 use super::cursor::Cursor;
 use super::mode::EditorMode;
-use crate::document::tree::JsonTree;
 use crate::document::node::{JsonNode, JsonValue};
+use crate::document::tree::JsonTree;
 use crate::ui::tree_view::TreeViewState;
 
 /// Parses a string into a JsonValue, detecting type automatically.
@@ -740,7 +740,8 @@ impl EditorState {
         }
 
         // Find current cursor line index
-        let cursor_idx = lines.iter()
+        let cursor_idx = lines
+            .iter()
             .position(|l| l.path == self.cursor.path())
             .unwrap_or(0);
 
@@ -800,7 +801,8 @@ impl EditorState {
             return;
         }
 
-        let current_idx = lines.iter()
+        let current_idx = lines
+            .iter()
             .position(|l| l.path == self.cursor.path())
             .unwrap_or(0);
 
@@ -808,7 +810,8 @@ impl EditorState {
         let scroll_amount = self.viewport_height / 2;
 
         // Scroll the viewport down
-        let new_scroll = (self.scroll_offset + scroll_amount).min(lines.len().saturating_sub(self.viewport_height));
+        let new_scroll = (self.scroll_offset + scroll_amount)
+            .min(lines.len().saturating_sub(self.viewport_height));
         self.scroll_offset = new_scroll;
 
         // Move cursor down by the same amount to maintain screen position
@@ -830,7 +833,8 @@ impl EditorState {
             return;
         }
 
-        let current_idx = lines.iter()
+        let current_idx = lines
+            .iter()
             .position(|l| l.path == self.cursor.path())
             .unwrap_or(0);
 
@@ -992,7 +996,7 @@ impl EditorState {
             }
             JsonValue::String(s) => serde_json::Value::String(s.clone()),
             JsonValue::Number(n) => serde_json::Value::Number(
-                serde_json::Number::from_f64(*n).unwrap_or_else(|| serde_json::Number::from(0))
+                serde_json::Number::from_f64(*n).unwrap_or_else(|| serde_json::Number::from(0)),
             ),
             JsonValue::Boolean(b) => serde_json::Value::Bool(*b),
             JsonValue::Null => serde_json::Value::Null,
@@ -1007,10 +1011,12 @@ impl EditorState {
     /// Pastes the clipboard node after the current cursor position.
     /// For objects, generates a unique key name. For arrays, inserts after current index.
     pub fn paste_node_at_cursor(&mut self) -> anyhow::Result<()> {
-        use anyhow::anyhow;
         use crate::document::node::JsonValue;
+        use anyhow::anyhow;
 
-        let clipboard_node = self.clipboard.clone()
+        let clipboard_node = self
+            .clipboard
+            .clone()
             .ok_or_else(|| anyhow!("Nothing to paste"))?;
 
         let current_path = self.cursor.path().to_vec();
@@ -1028,14 +1034,18 @@ impl EditorState {
         let parent = if parent_path.is_empty() {
             self.tree.root()
         } else {
-            self.tree.get_node(parent_path)
+            self.tree
+                .get_node(parent_path)
                 .ok_or_else(|| anyhow!("Parent node not found"))?
         };
 
         match parent.value() {
             JsonValue::Object(_) => {
                 // Use the original key name if available, otherwise use "pasted"
-                let base_key = self.clipboard_key.clone().unwrap_or_else(|| "pasted".to_string());
+                let base_key = self
+                    .clipboard_key
+                    .clone()
+                    .unwrap_or_else(|| "pasted".to_string());
                 let mut key_name = base_key.clone();
                 let mut counter = 1;
 
@@ -1072,13 +1082,15 @@ impl EditorState {
                 let mut insert_path = parent_path.to_vec();
                 insert_path.push(insert_index);
 
-                self.tree.insert_node_in_object(&insert_path, key_name, clipboard_node)?;
+                self.tree
+                    .insert_node_in_object(&insert_path, key_name, clipboard_node)?;
             }
             JsonValue::Array(_) => {
                 let mut insert_path = parent_path.to_vec();
                 insert_path.push(insert_index);
 
-                self.tree.insert_node_in_array(&insert_path, clipboard_node)?;
+                self.tree
+                    .insert_node_in_array(&insert_path, clipboard_node)?;
             }
             _ => {
                 return Err(anyhow!("Parent is not a container type"));
@@ -1100,10 +1112,12 @@ impl EditorState {
     /// Pastes the clipboard node before the current cursor position.
     /// For objects, generates a unique key name. For arrays, inserts before current index.
     pub fn paste_node_before_cursor(&mut self) -> anyhow::Result<()> {
-        use anyhow::anyhow;
         use crate::document::node::JsonValue;
+        use anyhow::anyhow;
 
-        let clipboard_node = self.clipboard.clone()
+        let clipboard_node = self
+            .clipboard
+            .clone()
             .ok_or_else(|| anyhow!("Nothing to paste"))?;
 
         let current_path = self.cursor.path().to_vec();
@@ -1121,14 +1135,18 @@ impl EditorState {
         let parent = if parent_path.is_empty() {
             self.tree.root()
         } else {
-            self.tree.get_node(parent_path)
+            self.tree
+                .get_node(parent_path)
                 .ok_or_else(|| anyhow!("Parent node not found"))?
         };
 
         match parent.value() {
             JsonValue::Object(_) => {
                 // Use the original key name if available, otherwise use "pasted"
-                let base_key = self.clipboard_key.clone().unwrap_or_else(|| "pasted".to_string());
+                let base_key = self
+                    .clipboard_key
+                    .clone()
+                    .unwrap_or_else(|| "pasted".to_string());
                 let mut key_name = base_key.clone();
                 let mut counter = 1;
 
@@ -1165,13 +1183,15 @@ impl EditorState {
                 let mut insert_path = parent_path.to_vec();
                 insert_path.push(insert_index);
 
-                self.tree.insert_node_in_object(&insert_path, key_name, clipboard_node)?;
+                self.tree
+                    .insert_node_in_object(&insert_path, key_name, clipboard_node)?;
             }
             JsonValue::Array(_) => {
                 let mut insert_path = parent_path.to_vec();
                 insert_path.push(insert_index);
 
-                self.tree.insert_node_in_array(&insert_path, clipboard_node)?;
+                self.tree
+                    .insert_node_in_array(&insert_path, clipboard_node)?;
             }
             _ => {
                 return Err(anyhow!("Parent is not a container type"));
@@ -1256,7 +1276,8 @@ impl EditorState {
         }
 
         self.search_index = (self.search_index + 1) % self.search_results.len();
-        self.cursor.set_path(self.search_results[self.search_index].clone());
+        self.cursor
+            .set_path(self.search_results[self.search_index].clone());
         true
     }
 
@@ -1304,7 +1325,9 @@ impl EditorState {
         if let Some(node) = self.tree.get_node(path) {
             // Check if node is editable (not a container)
             match node.value() {
-                crate::document::node::JsonValue::Object(_) | crate::document::node::JsonValue::Array(_) | crate::document::node::JsonValue::JsonlRoot(_) => {
+                crate::document::node::JsonValue::Object(_)
+                | crate::document::node::JsonValue::Array(_)
+                | crate::document::node::JsonValue::JsonlRoot(_) => {
                     return; // Can't edit containers
                 }
                 crate::document::node::JsonValue::String(s) => {
@@ -1351,12 +1374,16 @@ impl EditorState {
         use crate::document::node::JsonValue;
         use anyhow::{anyhow, Context};
 
-        let buffer_content = self.edit_buffer.as_ref()
+        let buffer_content = self
+            .edit_buffer
+            .as_ref()
             .ok_or_else(|| anyhow!("No active edit buffer"))?
             .clone();
 
         let path = self.cursor.path();
-        let node = self.tree.get_node(path)
+        let node = self
+            .tree
+            .get_node(path)
             .ok_or_else(|| anyhow!("Node not found at cursor"))?;
 
         // Special case: "null" always converts to Null regardless of original type
@@ -1367,7 +1394,8 @@ impl EditorState {
             match node.value() {
                 JsonValue::String(_) => JsonValue::String(buffer_content),
                 JsonValue::Number(_) => {
-                    let num = buffer_content.parse::<f64>()
+                    let num = buffer_content
+                        .parse::<f64>()
                         .context("Invalid number format")?;
                     JsonValue::Number(num)
                 }
@@ -1390,7 +1418,9 @@ impl EditorState {
         };
 
         // Update the node in the tree
-        let node_mut = self.tree.get_node_mut(path)
+        let node_mut = self
+            .tree
+            .get_node_mut(path)
             .ok_or_else(|| anyhow!("Node not found for update"))?;
         *node_mut.value_mut() = new_value;
 
@@ -1705,10 +1735,7 @@ impl EditorState {
             match self.tree.get_node(parent_path) {
                 Some(node) => node,
                 None => {
-                    self.set_message(
-                        "Invalid cursor position".to_string(),
-                        MessageLevel::Error,
-                    );
+                    self.set_message("Invalid cursor position".to_string(), MessageLevel::Error);
                     return;
                 }
             }
@@ -1738,10 +1765,7 @@ impl EditorState {
                 // Stay in Normal mode, wait for key input
             }
             _ => {
-                self.set_message(
-                    "Parent is not a container".to_string(),
-                    MessageLevel::Error,
-                );
+                self.set_message("Parent is not a container".to_string(), MessageLevel::Error);
             }
         }
     }
@@ -1760,7 +1784,9 @@ impl EditorState {
         }
 
         // Get the value from edit buffer
-        let value_str = self.edit_buffer.as_ref()
+        let value_str = self
+            .edit_buffer
+            .as_ref()
             .ok_or_else(|| anyhow!("No edit buffer"))?;
 
         // Parse the value
@@ -1768,7 +1794,9 @@ impl EditorState {
         let node = JsonNode::new(value);
 
         // Get insertion point
-        let insertion_path = self.add_insertion_point.as_ref()
+        let insertion_path = self
+            .add_insertion_point
+            .as_ref()
             .ok_or_else(|| anyhow!("No insertion point set"))?
             .clone();
 
@@ -1782,7 +1810,8 @@ impl EditorState {
         let parent = if parent_path.is_empty() {
             self.tree.root()
         } else {
-            self.tree.get_node(parent_path)
+            self.tree
+                .get_node(parent_path)
                 .ok_or_else(|| anyhow!("Parent node not found"))?
         };
 
@@ -1793,11 +1822,9 @@ impl EditorState {
             }
             JsonValue::Object(_) => {
                 let key = self.add_key_buffer.clone();
-                self.tree.insert_node_in_object(&insertion_path, key.clone(), node)?;
-                self.set_message(
-                    format!("Added field '{}'", key),
-                    MessageLevel::Info,
-                );
+                self.tree
+                    .insert_node_in_object(&insertion_path, key.clone(), node)?;
+                self.set_message(format!("Added field '{}'", key), MessageLevel::Info);
             }
             _ => {
                 return Err(anyhow!("Parent is not a container"));
@@ -1805,7 +1832,8 @@ impl EditorState {
         }
 
         // Update expanded paths to account for shifted indices after insertion
-        self.tree_view_mut().update_paths_after_insertion(&insertion_path);
+        self.tree_view_mut()
+            .update_paths_after_insertion(&insertion_path);
 
         // Rebuild tree view to show new node
         self.rebuild_tree_view();
@@ -1831,10 +1859,7 @@ impl EditorState {
         if matches!(self.add_mode_stage, AddModeStage::AwaitingKey) {
             // Check for empty key
             if self.add_key_buffer.is_empty() {
-                self.set_message(
-                    "Key cannot be empty".to_string(),
-                    MessageLevel::Error,
-                );
+                self.set_message("Key cannot be empty".to_string(), MessageLevel::Error);
                 return;
             }
 

@@ -1,4 +1,4 @@
-use jsonquill::theme::{get_builtin_theme, colors::ThemeColors};
+use jsonquill::theme::{colors::ThemeColors, get_builtin_theme};
 use ratatui::style::Color;
 
 // Tests for get_builtin_theme function
@@ -37,11 +37,11 @@ fn test_dark_theme_syntax_colors() {
     let theme = get_builtin_theme("default-dark").unwrap();
 
     // jless uses ANSI colors that adapt to terminal theme
-    assert_eq!(theme.colors.key, Color::LightBlue);      // ANSI 12
-    assert_eq!(theme.colors.string, Color::Green);       // ANSI 2
-    assert_eq!(theme.colors.number, Color::Magenta);     // ANSI 5
-    assert_eq!(theme.colors.boolean, Color::Yellow);     // ANSI 3
-    assert_eq!(theme.colors.null, Color::DarkGray);      // ANSI 8
+    assert_eq!(theme.colors.key, Color::LightBlue); // ANSI 12
+    assert_eq!(theme.colors.string, Color::Green); // ANSI 2
+    assert_eq!(theme.colors.number, Color::Magenta); // ANSI 5
+    assert_eq!(theme.colors.boolean, Color::Yellow); // ANSI 3
+    assert_eq!(theme.colors.null, Color::DarkGray); // ANSI 8
 }
 
 #[test]
@@ -49,11 +49,11 @@ fn test_dark_theme_ui_colors() {
     let theme = get_builtin_theme("default-dark").unwrap();
 
     // jless uses terminal defaults with white status bar
-    assert_eq!(theme.colors.background, Color::Reset);      // Terminal default background
-    assert_eq!(theme.colors.foreground, Color::Gray);       // Terminal default light
-    assert_eq!(theme.colors.cursor, Color::LightBlue);      // Match key color
-    assert_eq!(theme.colors.status_line_bg, Color::White);  // White status bar like jless
-    assert_eq!(theme.colors.status_line_fg, Color::Black);  // Black text on white
+    assert_eq!(theme.colors.background, Color::Reset); // Terminal default background
+    assert_eq!(theme.colors.foreground, Color::Gray); // Terminal default light
+    assert_eq!(theme.colors.cursor, Color::LightBlue); // Match key color
+    assert_eq!(theme.colors.status_line_bg, Color::White); // White status bar like jless
+    assert_eq!(theme.colors.status_line_fg, Color::Black); // Black text on white
 }
 
 #[test]

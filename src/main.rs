@@ -61,10 +61,7 @@ fn main() -> Result<()> {
                     "user".to_string(),
                     JsonNode::new(JsonValue::Object(user_obj)),
                 ),
-                (
-                    "count".to_string(),
-                    JsonNode::new(JsonValue::Number(42.0)),
-                ),
+                ("count".to_string(), JsonNode::new(JsonValue::Number(42.0))),
                 (
                     "active".to_string(),
                     JsonNode::new(JsonValue::Boolean(true)),
@@ -101,7 +98,10 @@ fn main() -> Result<()> {
     };
 
     let theme = get_builtin_theme(theme_name).unwrap_or_else(|| {
-        eprintln!("Warning: Theme '{}' not found, using default-dark", theme_name);
+        eprintln!(
+            "Warning: Theme '{}' not found, using default-dark",
+            theme_name
+        );
         get_builtin_theme("default-dark").unwrap()
     });
     let mut ui = UI::new(theme);

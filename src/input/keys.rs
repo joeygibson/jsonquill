@@ -1,7 +1,7 @@
 //! Keyboard event mapping and input event types.
 
-use termion::event::{Event, Key};
 use crate::editor::mode::EditorMode;
+use termion::event::{Event, Key};
 
 /// High-level input events abstracted from raw keyboard input.
 ///

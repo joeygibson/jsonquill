@@ -187,7 +187,8 @@ impl TreeViewState {
         match node.value() {
             JsonValue::Object(entries) => {
                 for (i, (_, child)) in entries.iter().enumerate() {
-                    let child_path: Vec<usize> = path.iter().copied().chain(std::iter::once(i)).collect();
+                    let child_path: Vec<usize> =
+                        path.iter().copied().chain(std::iter::once(i)).collect();
                     if child.value().is_container() {
                         self.expanded_paths.insert(child_path.clone());
                         self.expand_all_recursive(child, &child_path);
@@ -196,7 +197,8 @@ impl TreeViewState {
             }
             JsonValue::Array(elements) | JsonValue::JsonlRoot(elements) => {
                 for (i, child) in elements.iter().enumerate() {
-                    let child_path: Vec<usize> = path.iter().copied().chain(std::iter::once(i)).collect();
+                    let child_path: Vec<usize> =
+                        path.iter().copied().chain(std::iter::once(i)).collect();
                     if child.value().is_container() {
                         self.expanded_paths.insert(child_path.clone());
                         self.expand_all_recursive(child, &child_path);
@@ -211,7 +213,8 @@ impl TreeViewState {
         match node.value() {
             JsonValue::Object(entries) => {
                 for (i, (key, child)) in entries.iter().enumerate() {
-                    let child_path: Vec<usize> = path.iter().copied().chain(std::iter::once(i)).collect();
+                    let child_path: Vec<usize> =
+                        path.iter().copied().chain(std::iter::once(i)).collect();
                     let expanded = self.is_expanded(&child_path);
 
                     // Use collapsed preview for unexpanded containers
@@ -238,7 +241,8 @@ impl TreeViewState {
             }
             JsonValue::Array(elements) | JsonValue::JsonlRoot(elements) => {
                 for (i, child) in elements.iter().enumerate() {
-                    let child_path: Vec<usize> = path.iter().copied().chain(std::iter::once(i)).collect();
+                    let child_path: Vec<usize> =
+                        path.iter().copied().chain(std::iter::once(i)).collect();
                     let expanded = self.is_expanded(&child_path);
 
                     // Use collapsed preview for unexpanded containers
@@ -270,7 +274,9 @@ impl TreeViewState {
     fn get_value_preview(&self, value: &JsonValue) -> String {
         match value {
             JsonValue::Object(entries) => format!("{{ {} fields }}", entries.len()),
-            JsonValue::Array(elements) | JsonValue::JsonlRoot(elements) => format!("[ {} items ]", elements.len()),
+            JsonValue::Array(elements) | JsonValue::JsonlRoot(elements) => {
+                format!("[ {} items ]", elements.len())
+            }
             JsonValue::String(s) => format!("\"{}\"", s),
             JsonValue::Number(n) => n.to_string(),
             JsonValue::Boolean(b) => b.to_string(),
@@ -332,15 +338,15 @@ impl Default for TreeViewState {
     }
 }
 
+use crate::editor::cursor::Cursor;
+use crate::theme::colors::ThemeColors;
 use ratatui::{
     layout::Rect,
-    style::{Color, Style, Modifier},
+    style::{Color, Modifier, Style},
     text::{Line, Span},
     widgets::{Block, Borders, Paragraph},
     Frame,
 };
-use crate::theme::colors::ThemeColors;
-use crate::editor::cursor::Cursor;
 
 /// Renders the tree view with syntax highlighting and cursor.
 ///
@@ -403,7 +409,13 @@ pub fn render_tree_view(
 
     let viewport_height = area.height as usize;
 
-    for (line_num, line) in tree_view.lines().iter().enumerate().skip(scroll_offset).take(viewport_height) {
+    for (line_num, line) in tree_view
+        .lines()
+        .iter()
+        .enumerate()
+        .skip(scroll_offset)
+        .take(viewport_height)
+    {
         let is_cursor = cursor.path() == line.path.as_slice();
 
         let mut spans = Vec::new();
@@ -413,7 +425,9 @@ pub fn render_tree_view(
             let line_num_str = format!("{:>width$} ", line_num + 1, width = max_line_num_width);
             spans.push(Span::styled(
                 line_num_str,
-                Style::default().fg(colors.foreground).add_modifier(Modifier::DIM),
+                Style::default()
+                    .fg(colors.foreground)
+                    .add_modifier(Modifier::DIM),
             ));
         }
 
@@ -441,10 +455,7 @@ pub fn render_tree_view(
             } else {
                 Style::default().fg(colors.key)
             };
-            spans.push(Span::styled(
-                format!("{}: ", key),
-                key_style,
-            ));
+            spans.push(Span::styled(format!("{}: ", key), key_style));
         }
 
         // Value
@@ -619,12 +630,30 @@ mod tests {
 
     #[test]
     fn test_value_type_from_json() {
-        assert_eq!(ValueType::from_json_value(&JsonValue::Object(vec![])), ValueType::Object);
-        assert_eq!(ValueType::from_json_value(&JsonValue::Array(vec![])), ValueType::Array);
-        assert_eq!(ValueType::from_json_value(&JsonValue::String("x".to_string())), ValueType::String);
-        assert_eq!(ValueType::from_json_value(&JsonValue::Number(42.0)), ValueType::Number);
-        assert_eq!(ValueType::from_json_value(&JsonValue::Boolean(true)), ValueType::Boolean);
-        assert_eq!(ValueType::from_json_value(&JsonValue::Null), ValueType::Null);
+        assert_eq!(
+            ValueType::from_json_value(&JsonValue::Object(vec![])),
+            ValueType::Object
+        );
+        assert_eq!(
+            ValueType::from_json_value(&JsonValue::Array(vec![])),
+            ValueType::Array
+        );
+        assert_eq!(
+            ValueType::from_json_value(&JsonValue::String("x".to_string())),
+            ValueType::String
+        );
+        assert_eq!(
+            ValueType::from_json_value(&JsonValue::Number(42.0)),
+            ValueType::Number
+        );
+        assert_eq!(
+            ValueType::from_json_value(&JsonValue::Boolean(true)),
+            ValueType::Boolean
+        );
+        assert_eq!(
+            ValueType::from_json_value(&JsonValue::Null),
+            ValueType::Null
+        );
     }
 
     #[test]
@@ -636,7 +665,10 @@ mod tests {
     #[test]
     fn test_rebuild_with_flat_object() {
         let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
-            ("name".to_string(), JsonNode::new(JsonValue::String("Alice".to_string()))),
+            (
+                "name".to_string(),
+                JsonNode::new(JsonValue::String("Alice".to_string())),
+            ),
             ("age".to_string(), JsonNode::new(JsonValue::Number(30.0))),
         ])));
 
@@ -680,11 +712,13 @@ mod tests {
 
     #[test]
     fn test_nested_object_collapsed() {
-        let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
-            ("user".to_string(), JsonNode::new(JsonValue::Object(vec![
-                ("name".to_string(), JsonNode::new(JsonValue::String("Bob".to_string()))),
-            ]))),
-        ])));
+        let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![(
+            "user".to_string(),
+            JsonNode::new(JsonValue::Object(vec![(
+                "name".to_string(),
+                JsonNode::new(JsonValue::String("Bob".to_string())),
+            )])),
+        )])));
 
         let mut state = TreeViewState::new();
         state.rebuild(&tree);
@@ -697,11 +731,13 @@ mod tests {
 
     #[test]
     fn test_nested_object_expanded() {
-        let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
-            ("user".to_string(), JsonNode::new(JsonValue::Object(vec![
-                ("name".to_string(), JsonNode::new(JsonValue::String("Bob".to_string()))),
-            ]))),
-        ])));
+        let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![(
+            "user".to_string(),
+            JsonNode::new(JsonValue::Object(vec![(
+                "name".to_string(),
+                JsonNode::new(JsonValue::String("Bob".to_string())),
+            )])),
+        )])));
 
         let mut state = TreeViewState::new();
         state.toggle_expand(&[0]); // Expand "user"
@@ -720,7 +756,10 @@ mod tests {
         let state = TreeViewState::new();
 
         // Scalars still use simple format
-        assert_eq!(state.get_value_preview(&JsonValue::String("test".to_string())), "\"test\"");
+        assert_eq!(
+            state.get_value_preview(&JsonValue::String("test".to_string())),
+            "\"test\""
+        );
         assert_eq!(state.get_value_preview(&JsonValue::Number(3.14)), "3.14");
         assert_eq!(state.get_value_preview(&JsonValue::Boolean(true)), "true");
         assert_eq!(state.get_value_preview(&JsonValue::Null), "null");
@@ -736,7 +775,10 @@ mod tests {
         use ratatui::Terminal;
 
         let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
-            ("name".to_string(), JsonNode::new(JsonValue::String("Alice".to_string()))),
+            (
+                "name".to_string(),
+                JsonNode::new(JsonValue::String("Alice".to_string())),
+            ),
             ("age".to_string(), JsonNode::new(JsonValue::Number(30.0))),
         ])));
 
@@ -748,20 +790,36 @@ mod tests {
         let colors = ThemeColors::default_dark();
         let cursor = Cursor::new();
 
-        terminal.draw(|f| {
-            render_tree_view(f, f.area(), &state, &cursor, &colors, false, 0);
-        }).unwrap();
+        terminal
+            .draw(|f| {
+                render_tree_view(f, f.area(), &state, &cursor, &colors, false, 0);
+            })
+            .unwrap();
 
         let buffer = terminal.backend().buffer().clone();
-        let content = buffer.content().iter()
+        let content = buffer
+            .content()
+            .iter()
             .map(|cell| cell.symbol())
             .collect::<String>();
 
         // Keys should be displayed without quotes: "name: " not "\"name\": "
-        assert!(content.contains("name: "), "Expected 'name: ' without quotes in rendered output");
-        assert!(content.contains("age: "), "Expected 'age: ' without quotes in rendered output");
-        assert!(!content.contains("\"name\""), "Keys should not have quotes in rendered output");
-        assert!(!content.contains("\"age\""), "Keys should not have quotes in rendered output");
+        assert!(
+            content.contains("name: "),
+            "Expected 'name: ' without quotes in rendered output"
+        );
+        assert!(
+            content.contains("age: "),
+            "Expected 'age: ' without quotes in rendered output"
+        );
+        assert!(
+            !content.contains("\"name\""),
+            "Keys should not have quotes in rendered output"
+        );
+        assert!(
+            !content.contains("\"age\""),
+            "Keys should not have quotes in rendered output"
+        );
     }
 
     #[test]
@@ -769,9 +827,10 @@ mod tests {
         use ratatui::backend::TestBackend;
         use ratatui::Terminal;
 
-        let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
-            ("name".to_string(), JsonNode::new(JsonValue::String("Alice".to_string()))),
-        ])));
+        let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![(
+            "name".to_string(),
+            JsonNode::new(JsonValue::String("Alice".to_string())),
+        )])));
 
         let mut state = TreeViewState::new();
         state.rebuild(&tree);
@@ -782,9 +841,11 @@ mod tests {
         let mut cursor = Cursor::new();
         cursor.set_path(vec![0]); // Select first item
 
-        terminal.draw(|f| {
-            render_tree_view(f, f.area(), &state, &cursor, &colors, false, 0);
-        }).unwrap();
+        terminal
+            .draw(|f| {
+                render_tree_view(f, f.area(), &state, &cursor, &colors, false, 0);
+            })
+            .unwrap();
 
         let buffer = terminal.backend().buffer().clone();
 
@@ -817,9 +878,18 @@ mod tests {
             }
         }
 
-        assert!(found_key_highlight, "Key 'name:' should be highlighted with cursor background");
-        assert!(found_key_white_text, "Key 'name:' text should be white for visibility");
-        assert!(found_value_no_highlight, "Value '\"Alice\"' should not be highlighted");
+        assert!(
+            found_key_highlight,
+            "Key 'name:' should be highlighted with cursor background"
+        );
+        assert!(
+            found_key_white_text,
+            "Key 'name:' text should be white for visibility"
+        );
+        assert!(
+            found_value_no_highlight,
+            "Value '\"Alice\"' should not be highlighted"
+        );
     }
 
     #[test]
@@ -827,9 +897,10 @@ mod tests {
         use ratatui::backend::TestBackend;
         use ratatui::Terminal;
 
-        let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
-            ("name".to_string(), JsonNode::new(JsonValue::String("Alice".to_string()))),
-        ])));
+        let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![(
+            "name".to_string(),
+            JsonNode::new(JsonValue::String("Alice".to_string())),
+        )])));
 
         let mut state = TreeViewState::new();
         state.rebuild(&tree);
@@ -840,12 +911,16 @@ mod tests {
         let mut cursor = Cursor::new();
         cursor.set_path(vec![0]); // Select first item
 
-        terminal.draw(|f| {
-            render_tree_view(f, f.area(), &state, &cursor, &colors, false, 0);
-        }).unwrap();
+        terminal
+            .draw(|f| {
+                render_tree_view(f, f.area(), &state, &cursor, &colors, false, 0);
+            })
+            .unwrap();
 
         let buffer = terminal.backend().buffer().clone();
-        let content = buffer.content().iter()
+        let content = buffer
+            .content()
+            .iter()
             .map(|cell| cell.symbol())
             .collect::<String>();
 
@@ -853,12 +928,18 @@ mod tests {
         // Expected layout: "▶ name: \"Alice\""
         // The triangle should appear before the key, not after the value
         let first_line = content.lines().next().unwrap_or("");
-        assert!(first_line.contains("▶"), "Expected triangle indicator on left side for selected scalar value");
+        assert!(
+            first_line.contains("▶"),
+            "Expected triangle indicator on left side for selected scalar value"
+        );
 
         // Verify triangle comes before the key
         if let Some(triangle_pos) = first_line.find("▶") {
             if let Some(key_pos) = first_line.find("name") {
-                assert!(triangle_pos < key_pos, "Triangle should appear before the key on the left side");
+                assert!(
+                    triangle_pos < key_pos,
+                    "Triangle should appear before the key on the left side"
+                );
             }
         }
     }
@@ -869,7 +950,10 @@ mod tests {
 
         let obj = JsonNode::new(JsonValue::Object(vec![
             ("id".to_string(), JsonNode::new(JsonValue::Number(1.0))),
-            ("name".to_string(), JsonNode::new(JsonValue::String("Alice".to_string()))),
+            (
+                "name".to_string(),
+                JsonNode::new(JsonValue::String("Alice".to_string())),
+            ),
         ]));
 
         let preview = format_collapsed_preview(&obj, 100);
@@ -882,9 +966,13 @@ mod tests {
 
         let obj = JsonNode::new(JsonValue::Object(vec![
             ("id".to_string(), JsonNode::new(JsonValue::Number(1.0))),
-            ("user".to_string(), JsonNode::new(JsonValue::Object(vec![
-                ("name".to_string(), JsonNode::new(JsonValue::String("Alice".to_string()))),
-            ]))),
+            (
+                "user".to_string(),
+                JsonNode::new(JsonValue::Object(vec![(
+                    "name".to_string(),
+                    JsonNode::new(JsonValue::String("Alice".to_string())),
+                )])),
+            ),
         ]));
 
         let preview = format_collapsed_preview(&obj, 100);
@@ -911,9 +999,18 @@ mod tests {
 
         let obj = JsonNode::new(JsonValue::Object(vec![
             ("id".to_string(), JsonNode::new(JsonValue::Number(1.0))),
-            ("name".to_string(), JsonNode::new(JsonValue::String("Alice".to_string()))),
-            ("email".to_string(), JsonNode::new(JsonValue::String("alice@example.com".to_string()))),
-            ("active".to_string(), JsonNode::new(JsonValue::Boolean(true))),
+            (
+                "name".to_string(),
+                JsonNode::new(JsonValue::String("Alice".to_string())),
+            ),
+            (
+                "email".to_string(),
+                JsonNode::new(JsonValue::String("alice@example.com".to_string())),
+            ),
+            (
+                "active".to_string(),
+                JsonNode::new(JsonValue::Boolean(true)),
+            ),
         ]));
 
         let preview = format_collapsed_preview(&obj, 40);
@@ -927,8 +1024,16 @@ mod tests {
 
         // Test with multi-byte UTF-8 characters (emoji, Chinese, etc.)
         let obj = JsonNode::new(JsonValue::Object(vec![
-            ("emoji".to_string(), JsonNode::new(JsonValue::String("🌟✨🎉🎊🎈".to_string()))),
-            ("chinese".to_string(), JsonNode::new(JsonValue::String("你好世界这是一个很长的字符串".to_string()))),
+            (
+                "emoji".to_string(),
+                JsonNode::new(JsonValue::String("🌟✨🎉🎊🎈".to_string())),
+            ),
+            (
+                "chinese".to_string(),
+                JsonNode::new(JsonValue::String(
+                    "你好世界这是一个很长的字符串".to_string(),
+                )),
+            ),
         ]));
 
         // This should not panic even with multi-byte characters
@@ -938,7 +1043,9 @@ mod tests {
         // Test array with UTF-8 strings
         let arr = JsonNode::new(JsonValue::Array(vec![
             JsonNode::new(JsonValue::String("🌟✨🎉🎊🎈🎁🎀🎂".to_string())),
-            JsonNode::new(JsonValue::String("你好世界这是一个很长的字符串".to_string())),
+            JsonNode::new(JsonValue::String(
+                "你好世界这是一个很长的字符串".to_string(),
+            )),
         ]));
 
         // This should also not panic
@@ -952,12 +1059,14 @@ mod tests {
         use crate::document::tree::JsonTree;
 
         let lines = vec![
-            JsonNode::new(JsonValue::Object(vec![
-                ("id".to_string(), JsonNode::new(JsonValue::Number(1.0))),
-            ])),
-            JsonNode::new(JsonValue::Object(vec![
-                ("id".to_string(), JsonNode::new(JsonValue::Number(2.0))),
-            ])),
+            JsonNode::new(JsonValue::Object(vec![(
+                "id".to_string(),
+                JsonNode::new(JsonValue::Number(1.0)),
+            )])),
+            JsonNode::new(JsonValue::Object(vec![(
+                "id".to_string(),
+                JsonNode::new(JsonValue::Number(2.0)),
+            )])),
         ];
 
         let tree = JsonTree::new(JsonNode::new(JsonValue::JsonlRoot(lines)));
@@ -977,12 +1086,13 @@ mod tests {
         use crate::document::node::{JsonNode, JsonValue};
         use crate::document::tree::JsonTree;
 
-        let lines = vec![
-            JsonNode::new(JsonValue::Object(vec![
-                ("id".to_string(), JsonNode::new(JsonValue::Number(1.0))),
-                ("name".to_string(), JsonNode::new(JsonValue::String("Alice".to_string()))),
-            ])),
-        ];
+        let lines = vec![JsonNode::new(JsonValue::Object(vec![
+            ("id".to_string(), JsonNode::new(JsonValue::Number(1.0))),
+            (
+                "name".to_string(),
+                JsonNode::new(JsonValue::String("Alice".to_string())),
+            ),
+        ]))];
 
         let tree = JsonTree::new(JsonNode::new(JsonValue::JsonlRoot(lines)));
         let mut state = TreeViewState::new();

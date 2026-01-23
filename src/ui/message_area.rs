@@ -1,5 +1,8 @@
 //! Message area rendering for displaying messages and command input.
 
+use crate::editor::mode::EditorMode;
+use crate::editor::state::{EditorState, MessageLevel};
+use crate::theme::colors::ThemeColors;
 use ratatui::{
     layout::Rect,
     style::Style,
@@ -7,9 +10,6 @@ use ratatui::{
     widgets::Paragraph,
     Frame,
 };
-use crate::editor::state::{EditorState, MessageLevel};
-use crate::editor::mode::EditorMode;
-use crate::theme::colors::ThemeColors;
 
 /// Renders the message area at the bottom of the screen.
 ///
@@ -17,19 +17,15 @@ use crate::theme::colors::ThemeColors;
 /// - Command mode: `:` prompt with input buffer
 /// - Messages: errors, warnings, info
 /// - Empty when no message
-pub fn render_message_area(
-    f: &mut Frame,
-    area: Rect,
-    state: &EditorState,
-    colors: &ThemeColors,
-) {
+pub fn render_message_area(f: &mut Frame, area: Rect, state: &EditorState, colors: &ThemeColors) {
     let content = match state.mode() {
         EditorMode::Command => {
             // Show command prompt with buffer
             let text = format!(":{}", state.command_buffer());
-            Line::from(vec![
-                Span::styled(text, Style::default().fg(colors.foreground)),
-            ])
+            Line::from(vec![Span::styled(
+                text,
+                Style::default().fg(colors.foreground),
+            )])
         }
         EditorMode::Search => {
             // Show search prompt with buffer and results
@@ -37,9 +33,7 @@ pub fn render_message_area(
             if let Some((current, total)) = state.search_results_info() {
                 text.push_str(&format!(" ({}/{})", current, total));
             }
-            Line::from(vec![
-                Span::styled(text, Style::default().fg(colors.info)),
-            ])
+            Line::from(vec![Span::styled(text, Style::default().fg(colors.info))])
         }
         _ => {
             // Show message if present
@@ -49,17 +43,18 @@ pub fn render_message_area(
                     MessageLevel::Warning => colors.warning,
                     MessageLevel::Info => colors.info,
                 };
-                Line::from(vec![
-                    Span::styled(&message.text, Style::default().fg(color)),
-                ])
+                Line::from(vec![Span::styled(
+                    &message.text,
+                    Style::default().fg(color),
+                )])
             } else {
                 Line::from("")
             }
         }
     };
 
-    let paragraph = Paragraph::new(content)
-        .style(Style::default().bg(colors.background).fg(colors.foreground));
+    let paragraph =
+        Paragraph::new(content).style(Style::default().bg(colors.background).fg(colors.foreground));
 
     f.render_widget(paragraph, area);
 }
