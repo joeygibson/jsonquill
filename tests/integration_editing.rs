@@ -823,14 +823,9 @@ fn test_add_field_with_detailed_expansion_tracking() {
         "company".to_string(),
         JsonNode::new(JsonValue::Object(company)),
     )])));
-    let tree_copy = tree.clone();
     let mut state = EditorState::new(tree);
 
-    // Manually expand all nodes for this test
-    state.tree_view_mut().expand_all(&tree_copy);
-    state.rebuild_tree_view();
-
-    // All nodes should be expanded
+    // EditorState::new() auto-expands all nodes, so they should already be expanded
     println!("Initial expansion state (should all be true):");
     println!("  [0] (company): {}", state.tree_view().is_expanded(&[0]));
     println!(
