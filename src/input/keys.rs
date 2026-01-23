@@ -1,6 +1,6 @@
 //! Keyboard event mapping and input event types.
 
-use crossterm::event::{KeyCode, KeyEvent};
+use termion::event::{Event, Key};
 use crate::editor::mode::EditorMode;
 
 /// High-level input events abstracted from raw keyboard input.
@@ -61,7 +61,7 @@ pub enum InputEvent {
     Unknown,
 }
 
-/// Maps a crossterm KeyEvent to an InputEvent based on the current editor mode.
+/// Maps a termion Event to an InputEvent based on the current editor mode.
 ///
 /// Different modes interpret keys differently (vim-style modal editing):
 /// - Normal mode: hjkl for movement, i for insert, : for command, q for quit
@@ -70,7 +70,7 @@ pub enum InputEvent {
 ///
 /// # Arguments
 ///
-/// * `key` - The crossterm KeyEvent to map
+/// * `event` - The termion Event to map
 /// * `mode` - The current editor mode
 ///
 /// # Returns
@@ -80,68 +80,64 @@ pub enum InputEvent {
 /// # Example
 ///
 /// ```
-/// use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
+/// use termion::event::{Event, Key};
 /// use jeditor::editor::mode::EditorMode;
 /// use jeditor::input::keys::{map_key_event, InputEvent};
 ///
-/// let key = KeyEvent::new(KeyCode::Char('j'), KeyModifiers::NONE);
-/// let event = map_key_event(key, &EditorMode::Normal);
-/// assert_eq!(event, InputEvent::MoveDown);
+/// let event = Event::Key(Key::Char('j'));
+/// let input_event = map_key_event(event, &EditorMode::Normal);
+/// assert_eq!(input_event, InputEvent::MoveDown);
 /// ```
-pub fn map_key_event(key: KeyEvent, mode: &EditorMode) -> InputEvent {
+pub fn map_key_event(event: Event, mode: &EditorMode) -> InputEvent {
+    // We only care about key events
+    let key = match event {
+        Event::Key(k) => k,
+        _ => return InputEvent::Unknown,
+    };
+
     match mode {
-        EditorMode::Normal => {
-            use crossterm::event::KeyModifiers;
-
-            // Check for Ctrl-modified keys first
-            if key.modifiers.contains(KeyModifiers::CONTROL) {
-                match key.code {
-                    KeyCode::Char('d') => return InputEvent::PageDown,
-                    KeyCode::Char('u') => return InputEvent::PageUp,
-                    KeyCode::Char('r') => return InputEvent::Redo,
-                    _ => {}
-                }
-            }
-
-            // Then check for regular keys
-            match key.code {
-                KeyCode::Char('q') => InputEvent::Quit,
-                KeyCode::Char('j') => InputEvent::MoveDown,
-                KeyCode::Char('k') => InputEvent::MoveUp,
-                KeyCode::Char('h') => InputEvent::MoveLeft,
-                KeyCode::Char('l') => InputEvent::MoveRight,
-                KeyCode::Char('i') => InputEvent::EnterInsertMode,
-                KeyCode::Char(':') => InputEvent::EnterCommandMode,
-                KeyCode::Char('/') => InputEvent::EnterSearchMode,
-                KeyCode::Char('n') => InputEvent::NextSearchResult,
-                KeyCode::Char('d') => InputEvent::Delete,
-                KeyCode::Char('y') => InputEvent::Yank,
-                KeyCode::Char('p') => InputEvent::Paste,
-                KeyCode::Char('P') => InputEvent::PasteBefore,
-                KeyCode::Char('Z') => InputEvent::SaveAndQuit,
-                KeyCode::Char('g') => InputEvent::JumpToTop,
-                KeyCode::Char('G') => InputEvent::JumpToBottom,
-                KeyCode::Char('u') => InputEvent::Undo,
-                KeyCode::Down => InputEvent::MoveDown,
-                KeyCode::Up => InputEvent::MoveUp,
-                KeyCode::Left => InputEvent::MoveLeft,
-                KeyCode::Right => InputEvent::MoveRight,
-                _ => InputEvent::Unknown,
-            }
-        },
-        EditorMode::Insert => match key.code {
-            KeyCode::Esc => InputEvent::ExitMode,
-            KeyCode::Char(c) => InputEvent::InsertCharacter(c),
-            KeyCode::Backspace => InputEvent::InsertBackspace,
-            KeyCode::Enter => InputEvent::InsertEnter,
+        EditorMode::Normal => match key {
+            // Ctrl-modified keys
+            Key::Ctrl('d') => InputEvent::PageDown,
+            Key::Ctrl('u') => InputEvent::PageUp,
+            Key::Ctrl('r') => InputEvent::Redo,
+            // Regular keys
+            Key::Char('q') => InputEvent::Quit,
+            Key::Char('j') => InputEvent::MoveDown,
+            Key::Char('k') => InputEvent::MoveUp,
+            Key::Char('h') => InputEvent::MoveLeft,
+            Key::Char('l') => InputEvent::MoveRight,
+            Key::Char('i') => InputEvent::EnterInsertMode,
+            Key::Char(':') => InputEvent::EnterCommandMode,
+            Key::Char('/') => InputEvent::EnterSearchMode,
+            Key::Char('n') => InputEvent::NextSearchResult,
+            Key::Char('d') => InputEvent::Delete,
+            Key::Char('y') => InputEvent::Yank,
+            Key::Char('p') => InputEvent::Paste,
+            Key::Char('P') => InputEvent::PasteBefore,
+            Key::Char('Z') => InputEvent::SaveAndQuit,
+            Key::Char('g') => InputEvent::JumpToTop,
+            Key::Char('G') => InputEvent::JumpToBottom,
+            Key::Char('u') => InputEvent::Undo,
+            Key::Down => InputEvent::MoveDown,
+            Key::Up => InputEvent::MoveUp,
+            Key::Left => InputEvent::MoveLeft,
+            Key::Right => InputEvent::MoveRight,
             _ => InputEvent::Unknown,
         },
-        EditorMode::Command => match key.code {
-            KeyCode::Esc => InputEvent::ExitMode,
+        EditorMode::Insert => match key {
+            Key::Esc => InputEvent::ExitMode,
+            Key::Char(c) => InputEvent::InsertCharacter(c),
+            Key::Backspace => InputEvent::InsertBackspace,
+            Key::Char('\n') => InputEvent::InsertEnter,
             _ => InputEvent::Unknown,
         },
-        EditorMode::Search => match key.code {
-            KeyCode::Esc => InputEvent::ExitMode,
+        EditorMode::Command => match key {
+            Key::Esc => InputEvent::ExitMode,
+            _ => InputEvent::Unknown,
+        },
+        EditorMode::Search => match key {
+            Key::Esc => InputEvent::ExitMode,
             _ => InputEvent::Unknown,
         },
     }
@@ -150,62 +146,78 @@ pub fn map_key_event(key: KeyEvent, mode: &EditorMode) -> InputEvent {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crossterm::event::KeyModifiers;
 
     #[test]
     fn test_normal_mode_quit() {
-        let key = KeyEvent::new(KeyCode::Char('q'), KeyModifiers::NONE);
-        assert_eq!(map_key_event(key, &EditorMode::Normal), InputEvent::Quit);
+        let event = Event::Key(Key::Char('q'));
+        assert_eq!(map_key_event(event, &EditorMode::Normal), InputEvent::Quit);
     }
 
     #[test]
     fn test_normal_mode_movement_vim_keys() {
-        let key_j = KeyEvent::new(KeyCode::Char('j'), KeyModifiers::NONE);
-        assert_eq!(map_key_event(key_j, &EditorMode::Normal), InputEvent::MoveDown);
-
-        let key_k = KeyEvent::new(KeyCode::Char('k'), KeyModifiers::NONE);
-        assert_eq!(map_key_event(key_k, &EditorMode::Normal), InputEvent::MoveUp);
-
-        let key_h = KeyEvent::new(KeyCode::Char('h'), KeyModifiers::NONE);
-        assert_eq!(map_key_event(key_h, &EditorMode::Normal), InputEvent::MoveLeft);
-
-        let key_l = KeyEvent::new(KeyCode::Char('l'), KeyModifiers::NONE);
-        assert_eq!(map_key_event(key_l, &EditorMode::Normal), InputEvent::MoveRight);
+        assert_eq!(
+            map_key_event(Event::Key(Key::Char('j')), &EditorMode::Normal),
+            InputEvent::MoveDown
+        );
+        assert_eq!(
+            map_key_event(Event::Key(Key::Char('k')), &EditorMode::Normal),
+            InputEvent::MoveUp
+        );
+        assert_eq!(
+            map_key_event(Event::Key(Key::Char('h')), &EditorMode::Normal),
+            InputEvent::MoveLeft
+        );
+        assert_eq!(
+            map_key_event(Event::Key(Key::Char('l')), &EditorMode::Normal),
+            InputEvent::MoveRight
+        );
     }
 
     #[test]
     fn test_normal_mode_movement_arrow_keys() {
-        let key = KeyEvent::new(KeyCode::Down, KeyModifiers::NONE);
-        assert_eq!(map_key_event(key, &EditorMode::Normal), InputEvent::MoveDown);
-
-        let key = KeyEvent::new(KeyCode::Up, KeyModifiers::NONE);
-        assert_eq!(map_key_event(key, &EditorMode::Normal), InputEvent::MoveUp);
+        assert_eq!(
+            map_key_event(Event::Key(Key::Down), &EditorMode::Normal),
+            InputEvent::MoveDown
+        );
+        assert_eq!(
+            map_key_event(Event::Key(Key::Up), &EditorMode::Normal),
+            InputEvent::MoveUp
+        );
     }
 
     #[test]
     fn test_normal_mode_enter_modes() {
-        let key_i = KeyEvent::new(KeyCode::Char('i'), KeyModifiers::NONE);
-        assert_eq!(map_key_event(key_i, &EditorMode::Normal), InputEvent::EnterInsertMode);
-
-        let key_colon = KeyEvent::new(KeyCode::Char(':'), KeyModifiers::NONE);
-        assert_eq!(map_key_event(key_colon, &EditorMode::Normal), InputEvent::EnterCommandMode);
+        assert_eq!(
+            map_key_event(Event::Key(Key::Char('i')), &EditorMode::Normal),
+            InputEvent::EnterInsertMode
+        );
+        assert_eq!(
+            map_key_event(Event::Key(Key::Char(':')), &EditorMode::Normal),
+            InputEvent::EnterCommandMode
+        );
     }
 
     #[test]
     fn test_insert_mode_exit() {
-        let key = KeyEvent::new(KeyCode::Esc, KeyModifiers::NONE);
-        assert_eq!(map_key_event(key, &EditorMode::Insert), InputEvent::ExitMode);
+        assert_eq!(
+            map_key_event(Event::Key(Key::Esc), &EditorMode::Insert),
+            InputEvent::ExitMode
+        );
     }
 
     #[test]
     fn test_command_mode_exit() {
-        let key = KeyEvent::new(KeyCode::Esc, KeyModifiers::NONE);
-        assert_eq!(map_key_event(key, &EditorMode::Command), InputEvent::ExitMode);
+        assert_eq!(
+            map_key_event(Event::Key(Key::Esc), &EditorMode::Command),
+            InputEvent::ExitMode
+        );
     }
 
     #[test]
     fn test_unknown_key() {
-        let key = KeyEvent::new(KeyCode::Char('x'), KeyModifiers::NONE);
-        assert_eq!(map_key_event(key, &EditorMode::Normal), InputEvent::Unknown);
+        assert_eq!(
+            map_key_event(Event::Key(Key::Char('x')), &EditorMode::Normal),
+            InputEvent::Unknown
+        );
     }
 }

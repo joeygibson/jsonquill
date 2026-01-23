@@ -3,18 +3,24 @@
 use super::keys::{map_key_event, InputEvent};
 use crate::editor::state::EditorState;
 use crate::editor::mode::EditorMode;
-use crossterm::event::{self, Event};
-use anyhow::Result;
+use anyhow::{Context, Result};
+use std::fs::File;
+use std::io::{self, Read};
 use std::time::Duration;
+use termion::event::{Event, Key};
+use termion::input::TermRead;
 
 /// Handles terminal input events and updates editor state.
 ///
-/// The InputHandler polls for crossterm events and converts them to
+/// The InputHandler polls for termion events and converts them to
 /// high-level InputEvents, then updates the editor state accordingly.
-pub struct InputHandler;
+pub struct InputHandler {
+    /// File handle for /dev/tty when stdin was piped
+    tty_file: Option<File>,
+}
 
 impl InputHandler {
-    /// Creates a new InputHandler.
+    /// Creates a new InputHandler that reads from stdin.
     ///
     /// # Example
     ///
@@ -24,7 +30,21 @@ impl InputHandler {
     /// let handler = InputHandler::new();
     /// ```
     pub fn new() -> Self {
-        Self
+        Self { tty_file: None }
+    }
+
+    /// Creates a new InputHandler that reads from /dev/tty.
+    /// Use this when stdin has been consumed for piped data.
+    pub fn new_with_tty() -> Result<Self> {
+        let tty_file = File::options()
+            .read(true)
+            .write(true)
+            .open("/dev/tty")
+            .context("Failed to open /dev/tty for keyboard input")?;
+
+        Ok(Self {
+            tty_file: Some(tty_file),
+        })
     }
 
     /// Polls for a terminal event with a timeout.
@@ -48,12 +68,24 @@ impl InputHandler {
     /// let handler = InputHandler::new();
     /// let event = handler.poll_event(Duration::from_millis(100)).unwrap();
     /// ```
-    pub fn poll_event(&self, timeout: Duration) -> Result<Option<Event>> {
-        if event::poll(timeout)? {
-            Ok(Some(event::read()?))
+    pub fn poll_event(&mut self, _timeout: Duration) -> Result<Option<Event>> {
+        // Termion's events() iterator blocks until an event is available
+        // We'll use a non-blocking read with a timeout simulation
+        if let Some(tty_file) = &mut self.tty_file {
+            // Read from /dev/tty
+            let mut events = tty_file.events();
+            if let Some(event_result) = events.next() {
+                return Ok(Some(event_result?));
+            }
         } else {
-            Ok(None)
+            // Read from stdin
+            let mut events = io::stdin().events();
+            if let Some(event_result) = events.next() {
+                return Ok(Some(event_result?));
+            }
         }
+
+        Ok(None)
     }
 
     /// Handles a terminal event and updates editor state.
@@ -91,21 +123,11 @@ impl InputHandler {
     /// assert!(should_quit);
     /// ```
     pub fn handle_event(&self, event: Event, state: &mut EditorState) -> Result<bool> {
-        use crossterm::event::KeyCode;
-
         if let Event::Key(key) = event {
             // Handle insert mode separately for character input
             if *state.mode() == EditorMode::Insert {
-                match key.code {
-                    KeyCode::Char(c) => {
-                        state.push_to_edit_buffer(c);
-                        return Ok(false);
-                    }
-                    KeyCode::Backspace => {
-                        state.pop_from_edit_buffer();
-                        return Ok(false);
-                    }
-                    KeyCode::Enter => {
+                match key {
+                    Key::Char('\n') => {
                         // Commit the edit
                         use crate::editor::state::MessageLevel;
                         match state.commit_editing() {
@@ -122,7 +144,15 @@ impl InputHandler {
                         }
                         return Ok(false);
                     }
-                    KeyCode::Esc => {
+                    Key::Char(c) => {
+                        state.push_to_edit_buffer(c);
+                        return Ok(false);
+                    }
+                    Key::Backspace => {
+                        state.pop_from_edit_buffer();
+                        return Ok(false);
+                    }
+                    Key::Esc => {
                         state.cancel_editing();
                         state.set_mode(EditorMode::Normal);
                         use crate::editor::state::MessageLevel;
@@ -135,23 +165,23 @@ impl InputHandler {
 
             // Handle command mode separately for character input
             if *state.mode() == EditorMode::Command {
-                match key.code {
-                    KeyCode::Char(c) => {
-                        state.push_to_command_buffer(c);
-                        return Ok(false);
-                    }
-                    KeyCode::Backspace => {
-                        state.pop_from_command_buffer();
-                        return Ok(false);
-                    }
-                    KeyCode::Enter => {
+                match key {
+                    Key::Char('\n') => {
                         // Execute command and return to normal mode
                         let command = state.command_buffer().to_string();
                         state.clear_command_buffer();
                         state.set_mode(EditorMode::Normal);
                         return self.execute_command(&command, state);
                     }
-                    KeyCode::Esc => {
+                    Key::Char(c) => {
+                        state.push_to_command_buffer(c);
+                        return Ok(false);
+                    }
+                    Key::Backspace => {
+                        state.pop_from_command_buffer();
+                        return Ok(false);
+                    }
+                    Key::Esc => {
                         state.clear_command_buffer();
                         state.set_mode(EditorMode::Normal);
                         return Ok(false);
@@ -162,18 +192,8 @@ impl InputHandler {
 
             // Handle search mode separately for character input
             if *state.mode() == EditorMode::Search {
-                match key.code {
-                    KeyCode::Char(c) => {
-                        state.push_to_search_buffer(c);
-                        state.execute_search();
-                        return Ok(false);
-                    }
-                    KeyCode::Backspace => {
-                        state.pop_from_search_buffer();
-                        state.execute_search();
-                        return Ok(false);
-                    }
-                    KeyCode::Enter => {
+                match key {
+                    Key::Char('\n') => {
                         // Exit search mode
                         state.set_mode(EditorMode::Normal);
                         use crate::editor::state::MessageLevel;
@@ -190,7 +210,17 @@ impl InputHandler {
                         }
                         return Ok(false);
                     }
-                    KeyCode::Esc => {
+                    Key::Char(c) => {
+                        state.push_to_search_buffer(c);
+                        state.execute_search();
+                        return Ok(false);
+                    }
+                    Key::Backspace => {
+                        state.pop_from_search_buffer();
+                        state.execute_search();
+                        return Ok(false);
+                    }
+                    Key::Esc => {
                         state.clear_search_buffer();
                         state.set_mode(EditorMode::Normal);
                         return Ok(false);
@@ -200,7 +230,7 @@ impl InputHandler {
             }
 
             // Handle help toggle in all modes
-            if let KeyCode::Char('?') = key.code {
+            if let Key::Char('?') = key {
                 if *state.mode() == EditorMode::Normal {
                     state.toggle_help();
                     return Ok(false);
@@ -209,16 +239,16 @@ impl InputHandler {
 
             // If help is shown, handle scrolling and closing
             if state.show_help() {
-                match key.code {
-                    KeyCode::Esc | KeyCode::Char('?') => {
+                match key {
+                    Key::Esc | Key::Char('?') => {
                         state.toggle_help();
                         return Ok(false);
                     }
-                    KeyCode::Down | KeyCode::Char('j') => {
+                    Key::Down | Key::Char('j') => {
                         state.scroll_help_down();
                         return Ok(false);
                     }
-                    KeyCode::Up | KeyCode::Char('k') => {
+                    Key::Up | Key::Char('k') => {
                         state.scroll_help_up();
                         return Ok(false);
                     }
@@ -229,7 +259,7 @@ impl InputHandler {
                 }
             }
 
-            let input_event = map_key_event(key, state.mode());
+            let input_event = map_key_event(Event::Key(key), state.mode());
 
             match input_event {
                 InputEvent::Quit => {
@@ -676,7 +706,7 @@ impl Default for InputHandler {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
+    use termion::event::Key;
     use crate::editor::mode::EditorMode;
     use crate::document::node::{JsonNode, JsonValue};
     use crate::document::tree::JsonTree;
@@ -692,7 +722,7 @@ mod tests {
         let handler = InputHandler::new();
         let tree = JsonTree::new(JsonNode::new(JsonValue::Null));
         let mut state = EditorState::new(tree);
-        let event = Event::Key(KeyEvent::new(KeyCode::Char('q'), KeyModifiers::NONE));
+        let event = Event::Key(Key::Char('q'));
 
         let should_quit = handler.handle_event(event, &mut state).unwrap();
         assert!(should_quit);
@@ -707,7 +737,7 @@ mod tests {
         // Mark the file as dirty
         state.mark_dirty();
 
-        let event = Event::Key(KeyEvent::new(KeyCode::Char('q'), KeyModifiers::NONE));
+        let event = Event::Key(Key::Char('q'));
         let should_quit = handler.handle_event(event, &mut state).unwrap();
 
         // Should NOT quit when file is dirty
@@ -728,7 +758,7 @@ mod tests {
         let mut state = EditorState::new(tree);
         assert_eq!(*state.mode(), EditorMode::Normal);
 
-        let event = Event::Key(KeyEvent::new(KeyCode::Char('i'), KeyModifiers::NONE));
+        let event = Event::Key(Key::Char('i'));
         let should_quit = handler.handle_event(event, &mut state).unwrap();
 
         assert!(!should_quit);
@@ -741,7 +771,7 @@ mod tests {
         let tree = JsonTree::new(JsonNode::new(JsonValue::Null));
         let mut state = EditorState::new(tree);
 
-        let event = Event::Key(KeyEvent::new(KeyCode::Char(':'), KeyModifiers::NONE));
+        let event = Event::Key(Key::Char(':'));
         handler.handle_event(event, &mut state).unwrap();
 
         assert_eq!(*state.mode(), EditorMode::Command);
@@ -754,7 +784,7 @@ mod tests {
         let mut state = EditorState::new(tree);
         state.set_mode(EditorMode::Insert);
 
-        let event = Event::Key(KeyEvent::new(KeyCode::Esc, KeyModifiers::NONE));
+        let event = Event::Key(Key::Esc);
         handler.handle_event(event, &mut state).unwrap();
 
         assert_eq!(*state.mode(), EditorMode::Normal);
@@ -766,7 +796,7 @@ mod tests {
         let tree = JsonTree::new(JsonNode::new(JsonValue::Null));
         let mut state = EditorState::new(tree);
 
-        let event = Event::Key(KeyEvent::new(KeyCode::Char('j'), KeyModifiers::NONE));
+        let event = Event::Key(Key::Char('j'));
         let should_quit = handler.handle_event(event, &mut state).unwrap();
 
         assert!(!should_quit);

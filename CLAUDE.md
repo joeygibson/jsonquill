@@ -51,7 +51,7 @@ The project follows a standard Rust binary + library structure:
 ### Key Dependencies
 
 - **ratatui (0.29)**: Terminal UI framework for building the interface
-- **crossterm (0.28)**: Cross-platform terminal manipulation library (backend for ratatui)
+- **termion (4.0)**: Terminal manipulation library (backend for ratatui) with native /dev/tty support
 - **serde (1.0)** + **serde_json (1.0)**: JSON serialization/deserialization
 - **clap (4.5)**: Command-line argument parsing
 - **toml (0.8)**: Configuration file support
@@ -126,7 +126,7 @@ Implemented modules:
 # Open a JSON file
 ./target/release/jeditor foo.json
 
-# Pipe JSON from stdin
+# Pipe JSON from stdin (requires /dev/tty for keyboard input)
 cat foo.json | ./target/release/jeditor
 echo '{"key": "value"}' | ./target/release/jeditor
 curl https://api.example.com/data | ./target/release/jeditor
@@ -239,4 +239,32 @@ Settings are loaded automatically when jeditor starts:
 1. Default values are used as a baseline
 2. Config file values override defaults (if the file exists)
 3. Command-line arguments override config file values
+
+## Stdin Piping
+
+jeditor supports reading JSON data from stdin while maintaining full keyboard interactivity. This is accomplished using `/dev/tty` for keyboard input:
+
+**How it works:**
+1. When stdin is piped (not a terminal), jeditor detects this automatically
+2. JSON data is read from stdin before setting up the terminal UI
+3. The input handler opens `/dev/tty` for keyboard events
+4. termion reads keyboard input from the controlling terminal (`/dev/tty`)
+5. The TUI remains fully interactive even though stdin was consumed for data
+
+**Requirements:**
+- A controlling terminal must be available (`/dev/tty` must be accessible)
+- Works in interactive terminal sessions
+- Will fail gracefully in non-interactive environments (CI/CD, detached sessions)
+
+**Examples:**
+```bash
+# Read JSON from curl
+curl https://api.github.com/users/octocat | jeditor
+
+# Read from file via cat
+cat config.json | jeditor
+
+# Read from echo
+echo '{"test": [1,2,3]}' | jeditor
 ```
+

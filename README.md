@@ -4,7 +4,15 @@ A terminal-based structural JSON editor with vim-style keybindings.
 
 ## Status
 
-Under active development. The project is in its initial implementation phase and not yet ready for use.
+**Alpha Release** - Core functionality is implemented and usable. The editor supports:
+- JSON file loading and editing
+- Tree-based navigation with vim keybindings
+- Stdin piping support (e.g., `cat file.json | jeditor`)
+- Undo/redo functionality
+- Clipboard operations (yank/paste)
+- Customizable themes and settings
+
+See [CLAUDE.md](CLAUDE.md) for detailed feature list and usage instructions.
 
 ## Description
 
@@ -14,7 +22,7 @@ jeditor is a Rust-based terminal application for viewing and editing JSON files 
 
 - **Rust**: Core language
 - **ratatui**: Terminal UI framework
-- **crossterm**: Cross-platform terminal manipulation
+- **termion**: Terminal manipulation with /dev/tty support for stdin piping
 - **serde_json**: JSON parsing and serialization
 - **clap**: Command-line argument parsing
 - **arboard**: Clipboard integration
@@ -45,7 +53,36 @@ cargo test
 
 ## Installation & Usage
 
-The project is not yet ready for installation or production use. Check back later for release information.
+Build from source:
+
+```bash
+# Clone and build
+git clone <repository-url>
+cd jeditor
+cargo build --release
+
+# Run with a file
+./target/release/jeditor examples/sample.json
+
+# Or pipe JSON from stdin
+cat file.json | ./target/release/jeditor
+curl https://api.example.com/data | ./target/release/jeditor
+```
+
+Basic keybindings:
+- `j/k` or arrow keys: Navigate
+- `h/l`: Collapse/expand nodes
+- `i`: Edit value
+- `yy`: Copy node
+- `dd`: Delete node
+- `p`: Paste
+- `u`: Undo
+- `Ctrl-r`: Redo
+- `:w`: Save
+- `:q`: Quit
+- `?`: Help
+
+For complete documentation, see [CLAUDE.md](CLAUDE.md).
 
 ## License
 

@@ -1,12 +1,10 @@
 use anyhow::{Context, Result};
 use clap::Parser;
-use crossterm::{
-    execute,
-    terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
-};
-use ratatui::{backend::CrosstermBackend, Terminal};
-use std::io::{self, IsTerminal};
+use ratatui::{backend::TermionBackend, Terminal};
+use std::io::{self, IsTerminal, Write};
 use std::time::Duration;
+use termion::raw::IntoRawMode;
+use termion::screen::IntoAlternateScreen;
 
 use jeditor::document::node::{JsonNode, JsonValue};
 use jeditor::document::tree::JsonTree;
@@ -79,44 +77,14 @@ fn main() -> Result<()> {
     };
 
     // Setup terminal
-    // When stdin was piped for data, we need to redirect stdin to /dev/tty for keyboard input
-    #[cfg(unix)]
-    {
-        if _stdin_was_piped {
-            use std::fs::File;
-            use std::os::unix::io::AsRawFd;
+    // Termion can use /dev/tty directly when stdin is piped, no redirection needed
+    let stdout = io::stdout()
+        .into_raw_mode()
+        .context("Failed to enable raw mode")?
+        .into_alternate_screen()
+        .context("Failed to enter alternate screen")?;
 
-            let tty = File::options()
-                .read(true)
-                .write(true)
-                .open("/dev/tty")
-                .context(
-                    "Failed to open /dev/tty for keyboard input.\n\
-                     When JSON is piped via stdin, jeditor requires a controlling terminal (/dev/tty) for keyboard input.\n\
-                     This error typically occurs when running in:\n\
-                     - Non-interactive shells or scripts\n\
-                     - CI/CD environments without a PTY\n\
-                     - Environments where the controlling terminal has been detached\n\n\
-                     Try running from an interactive terminal session."
-                )?;
-
-            // Redirect stdin (fd 0) to point to the TTY
-            // This allows crossterm to read keyboard events from the TTY
-            let tty_fd = tty.as_raw_fd();
-            unsafe {
-                if libc::dup2(tty_fd, 0) == -1 {
-                    anyhow::bail!("Failed to redirect stdin to /dev/tty");
-                }
-            }
-            // Keep tty alive until after dup2 completes
-            drop(tty);
-        }
-    }
-
-    enable_raw_mode()?;
-    let mut stdout = io::stdout();
-    execute!(stdout, EnterAlternateScreen)?;
-    let backend = CrosstermBackend::new(stdout);
+    let backend = TermionBackend::new(stdout);
     let mut terminal = Terminal::new(backend)?;
     terminal.clear()?;
 
@@ -137,7 +105,12 @@ fn main() -> Result<()> {
         get_builtin_theme("default-dark").unwrap()
     });
     let mut ui = UI::new(theme);
-    let input_handler = InputHandler::new();
+    let mut input_handler = if _stdin_was_piped {
+        InputHandler::new_with_tty()
+            .context("Failed to open /dev/tty for keyboard input when stdin was piped")?
+    } else {
+        InputHandler::new()
+    };
 
     let mut state = EditorState::new(tree);
     if let Some(name) = filename {
@@ -149,12 +122,13 @@ fn main() -> Result<()> {
     state.set_show_line_numbers(config.show_line_numbers);
 
     // Main event loop
-    let result = run_event_loop(&mut terminal, &mut ui, &input_handler, &mut state);
+    let result = run_event_loop(&mut terminal, &mut ui, &mut input_handler, &mut state);
 
     // Cleanup
-    disable_raw_mode()?;
-    execute!(terminal.backend_mut(), LeaveAlternateScreen)?;
-    terminal.show_cursor()?;
+    // Termion handles cleanup automatically through Drop guards
+    // But we still want to show the cursor before exiting
+    write!(terminal.backend_mut(), "{}", termion::cursor::Show)?;
+    terminal.backend_mut().flush()?;
 
     result
 }
@@ -162,7 +136,7 @@ fn main() -> Result<()> {
 fn run_event_loop<B: ratatui::backend::Backend>(
     terminal: &mut Terminal<B>,
     ui: &mut UI,
-    input_handler: &InputHandler,
+    input_handler: &mut InputHandler,
     state: &mut EditorState,
 ) -> Result<()> {
     loop {
