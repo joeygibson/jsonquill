@@ -1645,4 +1645,104 @@ impl EditorState {
     pub fn clear_add_key_buffer(&mut self) {
         self.add_key_buffer.clear();
     }
+
+    /// Starts an add operation at the current cursor position.
+    ///
+    /// Determines whether we're adding to an array or object, and sets the
+    /// appropriate add_mode_stage. For arrays, immediately enters Insert mode.
+    /// For objects, stays in Normal mode and waits for key input.
+    pub fn start_add_operation(&mut self) {
+        use crate::document::node::JsonValue;
+
+        let current_path = self.cursor.path().to_vec();
+
+        // Special case: if cursor is at root (empty path)
+        if current_path.is_empty() {
+            // Check if root is a container
+            match self.tree.root().value() {
+                JsonValue::Object(_) | JsonValue::Array(_) => {
+                    // Root is container, we can add to it
+                    // Determine which type
+                    match self.tree.root().value() {
+                        JsonValue::Array(_) => {
+                            // Array: go straight to value input
+                            self.add_mode_stage = AddModeStage::AwaitingValue;
+                            self.add_insertion_point = Some(vec![0]); // Insert at position 0
+
+                            // Enter Insert mode with empty edit buffer
+                            self.edit_buffer = Some(String::new());
+                            self.edit_cursor = 0;
+                            self.set_mode(EditorMode::Insert);
+                            self.reset_cursor_blink();
+                        }
+                        JsonValue::Object(_) => {
+                            // Object: need key first
+                            self.add_mode_stage = AddModeStage::AwaitingKey;
+                            self.add_insertion_point = Some(vec![0]); // Insert at position 0
+                        }
+                        _ => unreachable!(),
+                    }
+                }
+                _ => {
+                    // Root is scalar, can't add sibling
+                    self.set_message(
+                        "Cannot add sibling to root node".to_string(),
+                        MessageLevel::Error,
+                    );
+                }
+            }
+            return;
+        }
+
+        // Get parent path (all but last index)
+        let parent_path = &current_path[..current_path.len() - 1];
+        let current_index = current_path[current_path.len() - 1];
+
+        // Get parent node
+        let parent = if parent_path.is_empty() {
+            self.tree.root()
+        } else {
+            match self.tree.get_node(parent_path) {
+                Some(node) => node,
+                None => {
+                    self.set_message(
+                        "Invalid cursor position".to_string(),
+                        MessageLevel::Error,
+                    );
+                    return;
+                }
+            }
+        };
+
+        // Determine parent type and set up add operation
+        match parent.value() {
+            JsonValue::Array(_) => {
+                // Adding to array: insert after current element
+                self.add_mode_stage = AddModeStage::AwaitingValue;
+                let mut insertion_path = parent_path.to_vec();
+                insertion_path.push(current_index + 1);
+                self.add_insertion_point = Some(insertion_path);
+
+                // Enter Insert mode with empty edit buffer
+                self.edit_buffer = Some(String::new());
+                self.edit_cursor = 0;
+                self.set_mode(EditorMode::Insert);
+                self.reset_cursor_blink();
+            }
+            JsonValue::Object(_) => {
+                // Adding to object: need key first
+                self.add_mode_stage = AddModeStage::AwaitingKey;
+                let mut insertion_path = parent_path.to_vec();
+                insertion_path.push(current_index + 1);
+                self.add_insertion_point = Some(insertion_path);
+                // Stay in Normal mode, wait for key input
+            }
+            _ => {
+                self.set_message(
+                    "Parent is not a container".to_string(),
+                    MessageLevel::Error,
+                );
+            }
+        }
+    }
 }

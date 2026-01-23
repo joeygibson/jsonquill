@@ -1315,3 +1315,128 @@ fn test_parse_scalar_value() {
         _ => panic!("Expected string (case sensitive)"),
     }
 }
+
+#[test]
+fn test_start_add_in_array() {
+    use jeditor::editor::state::{EditorState, AddModeStage};
+    use jeditor::editor::mode::EditorMode;
+    use jeditor::document::node::{JsonNode, JsonValue};
+    use jeditor::document::tree::JsonTree;
+
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Array(vec![
+        JsonNode::new(JsonValue::Number(1.0)),
+        JsonNode::new(JsonValue::Number(2.0)),
+    ])));
+    let mut state = EditorState::new(tree);
+
+    // Move cursor to first element
+    state.cursor_mut().set_path(vec![0]);
+
+    // Start add operation
+    state.start_add_operation();
+
+    // Should be in AwaitingValue stage (arrays skip key prompt)
+    assert!(matches!(state.add_mode_stage(), &AddModeStage::AwaitingValue));
+    // Should have entered Insert mode
+    assert_eq!(state.mode(), &EditorMode::Insert);
+    // Edit buffer should be empty
+    assert_eq!(state.edit_buffer(), Some(""));
+}
+
+#[test]
+fn test_start_add_in_object() {
+    use jeditor::editor::state::{EditorState, AddModeStage};
+    use jeditor::editor::mode::EditorMode;
+    use jeditor::document::node::{JsonNode, JsonValue};
+    use jeditor::document::tree::JsonTree;
+
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
+        ("name".to_string(), JsonNode::new(JsonValue::String("Alice".to_string()))),
+    ])));
+    let mut state = EditorState::new(tree);
+
+    // Move cursor to first field
+    state.cursor_mut().set_path(vec![0]);
+
+    // Start add operation
+    state.start_add_operation();
+
+    // Should be in AwaitingKey stage (objects need key first)
+    assert!(matches!(state.add_mode_stage(), &AddModeStage::AwaitingKey));
+    // Should still be in Normal mode (key prompt, not Insert)
+    assert_eq!(state.mode(), &EditorMode::Normal);
+}
+
+#[test]
+fn test_start_add_in_root_array() {
+    use jeditor::editor::state::{EditorState, AddModeStage};
+    use jeditor::editor::mode::EditorMode;
+    use jeditor::document::node::{JsonNode, JsonValue};
+    use jeditor::document::tree::JsonTree;
+
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Array(vec![])));
+    let mut state = EditorState::new(tree);
+
+    // Cursor is at root (empty path because array is empty)
+    state.cursor_mut().set_path(vec![]);
+
+    // Start add operation
+    state.start_add_operation();
+
+    // Should be in AwaitingValue stage (arrays skip key prompt)
+    assert!(matches!(state.add_mode_stage(), &AddModeStage::AwaitingValue));
+    // Should have entered Insert mode
+    assert_eq!(state.mode(), &EditorMode::Insert);
+    // Edit buffer should be empty
+    assert_eq!(state.edit_buffer(), Some(""));
+}
+
+#[test]
+fn test_start_add_in_root_object() {
+    use jeditor::editor::state::{EditorState, AddModeStage};
+    use jeditor::editor::mode::EditorMode;
+    use jeditor::document::node::{JsonNode, JsonValue};
+    use jeditor::document::tree::JsonTree;
+
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![])));
+    let mut state = EditorState::new(tree);
+
+    // Cursor is at root (empty path because object is empty)
+    state.cursor_mut().set_path(vec![]);
+
+    // Start add operation
+    state.start_add_operation();
+
+    // Should be in AwaitingKey stage (objects need key first)
+    assert!(matches!(state.add_mode_stage(), &AddModeStage::AwaitingKey));
+    // Should still be in Normal mode (key prompt, not Insert)
+    assert_eq!(state.mode(), &EditorMode::Normal);
+}
+
+#[test]
+fn test_start_add_at_root_scalar_fails() {
+    use jeditor::editor::state::{EditorState, AddModeStage, MessageLevel};
+    use jeditor::editor::mode::EditorMode;
+    use jeditor::document::node::{JsonNode, JsonValue};
+    use jeditor::document::tree::JsonTree;
+
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Number(42.0)));
+    let mut state = EditorState::new(tree);
+
+    // Cursor is at root (empty path)
+
+    // Try to start add operation
+    state.start_add_operation();
+
+    // Should still be in None stage
+    assert!(matches!(state.add_mode_stage(), &AddModeStage::None));
+    // Should still be in Normal mode
+    assert_eq!(state.mode(), &EditorMode::Normal);
+    // Should have error message
+    if let Some(msg) = state.message() {
+        assert_eq!(msg.level, MessageLevel::Error);
+        assert!(msg.text.contains("Cannot add sibling to root"));
+    } else {
+        panic!("Expected error message");
+    }
+}
