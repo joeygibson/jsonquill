@@ -1,4 +1,4 @@
-# jeditor
+# JSON Quill
 
 A terminal-based structural JSON editor with vim-style keybindings.
 
@@ -7,25 +7,197 @@ A terminal-based structural JSON editor with vim-style keybindings.
 **Alpha Release** - Core functionality is implemented and usable. The editor supports:
 - JSON file loading and editing
 - Tree-based navigation with vim keybindings
-- Stdin piping support (e.g., `cat file.json | jeditor`)
+- Add, edit, delete operations for JSON values
 - Undo/redo functionality
 - Clipboard operations (yank/paste)
 - Customizable themes and settings
+- Search functionality
+- Configuration file support
 
-See [CLAUDE.md](CLAUDE.md) for detailed feature list and usage instructions.
+See [CLAUDE.md](CLAUDE.md) for detailed feature list and developer documentation.
 
 ## Description
 
-jeditor is a Rust-based terminal application for viewing and editing JSON files in a structured, tree-like format. It aims to provide an intuitive vim-style interface for navigating complex JSON documents directly in the terminal.
+JSON Quill is a Rust-based terminal application for viewing and editing JSON files in a structured, tree-like format. It provides an intuitive vim-style interface for navigating and manipulating complex JSON documents directly in the terminal.
 
 ## Tech Stack
 
 - **Rust**: Core language
 - **ratatui**: Terminal UI framework
-- **termion**: Terminal manipulation with /dev/tty support for stdin piping
+- **termion**: Terminal manipulation with /dev/tty support
 - **serde_json**: JSON parsing and serialization
 - **clap**: Command-line argument parsing
 - **arboard**: Clipboard integration
+
+## Installation & Usage
+
+### Build from Source
+
+```bash
+# Clone the repository
+git clone https://github.com/joeygibson/jsonquill
+cd jsonquill
+
+# Build release binary
+cargo build --release
+
+# Run with a file
+./target/release/jsonquill examples/sample.json
+```
+
+### Basic Usage
+
+```bash
+# Open a JSON file
+jsonquill file.json
+
+# Create a new empty JSON file
+jsonquill
+
+# Specify theme
+jsonquill --theme default-light file.json
+```
+
+## Key Bindings
+
+### Navigation
+
+| Key | Action | Notes |
+|-----|--------|-------|
+| `j` / `k` | Move down / up | Supports count prefix (e.g., `3j` moves down 3 lines) |
+| `↓` / `↑` | Move down / up | Arrow keys also work |
+| `h` / `l` | Collapse / expand node | Toggle node expansion state |
+| `←` / `→` | Collapse / expand node | Arrow keys also work |
+| `gg` | Jump to top of document | |
+| `G` | Jump to bottom of document | |
+| `<count>g` | Jump to line number | e.g., `10g` jumps to line 10 |
+| `Ctrl-d` | Page down | Scroll half page down |
+| `Ctrl-u` | Page up | Scroll half page up |
+
+### Modes
+
+| Key | Action | Description |
+|-----|--------|-------------|
+| `i` | Enter INSERT mode | Edit value of current node |
+| `:` | Enter COMMAND mode | Execute commands (`:w`, `:q`, etc.) |
+| `/` | Enter SEARCH mode | Search in keys and values |
+| `Esc` | Return to NORMAL mode | Exit INSERT, COMMAND, or SEARCH mode |
+
+### Editing (NORMAL mode)
+
+| Key | Action | Notes |
+|-----|--------|-------|
+| `a` | Add new field/element | Objects: prompts for key then value<br>Arrays: prompts for value directly |
+| `dd` | Delete current node | Supports count prefix (e.g., `3dd` deletes 3 nodes) |
+| `yy` | Yank (copy) current node | Supports count prefix (e.g., `2yy` copies 2 nodes)<br>Copies to system clipboard |
+| `p` | Paste after cursor | Insert yanked content after current node |
+| `P` | Paste before cursor | Insert yanked content before current node |
+| `u` | Undo last change | |
+| `Ctrl-r` | Redo last undone change | |
+| `ZZ` | Save and quit | Only saves if file has been modified |
+
+### INSERT Mode
+
+| Key | Action |
+|-----|--------|
+| `<chars>` | Type to edit the value |
+| `Backspace` | Delete last character |
+| `←` / `→` | Move cursor left/right |
+| `Home` / `End` | Move to start/end of line |
+| `Ctrl-u` | Delete to start of line |
+| `Delete` | Delete character under cursor |
+| `Enter` | Commit changes and return to NORMAL mode |
+| `Esc` | Cancel editing and return to NORMAL mode |
+
+### Search
+
+| Key | Action | Description |
+|-----|--------|-------------|
+| `/` | Start search | Enter SEARCH mode to type search query |
+| `n` | Jump to next match | Find next occurrence of search term |
+| `Esc` | Exit search mode | Return to NORMAL mode |
+
+### Commands (COMMAND mode)
+
+Type `:` to enter command mode, then:
+
+| Command | Action | Notes |
+|---------|--------|-------|
+| `:w` | Save file | Write changes to disk |
+| `:w <filename>` | Save as | Write to a different file |
+| `:q` | Quit | Warns if there are unsaved changes |
+| `:q!` | Force quit | Quit without saving changes |
+| `:wq` | Save and quit | Also: `:x` or `ZZ` |
+| `:undo` | Undo last change | Same as `u` in NORMAL mode |
+| `:redo` | Redo last undone change | Same as `Ctrl-r` in NORMAL mode |
+| `:theme` | List available themes | Shows all built-in themes |
+| `:theme <name>` | Switch theme | e.g., `:theme default-light` |
+| `:set` | Show current settings | Display all configuration values |
+| `:set number` | Enable line numbers | Show line numbers in tree view |
+| `:set nonumber` | Disable line numbers | Hide line numbers |
+| `:set save` | Save settings to config | Write current settings to `~/.config/jsonquill/config.toml` |
+
+### Other
+
+| Key | Action | Notes |
+|-----|--------|-------|
+| `q` | Quit | Only works in NORMAL mode (same as `:q`) |
+| `?` | Toggle help overlay | Shows all keybindings |
+| `↑` / `↓` | Scroll help | When help overlay is open |
+| `j` / `k` | Scroll help | When help overlay is open |
+
+## Value Parsing
+
+When adding or editing values, JSON Quill automatically detects the type:
+
+- `true` / `false` → Boolean
+- `null` → Null
+- `42` / `3.14` / `-1.5` → Number
+- Anything else → String
+
+Examples:
+- Type `hello` → Stored as string `"hello"`
+- Type `42` → Stored as number `42`
+- Type `true` → Stored as boolean `true`
+
+## Configuration
+
+JSON Quill supports a configuration file at `~/.config/jsonquill/config.toml`.
+
+### Config File Format
+
+```toml
+# Theme name (default: "default-dark")
+theme = "default-dark"
+
+# Number of spaces per indentation level (default: 2)
+indent_size = 2
+
+# Display line numbers (default: true)
+show_line_numbers = true
+
+# Automatically save on changes (default: false)
+auto_save = false
+
+# JSON validation strictness: "strict", "permissive", or "none" (default: "strict")
+validation_mode = "strict"
+
+# Create .bak files before saving (default: false)
+create_backup = false
+
+# Maximum number of undo operations (default: 50)
+undo_limit = 50
+
+# Sync unnamed register with system clipboard (default: true)
+sync_unnamed_register = true
+
+# File size in bytes to trigger lazy loading (default: 104857600 = 100MB)
+lazy_load_threshold = 104857600
+```
+
+### Saving Settings
+
+Use `:set save` to persist your current settings to the config file.
 
 ## Development Setup
 
@@ -38,54 +210,34 @@ jeditor is a Rust-based terminal application for viewing and editing JSON files 
 
 ```bash
 # Clone the repository
-git clone <repository-url>
-cd jeditor
+git clone https://github.com/joeygibson/jsonquill
+cd jsonquill
 
 # Build the project
 cargo build
 
-# Run the application
-cargo run
-
 # Run tests
 cargo test
+
+# Run the application
+cargo run -- examples/sample.json
+
+# Build release binary
+cargo build --release
 ```
 
-## Installation & Usage
-
-Build from source:
+### Running Tests
 
 ```bash
-# Clone and build
-git clone <repository-url>
-cd jeditor
-cargo build --release
+# Run all tests
+cargo test
 
-# Run with a file
-./target/release/jeditor examples/sample.json
+# Run specific test
+cargo test test_add_field_to_object
 
-# Or pipe JSON from stdin
-cat file.json | ./target/release/jeditor
-curl https://api.example.com/data | ./target/release/jeditor
+# Run with output
+cargo test -- --nocapture
 ```
-
-Basic keybindings:
-- `j/k` or arrow keys: Navigate (supports count prefix: `3j` moves down 3 lines)
-- `h/l`: Collapse/expand nodes
-- `gg/G`: Jump to top/bottom
-- `<count>g`: Jump to line number (e.g., `10g` goes to line 10)
-- `a`: Add scalar value (arrays: direct insert, objects: prompt for key then value)
-- `i`: Edit value
-- `yy`: Copy node (supports count: `3yy` copies 3 nodes)
-- `dd`: Delete node (supports count: `3dd` deletes 3 nodes)
-- `p`: Paste
-- `u`: Undo
-- `Ctrl-r`: Redo
-- `:w`: Save (`:w filename` to save as new file)
-- `:q`: Quit
-- `?`: Help
-
-For complete documentation, see [CLAUDE.md](CLAUDE.md).
 
 ## License
 
