@@ -43,8 +43,45 @@
 use super::cursor::Cursor;
 use super::mode::EditorMode;
 use crate::document::tree::JsonTree;
-use crate::document::node::JsonNode;
+use crate::document::node::{JsonNode, JsonValue};
 use crate::ui::tree_view::TreeViewState;
+
+/// Parses a string into a JsonValue, detecting type automatically.
+///
+/// - "true"/"false" → Boolean
+/// - "null" → Null
+/// - Valid number → Number
+/// - Everything else → String
+fn parse_scalar_value(input: &str) -> JsonValue {
+    let trimmed = input.trim();
+
+    // Try boolean
+    if trimmed == "true" {
+        return JsonValue::Boolean(true);
+    }
+    if trimmed == "false" {
+        return JsonValue::Boolean(false);
+    }
+
+    // Try null
+    if trimmed == "null" {
+        return JsonValue::Null;
+    }
+
+    // Try number
+    if let Ok(num) = trimmed.parse::<f64>() {
+        return JsonValue::Number(num);
+    }
+
+    // Default to string (use original input, not trimmed)
+    JsonValue::String(input.to_string())
+}
+
+/// Test helper to expose private function
+#[doc(hidden)]
+pub fn parse_scalar_value_for_test(input: &str) -> JsonValue {
+    parse_scalar_value(input)
+}
 
 /// Manages the complete runtime state of the editor.
 ///

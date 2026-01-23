@@ -1264,3 +1264,54 @@ fn test_add_key_buffer_operations() {
     state.clear_add_key_buffer();
     assert_eq!(state.add_key_buffer(), "");
 }
+
+#[test]
+fn test_parse_scalar_value() {
+    use jeditor::document::node::JsonValue;
+    use jeditor::editor::state::parse_scalar_value_for_test;
+
+    // Booleans
+    assert!(matches!(parse_scalar_value_for_test("true"), JsonValue::Boolean(true)));
+    assert!(matches!(parse_scalar_value_for_test("false"), JsonValue::Boolean(false)));
+    assert!(matches!(parse_scalar_value_for_test("  true  "), JsonValue::Boolean(true)));
+
+    // Null
+    assert!(matches!(parse_scalar_value_for_test("null"), JsonValue::Null));
+    assert!(matches!(parse_scalar_value_for_test("  null  "), JsonValue::Null));
+
+    // Numbers
+    match parse_scalar_value_for_test("42") {
+        JsonValue::Number(n) => assert_eq!(n, 42.0),
+        _ => panic!("Expected number"),
+    }
+    match parse_scalar_value_for_test("-1.5") {
+        JsonValue::Number(n) => assert_eq!(n, -1.5),
+        _ => panic!("Expected number"),
+    }
+    match parse_scalar_value_for_test("0") {
+        JsonValue::Number(n) => assert_eq!(n, 0.0),
+        _ => panic!("Expected number"),
+    }
+
+    // Strings (fallback)
+    match parse_scalar_value_for_test("hello") {
+        JsonValue::String(s) => assert_eq!(s, "hello"),
+        _ => panic!("Expected string"),
+    }
+    match parse_scalar_value_for_test("123abc") {
+        JsonValue::String(s) => assert_eq!(s, "123abc"),
+        _ => panic!("Expected string"),
+    }
+    match parse_scalar_value_for_test("") {
+        JsonValue::String(s) => assert_eq!(s, ""),
+        _ => panic!("Expected string"),
+    }
+    match parse_scalar_value_for_test("True") {
+        JsonValue::String(s) => assert_eq!(s, "True"),
+        _ => panic!("Expected string (case sensitive)"),
+    }
+    match parse_scalar_value_for_test("NULL") {
+        JsonValue::String(s) => assert_eq!(s, "NULL"),
+        _ => panic!("Expected string (case sensitive)"),
+    }
+}
