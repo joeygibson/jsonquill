@@ -1586,4 +1586,26 @@ impl EditorState {
     pub fn add_mode_stage(&self) -> &AddModeStage {
         &self.add_mode_stage
     }
+
+    /// Returns the current add key buffer.
+    pub fn add_key_buffer(&self) -> &str {
+        &self.add_key_buffer
+    }
+
+    /// Pushes a character to the add key buffer.
+    pub fn push_to_add_key_buffer(&mut self, ch: char) {
+        self.add_key_buffer.push(ch);
+        self.reset_cursor_blink();
+    }
+
+    /// Removes the last character from the add key buffer.
+    pub fn pop_from_add_key_buffer(&mut self) {
+        self.add_key_buffer.pop();
+        self.reset_cursor_blink();
+    }
+
+    /// Clears the add key buffer.
+    pub fn clear_add_key_buffer(&mut self) {
+        self.add_key_buffer.clear();
+    }
 }

@@ -1235,3 +1235,32 @@ fn test_add_mode_stage_default() {
 
     assert!(matches!(state.add_mode_stage(), &AddModeStage::None));
 }
+
+#[test]
+fn test_add_key_buffer_operations() {
+    use jeditor::editor::state::EditorState;
+    use jeditor::document::node::{JsonNode, JsonValue};
+    use jeditor::document::tree::JsonTree;
+
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Null));
+    let mut state = EditorState::new(tree);
+
+    // Initially empty
+    assert_eq!(state.add_key_buffer(), "");
+
+    // Push characters
+    state.push_to_add_key_buffer('e');
+    state.push_to_add_key_buffer('m');
+    state.push_to_add_key_buffer('a');
+    state.push_to_add_key_buffer('i');
+    state.push_to_add_key_buffer('l');
+    assert_eq!(state.add_key_buffer(), "email");
+
+    // Pop character
+    state.pop_from_add_key_buffer();
+    assert_eq!(state.add_key_buffer(), "emai");
+
+    // Clear buffer
+    state.clear_add_key_buffer();
+    assert_eq!(state.add_key_buffer(), "");
+}
