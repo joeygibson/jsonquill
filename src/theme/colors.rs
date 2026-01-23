@@ -61,6 +61,8 @@ pub struct ThemeColors {
     pub info: Color,
     /// Background color for search result highlights.
     pub search_highlight: Color,
+    /// Color for collapsed previews (object/array content when collapsed).
+    pub preview: Color,
 }
 
 impl ThemeColors {
@@ -110,6 +112,7 @@ impl ThemeColors {
             warning: Color::Yellow,      // ANSI 3
             info: Color::LightBlue,      // ANSI 12
             search_highlight: Color::Yellow, // ANSI 3 (jless uses yellow for search)
+            preview: Color::Cyan,        // ANSI 6 (for collapsed previews)
         }
     }
 
@@ -151,6 +154,7 @@ impl ThemeColors {
             warning: Color::Rgb(152, 104, 1),
             info: Color::Rgb(1, 132, 188),
             search_highlight: Color::Rgb(220, 220, 220),
+            preview: Color::Rgb(1, 132, 188), // Blue for collapsed previews in light theme
         }
     }
 }
