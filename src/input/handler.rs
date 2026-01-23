@@ -567,6 +567,10 @@ impl InputHandler {
                         state.set_message("Already at newest change".to_string(), MessageLevel::Info);
                     }
                 }
+                InputEvent::Add => {
+                    state.clear_pending();
+                    state.start_add_operation();
+                }
                 InputEvent::InsertCharacter(_) | InputEvent::InsertBackspace | InputEvent::InsertEnter => {
                     state.clear_pending();
                     // These are handled earlier in insert mode, should never reach here
