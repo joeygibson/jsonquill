@@ -112,7 +112,7 @@ impl ThemeColors {
             warning: Color::Yellow,          // ANSI 3
             info: Color::LightBlue,          // ANSI 12
             search_highlight: Color::Yellow, // ANSI 3 (jless uses yellow for search)
-            preview: Color::DarkGray,        // ANSI 8 (muted gray for collapsed previews)
+            preview: Color::Rgb(60, 60, 60), // Very dark gray for collapsed previews
         }
     }
 
@@ -154,7 +154,7 @@ impl ThemeColors {
             warning: Color::Rgb(152, 104, 1),
             info: Color::Rgb(1, 132, 188),
             search_highlight: Color::Rgb(220, 220, 220),
-            preview: Color::Rgb(128, 128, 128), // Medium gray for collapsed previews in light theme
+            preview: Color::Rgb(120, 120, 120), // Dark gray for light theme
         }
     }
 }
