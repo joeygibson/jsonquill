@@ -112,6 +112,7 @@ pub struct EditorState {
     search_index: usize,
     show_line_numbers: bool,
     edit_buffer: Option<String>,
+    edit_cursor: usize,
     pending_command: Option<char>,
     scroll_offset: usize,
     viewport_height: usize,
@@ -181,6 +182,7 @@ impl EditorState {
             search_index: 0,
             show_line_numbers: true,
             edit_buffer: None,
+            edit_cursor: 0,
             pending_command: None,
             scroll_offset: 0,
             viewport_height: 20,
@@ -1232,7 +1234,9 @@ impl EditorState {
                 }
                 crate::document::node::JsonValue::String(s) => {
                     // Pre-populate with current string value (without JSON quotes)
-                    self.edit_buffer = Some(s.clone());
+                    let content = s.clone();
+                    self.edit_cursor = content.len();
+                    self.edit_buffer = Some(content);
                 }
                 crate::document::node::JsonValue::Number(n) => {
                     // Pre-populate with current number value
@@ -1241,14 +1245,18 @@ impl EditorState {
                     } else {
                         n.to_string()
                     };
+                    self.edit_cursor = num_str.len();
                     self.edit_buffer = Some(num_str);
                 }
                 crate::document::node::JsonValue::Boolean(b) => {
                     // Pre-populate with current boolean value
-                    self.edit_buffer = Some(b.to_string());
+                    let content = b.to_string();
+                    self.edit_cursor = content.len();
+                    self.edit_buffer = Some(content);
                 }
                 crate::document::node::JsonValue::Null => {
                     // Pre-populate with "null"
+                    self.edit_cursor = 4; // "null".len()
                     self.edit_buffer = Some("null".to_string());
                 }
             }
@@ -1258,6 +1266,7 @@ impl EditorState {
     /// Cancels editing and clears the edit buffer without saving changes.
     pub fn cancel_editing(&mut self) {
         self.edit_buffer = None;
+        self.edit_cursor = 0;
     }
 
     /// Commits the edited value from the buffer to the tree.
@@ -1319,25 +1328,72 @@ impl EditorState {
         Ok(())
     }
 
-    /// Appends a character to the edit buffer.
+    /// Inserts a character at the current cursor position in the edit buffer.
     pub fn push_to_edit_buffer(&mut self, ch: char) {
         if let Some(ref mut buffer) = self.edit_buffer {
-            buffer.push(ch);
+            buffer.insert(self.edit_cursor, ch);
+            self.edit_cursor += 1;
         }
     }
 
-    /// Removes the last character from the edit buffer.
+    /// Removes the character before the cursor (backspace).
     pub fn pop_from_edit_buffer(&mut self) {
         if let Some(ref mut buffer) = self.edit_buffer {
-            buffer.pop();
+            if self.edit_cursor > 0 {
+                buffer.remove(self.edit_cursor - 1);
+                self.edit_cursor -= 1;
+            }
         }
     }
 
-    /// Clears the edit buffer entirely.
+    /// Clears the edit buffer entirely and resets cursor.
     pub fn clear_edit_buffer(&mut self) {
         if let Some(ref mut buffer) = self.edit_buffer {
             buffer.clear();
+            self.edit_cursor = 0;
         }
+    }
+
+    /// Moves the edit cursor left by one character.
+    pub fn edit_cursor_left(&mut self) {
+        if self.edit_cursor > 0 {
+            self.edit_cursor -= 1;
+        }
+    }
+
+    /// Moves the edit cursor right by one character.
+    pub fn edit_cursor_right(&mut self) {
+        if let Some(ref buffer) = self.edit_buffer {
+            if self.edit_cursor < buffer.len() {
+                self.edit_cursor += 1;
+            }
+        }
+    }
+
+    /// Moves the edit cursor to the beginning of the buffer (Ctrl-a).
+    pub fn edit_cursor_home(&mut self) {
+        self.edit_cursor = 0;
+    }
+
+    /// Moves the edit cursor to the end of the buffer (Ctrl-e).
+    pub fn edit_cursor_end(&mut self) {
+        if let Some(ref buffer) = self.edit_buffer {
+            self.edit_cursor = buffer.len();
+        }
+    }
+
+    /// Deletes the character at the cursor position (Ctrl-d).
+    pub fn edit_delete_at_cursor(&mut self) {
+        if let Some(ref mut buffer) = self.edit_buffer {
+            if self.edit_cursor < buffer.len() {
+                buffer.remove(self.edit_cursor);
+            }
+        }
+    }
+
+    /// Returns the current edit cursor position.
+    pub fn edit_cursor_position(&self) -> usize {
+        self.edit_cursor
     }
 
     /// Returns the current pending command character, if any.

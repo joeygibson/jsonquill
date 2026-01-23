@@ -1042,3 +1042,150 @@ fn test_checkpoint_captures_state() {
     assert!(redo_result);
     assert_eq!(state.tree_view().lines().len(), 1);
 }
+
+// Edit cursor navigation tests
+
+#[test]
+fn test_edit_cursor_starts_at_end() {
+    use jeditor::document::node::{JsonNode, JsonValue};
+    use jeditor::document::tree::JsonTree;
+
+    let tree = JsonTree::new(JsonNode::new(JsonValue::String("hello".to_string())));
+    let mut state = EditorState::new(tree);
+
+    state.cursor_mut().set_path(vec![]);
+    state.start_editing();
+
+    assert_eq!(state.edit_cursor_position(), 5); // "hello".len()
+}
+
+#[test]
+fn test_edit_cursor_left_right() {
+    use jeditor::document::node::{JsonNode, JsonValue};
+    use jeditor::document::tree::JsonTree;
+
+    let tree = JsonTree::new(JsonNode::new(JsonValue::String("test".to_string())));
+    let mut state = EditorState::new(tree);
+
+    state.cursor_mut().set_path(vec![]);
+    state.start_editing();
+    assert_eq!(state.edit_cursor_position(), 4);
+
+    state.edit_cursor_left();
+    assert_eq!(state.edit_cursor_position(), 3);
+
+    state.edit_cursor_left();
+    state.edit_cursor_left();
+    assert_eq!(state.edit_cursor_position(), 1);
+
+    state.edit_cursor_right();
+    assert_eq!(state.edit_cursor_position(), 2);
+
+    // Can't go left past 0
+    state.edit_cursor_home();
+    state.edit_cursor_left();
+    assert_eq!(state.edit_cursor_position(), 0);
+
+    // Can't go right past end
+    state.edit_cursor_end();
+    state.edit_cursor_right();
+    assert_eq!(state.edit_cursor_position(), 4);
+}
+
+#[test]
+fn test_edit_cursor_home_end() {
+    use jeditor::document::node::{JsonNode, JsonValue};
+    use jeditor::document::tree::JsonTree;
+
+    let tree = JsonTree::new(JsonNode::new(JsonValue::String("hello world".to_string())));
+    let mut state = EditorState::new(tree);
+
+    state.cursor_mut().set_path(vec![]);
+    state.start_editing();
+
+    // Cursor starts at end
+    assert_eq!(state.edit_cursor_position(), 11);
+
+    // Home goes to start
+    state.edit_cursor_home();
+    assert_eq!(state.edit_cursor_position(), 0);
+
+    // End goes to end
+    state.edit_cursor_end();
+    assert_eq!(state.edit_cursor_position(), 11);
+}
+
+#[test]
+fn test_edit_insert_at_cursor() {
+    use jeditor::document::node::{JsonNode, JsonValue};
+    use jeditor::document::tree::JsonTree;
+
+    let tree = JsonTree::new(JsonNode::new(JsonValue::String("test".to_string())));
+    let mut state = EditorState::new(tree);
+
+    state.cursor_mut().set_path(vec![]);
+    state.start_editing();
+
+    // Move to middle and insert
+    state.edit_cursor_home();
+    state.edit_cursor_right();
+    state.edit_cursor_right(); // cursor at position 2 (between 'e' and 's')
+
+    state.push_to_edit_buffer('X');
+    assert_eq!(state.edit_buffer().unwrap(), "teXst");
+    assert_eq!(state.edit_cursor_position(), 3);
+}
+
+#[test]
+fn test_edit_backspace_at_cursor() {
+    use jeditor::document::node::{JsonNode, JsonValue};
+    use jeditor::document::tree::JsonTree;
+
+    let tree = JsonTree::new(JsonNode::new(JsonValue::String("hello".to_string())));
+    let mut state = EditorState::new(tree);
+
+    state.cursor_mut().set_path(vec![]);
+    state.start_editing();
+
+    // Backspace from end
+    state.pop_from_edit_buffer();
+    assert_eq!(state.edit_buffer().unwrap(), "hell");
+    assert_eq!(state.edit_cursor_position(), 4);
+
+    // Move to middle and backspace
+    state.edit_cursor_home();
+    state.edit_cursor_right();
+    state.edit_cursor_right(); // cursor at position 2
+    state.pop_from_edit_buffer(); // delete 'e'
+    assert_eq!(state.edit_buffer().unwrap(), "hll");
+    assert_eq!(state.edit_cursor_position(), 1);
+}
+
+#[test]
+fn test_edit_delete_at_cursor() {
+    use jeditor::document::node::{JsonNode, JsonValue};
+    use jeditor::document::tree::JsonTree;
+
+    let tree = JsonTree::new(JsonNode::new(JsonValue::String("hello".to_string())));
+    let mut state = EditorState::new(tree);
+
+    state.cursor_mut().set_path(vec![]);
+    state.start_editing();
+
+    // Delete at end does nothing
+    state.edit_delete_at_cursor();
+    assert_eq!(state.edit_buffer().unwrap(), "hello");
+    assert_eq!(state.edit_cursor_position(), 5);
+
+    // Move to start and delete
+    state.edit_cursor_home();
+    state.edit_delete_at_cursor(); // delete 'h'
+    assert_eq!(state.edit_buffer().unwrap(), "ello");
+    assert_eq!(state.edit_cursor_position(), 0);
+
+    // Delete in middle
+    state.edit_cursor_right();
+    state.edit_delete_at_cursor(); // delete first 'l'
+    assert_eq!(state.edit_buffer().unwrap(), "elo");
+    assert_eq!(state.edit_cursor_position(), 1);
+}

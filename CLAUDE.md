@@ -157,9 +157,20 @@ Esc         - Return to NORMAL mode
 q           - Quit (warns if unsaved, use :q! to force)
 
 # INSERT mode
-When you press `i` to edit a value, the current value is pre-populated in the edit buffer.
-<chars>     - Type to edit the value (appends to existing content)
-Backspace   - Delete last character
+When you press `i` to edit a value, the current value is pre-populated in the edit buffer
+with the cursor positioned at the end.
+
+Editing:
+<chars>     - Insert character at cursor position
+Backspace   - Delete character before cursor
+Ctrl-d      - Delete character at cursor
+
+Navigation:
+Left/Right  - Move cursor within the edit buffer
+Ctrl-a      - Jump to beginning of buffer
+Ctrl-e      - Jump to end of buffer
+
+Commit/Cancel:
 Enter       - Commit changes and return to NORMAL mode
 Esc         - Cancel editing and return to NORMAL mode
 

@@ -152,6 +152,26 @@ impl InputHandler {
                         state.pop_from_edit_buffer();
                         return Ok(false);
                     }
+                    Key::Left => {
+                        state.edit_cursor_left();
+                        return Ok(false);
+                    }
+                    Key::Right => {
+                        state.edit_cursor_right();
+                        return Ok(false);
+                    }
+                    Key::Ctrl('a') => {
+                        state.edit_cursor_home();
+                        return Ok(false);
+                    }
+                    Key::Ctrl('e') => {
+                        state.edit_cursor_end();
+                        return Ok(false);
+                    }
+                    Key::Ctrl('d') => {
+                        state.edit_delete_at_cursor();
+                        return Ok(false);
+                    }
                     Key::Esc => {
                         state.cancel_editing();
                         state.set_mode(EditorMode::Normal);
