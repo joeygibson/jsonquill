@@ -54,7 +54,8 @@
       "Skill(domain-check)",
       "Bash(nslookup:*)",
       "Bash(bc:*)",
-      "Bash(echo:*)"
+      "Bash(echo:*)",
+      "Bash(git pull:*)"
     ]
   }
 }
