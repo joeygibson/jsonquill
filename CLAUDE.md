@@ -99,12 +99,13 @@ Implemented modules:
 - ✅ Quit with dirty check (`q` warns if unsaved, matching `:q` behavior)
 - ✅ Default dark theme (gray/black, not blue)
 - ✅ Undo/redo (`u` to undo, `Ctrl-r` to redo, `:undo`, `:redo`)
+- ✅ Add scalar values (`a` to add after current node)
 - ✅ All tests passing
 
 **Known Issues / TODO:**
 
 **High Priority (Core Editing):**
-- ❌ **No add operations** - `a` (add field/element), `o/O` (add sibling) not implemented
+- ❌ **No add operations for objects/arrays** - `a` only adds scalars, `ao/aa` not implemented
 - ❌ **No rename operation** - `r` to rename object keys not implemented
 
 **Navigation Enhancements:**
@@ -198,6 +199,10 @@ Esc         - Cancel editing and return to NORMAL mode
 # Editing (NORMAL mode)
 Commands can be prefixed with a count (e.g., `3dd` to delete 3 nodes, `5yy` to yank 5 nodes).
 
+a           - Add scalar value after current node
+            - Arrays: immediately enter Insert mode to type value
+            - Objects: prompt for key, then enter Insert mode for value
+            - Values are parsed: true/false → boolean, null → null, numbers → number, else → string
 yy          - Yank (copy) current node to clipboard
 dd          - Delete current node (removes from tree)
 p           - Paste clipboard content after current node

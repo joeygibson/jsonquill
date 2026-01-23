@@ -74,6 +74,7 @@ Basic keybindings:
 - `h/l`: Collapse/expand nodes
 - `gg/G`: Jump to top/bottom
 - `<count>g`: Jump to line number (e.g., `10g` goes to line 10)
+- `a`: Add scalar value (arrays: direct insert, objects: prompt for key then value)
 - `i`: Edit value
 - `yy`: Copy node (supports count: `3yy` copies 3 nodes)
 - `dd`: Delete node (supports count: `3dd` deletes 3 nodes)
