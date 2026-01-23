@@ -145,6 +145,9 @@ fn run_event_loop<B: ratatui::backend::Backend>(
             ui.set_theme(&theme_name);
         }
 
+        // Update cursor blink state
+        state.update_cursor_blink();
+
         // Render UI
         ui.render(terminal, state)?;
 

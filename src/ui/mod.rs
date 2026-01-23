@@ -168,6 +168,8 @@ impl UI {
                     f,
                     chunks[2],
                     buffer,
+                    state.edit_cursor_position(),
+                    state.cursor_visible(),
                     &self.theme.colors,
                 );
             } else {

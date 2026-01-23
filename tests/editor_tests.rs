@@ -1189,3 +1189,37 @@ fn test_edit_delete_at_cursor() {
     assert_eq!(state.edit_buffer().unwrap(), "elo");
     assert_eq!(state.edit_cursor_position(), 1);
 }
+
+#[test]
+fn test_edit_kill_to_end() {
+    use jeditor::document::node::{JsonNode, JsonValue};
+    use jeditor::document::tree::JsonTree;
+
+    let tree = JsonTree::new(JsonNode::new(JsonValue::String("hello world".to_string())));
+    let mut state = EditorState::new(tree);
+
+    state.cursor_mut().set_path(vec![]);
+    state.start_editing();
+
+    // Kill from end does nothing
+    state.edit_kill_to_end();
+    assert_eq!(state.edit_buffer().unwrap(), "hello world");
+    assert_eq!(state.edit_cursor_position(), 11);
+
+    // Move to middle and kill to end
+    state.edit_cursor_home();
+    state.edit_cursor_right();
+    state.edit_cursor_right();
+    state.edit_cursor_right();
+    state.edit_cursor_right();
+    state.edit_cursor_right(); // cursor at position 5 (after "hello")
+    state.edit_kill_to_end();
+    assert_eq!(state.edit_buffer().unwrap(), "hello");
+    assert_eq!(state.edit_cursor_position(), 5);
+
+    // Kill from start
+    state.edit_cursor_home();
+    state.edit_kill_to_end();
+    assert_eq!(state.edit_buffer().unwrap(), "");
+    assert_eq!(state.edit_cursor_position(), 0);
+}

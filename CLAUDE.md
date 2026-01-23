@@ -158,12 +158,13 @@ q           - Quit (warns if unsaved, use :q! to force)
 
 # INSERT mode
 When you press `i` to edit a value, the current value is pre-populated in the edit buffer
-with the cursor positioned at the end.
+with the cursor positioned at the end. The cursor blinks to indicate the insertion point.
 
 Editing:
 <chars>     - Insert character at cursor position
 Backspace   - Delete character before cursor
 Ctrl-d      - Delete character at cursor
+Ctrl-k      - Delete from cursor to end of buffer
 
 Navigation:
 Left/Right  - Move cursor within the edit buffer

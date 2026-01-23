@@ -172,6 +172,10 @@ impl InputHandler {
                         state.edit_delete_at_cursor();
                         return Ok(false);
                     }
+                    Key::Ctrl('k') => {
+                        state.edit_kill_to_end();
+                        return Ok(false);
+                    }
                     Key::Esc => {
                         state.cancel_editing();
                         state.set_mode(EditorMode::Normal);

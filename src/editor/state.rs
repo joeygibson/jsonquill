@@ -113,6 +113,8 @@ pub struct EditorState {
     show_line_numbers: bool,
     edit_buffer: Option<String>,
     edit_cursor: usize,
+    cursor_visible: bool,
+    cursor_blink_ticks: u8,
     pending_command: Option<char>,
     scroll_offset: usize,
     viewport_height: usize,
@@ -183,6 +185,8 @@ impl EditorState {
             show_line_numbers: true,
             edit_buffer: None,
             edit_cursor: 0,
+            cursor_visible: true,
+            cursor_blink_ticks: 0,
             pending_command: None,
             scroll_offset: 0,
             viewport_height: 20,
@@ -1333,6 +1337,7 @@ impl EditorState {
         if let Some(ref mut buffer) = self.edit_buffer {
             buffer.insert(self.edit_cursor, ch);
             self.edit_cursor += 1;
+            self.reset_cursor_blink();
         }
     }
 
@@ -1342,6 +1347,7 @@ impl EditorState {
             if self.edit_cursor > 0 {
                 buffer.remove(self.edit_cursor - 1);
                 self.edit_cursor -= 1;
+                self.reset_cursor_blink();
             }
         }
     }
@@ -1351,6 +1357,7 @@ impl EditorState {
         if let Some(ref mut buffer) = self.edit_buffer {
             buffer.clear();
             self.edit_cursor = 0;
+            self.reset_cursor_blink();
         }
     }
 
@@ -1358,6 +1365,7 @@ impl EditorState {
     pub fn edit_cursor_left(&mut self) {
         if self.edit_cursor > 0 {
             self.edit_cursor -= 1;
+            self.reset_cursor_blink();
         }
     }
 
@@ -1366,6 +1374,7 @@ impl EditorState {
         if let Some(ref buffer) = self.edit_buffer {
             if self.edit_cursor < buffer.len() {
                 self.edit_cursor += 1;
+                self.reset_cursor_blink();
             }
         }
     }
@@ -1373,12 +1382,14 @@ impl EditorState {
     /// Moves the edit cursor to the beginning of the buffer (Ctrl-a).
     pub fn edit_cursor_home(&mut self) {
         self.edit_cursor = 0;
+        self.reset_cursor_blink();
     }
 
     /// Moves the edit cursor to the end of the buffer (Ctrl-e).
     pub fn edit_cursor_end(&mut self) {
         if let Some(ref buffer) = self.edit_buffer {
             self.edit_cursor = buffer.len();
+            self.reset_cursor_blink();
         }
     }
 
@@ -1387,13 +1398,43 @@ impl EditorState {
         if let Some(ref mut buffer) = self.edit_buffer {
             if self.edit_cursor < buffer.len() {
                 buffer.remove(self.edit_cursor);
+                self.reset_cursor_blink();
             }
+        }
+    }
+
+    /// Deletes from cursor to end of buffer (Ctrl-k).
+    pub fn edit_kill_to_end(&mut self) {
+        if let Some(ref mut buffer) = self.edit_buffer {
+            buffer.truncate(self.edit_cursor);
+            self.reset_cursor_blink();
         }
     }
 
     /// Returns the current edit cursor position.
     pub fn edit_cursor_position(&self) -> usize {
         self.edit_cursor
+    }
+
+    /// Returns whether the cursor is currently visible (for blinking).
+    pub fn cursor_visible(&self) -> bool {
+        self.cursor_visible
+    }
+
+    /// Updates the cursor blink state. Call this periodically to make cursor blink.
+    /// Toggles visibility every ~5 ticks (adjust based on render frequency).
+    pub fn update_cursor_blink(&mut self) {
+        self.cursor_blink_ticks = self.cursor_blink_ticks.wrapping_add(1);
+        if self.cursor_blink_ticks >= 5 {
+            self.cursor_visible = !self.cursor_visible;
+            self.cursor_blink_ticks = 0;
+        }
+    }
+
+    /// Resets cursor to visible (called on any edit action to show immediate feedback).
+    pub fn reset_cursor_blink(&mut self) {
+        self.cursor_visible = true;
+        self.cursor_blink_ticks = 0;
     }
 
     /// Returns the current pending command character, if any.
