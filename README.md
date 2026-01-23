@@ -66,6 +66,26 @@ curl https://api.example.com/data | jsonquill
 curl -s https://jsonplaceholder.typicode.com/users/1 | jsonquill
 ```
 
+### JSONL Support
+
+JSON Quill supports JSONL (JSON Lines) files with the `.jsonl` or `.ndjson` extension:
+
+```bash
+# Open a JSONL file
+jsonquill data.jsonl
+
+# Each line displays as a collapsed object
+# Press l or → to expand a line
+# Edit fields within expanded lines normally
+```
+
+**JSONL Features:**
+- Each line parsed as separate JSON object
+- Lines start collapsed showing preview
+- Flat display (no nesting at root level)
+- Save preserves line-by-line format
+- All edit operations work within lines
+
 ## Key Bindings
 
 ### Navigation
