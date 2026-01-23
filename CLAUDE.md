@@ -158,7 +158,8 @@ q           - Quit (warns if unsaved, use :q! to force)
 
 # INSERT mode
 When you press `i` to edit a value, the current value is pre-populated in the edit buffer
-with the cursor positioned at the end. The cursor blinks to indicate the insertion point.
+with the cursor positioned at the end. A blinking block cursor highlights the character at
+the insertion point (or shows a space if at the end of the buffer).
 
 Editing:
 <chars>     - Insert character at cursor position

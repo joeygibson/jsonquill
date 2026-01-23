@@ -16,11 +16,17 @@ pub fn render_edit_prompt(
     cursor_visible: bool,
     colors: &ThemeColors,
 ) {
-    // Split buffer at cursor position
     let cursor_pos = cursor_pos.min(buffer.len());
-    let (before, after) = buffer.split_at(cursor_pos);
 
-    // Build the line with cursor in the correct position
+    // Split buffer into: text before cursor, char at cursor, text after cursor
+    let chars: Vec<char> = buffer.chars().collect();
+    let before: String = chars.iter().take(cursor_pos).collect();
+    let after: String = chars.iter().skip(cursor_pos + 1).collect();
+
+    // Get character at cursor position (or space if at end)
+    let char_at_cursor = chars.get(cursor_pos).copied().unwrap_or(' ');
+
+    // Build the line with cursor highlighting the character at cursor position
     let mut spans = vec![
         Span::styled(
             "Edit: ",
@@ -38,31 +44,36 @@ pub fn render_edit_prompt(
         ),
     ];
 
-    // Add cursor (blinking)
+    // Add character at cursor position with inverted colors (block cursor effect)
     if cursor_visible {
         spans.push(Span::styled(
-            "█",
+            char_at_cursor.to_string(),
             Style::default()
-                .fg(colors.cursor)
-                .bg(colors.background),
+                .fg(colors.background)
+                .bg(colors.cursor)
+                .add_modifier(Modifier::BOLD),
         ));
     } else {
+        // When cursor is not visible, show the character normally
         spans.push(Span::styled(
-            " ",
+            char_at_cursor.to_string(),
             Style::default()
-                .fg(colors.cursor)
-                .bg(colors.background),
+                .fg(colors.foreground)
+                .bg(colors.background)
+                .add_modifier(Modifier::BOLD),
         ));
     }
 
     // Add text after cursor
-    spans.push(Span::styled(
-        after,
-        Style::default()
-            .fg(colors.foreground)
-            .bg(colors.background)
-            .add_modifier(Modifier::BOLD),
-    ));
+    if !after.is_empty() {
+        spans.push(Span::styled(
+            after,
+            Style::default()
+                .fg(colors.foreground)
+                .bg(colors.background)
+                .add_modifier(Modifier::BOLD),
+        ));
+    }
 
     let line = Line::from(spans);
     let prompt = Paragraph::new(line)
