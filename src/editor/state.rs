@@ -198,8 +198,7 @@ impl EditorState {
     /// ```
     pub fn new(tree: JsonTree) -> Self {
         let mut tree_view = TreeViewState::new();
-        // Expand all nodes by default for single JSON files
-        tree_view.expand_all(&tree);
+        // Don't auto-expand - show collapsed previews like JSONL files
         tree_view.rebuild(&tree);
 
         // Initialize cursor to first visible line if available
@@ -698,16 +697,16 @@ impl EditorState {
     /// ])));
     /// let mut state = EditorState::new(tree);
     ///
-    /// // Initially expanded (auto-expansion is default) - 2 lines
-    /// assert_eq!(state.tree_view().lines().len(), 2);
-    ///
-    /// // Toggle to collapse
-    /// state.toggle_expand_at_cursor();
+    /// // Initially collapsed (shows collapsed previews) - 1 line
     /// assert_eq!(state.tree_view().lines().len(), 1);
     ///
-    /// // Toggle to expand again
+    /// // Toggle to expand
     /// state.toggle_expand_at_cursor();
     /// assert_eq!(state.tree_view().lines().len(), 2);
+    ///
+    /// // Toggle to collapse again
+    /// state.toggle_expand_at_cursor();
+    /// assert_eq!(state.tree_view().lines().len(), 1);
     /// ```
     pub fn toggle_expand_at_cursor(&mut self) {
         let current_path = self.cursor.path().to_vec();

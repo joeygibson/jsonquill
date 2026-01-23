@@ -351,17 +351,17 @@ fn test_tree_view_mut_toggle() {
 
     let mut state = EditorState::new(tree);
 
-    // Initially expanded (auto-expansion is default)
-    assert_eq!(state.tree_view().lines().len(), 2);
-    assert!(state.tree_view().is_expanded(&[0]));
+    // Initially collapsed (showing collapsed previews)
+    assert_eq!(state.tree_view().lines().len(), 1);
+    assert!(!state.tree_view().is_expanded(&[0]));
 
-    // Toggle collapse
+    // Toggle expand
     state.tree_view_mut().toggle_expand(&[0]);
     state.rebuild_tree_view();
 
-    // Now collapsed - should see only one line
-    assert!(!state.tree_view().is_expanded(&[0]));
-    assert_eq!(state.tree_view().lines().len(), 1);
+    // Now expanded - should see both lines
+    assert!(state.tree_view().is_expanded(&[0]));
+    assert_eq!(state.tree_view().lines().len(), 2);
 }
 
 #[test]
@@ -512,21 +512,21 @@ fn test_toggle_expand_at_cursor_expandable() {
 
     let mut state = EditorState::new(tree);
 
-    // Initially expanded (auto-expansion is default) - 2 lines visible
-    assert_eq!(state.tree_view().lines().len(), 2);
-    assert!(state.tree_view().is_expanded(&[0]));
-
-    // Toggle collapse at cursor (which is at [0])
-    state.toggle_expand_at_cursor();
-
-    // Now should be collapsed - 1 line visible
+    // Initially collapsed (showing collapsed previews) - 1 line visible
     assert_eq!(state.tree_view().lines().len(), 1);
     assert!(!state.tree_view().is_expanded(&[0]));
 
-    // Toggle again to expand
+    // Toggle expand at cursor (which is at [0])
     state.toggle_expand_at_cursor();
+
+    // Now should be expanded - 2 lines visible
     assert_eq!(state.tree_view().lines().len(), 2);
     assert!(state.tree_view().is_expanded(&[0]));
+
+    // Toggle again to collapse
+    state.toggle_expand_at_cursor();
+    assert_eq!(state.tree_view().lines().len(), 1);
+    assert!(!state.tree_view().is_expanded(&[0]));
 }
 
 #[test]
@@ -577,9 +577,14 @@ fn test_navigation_with_nested_expanded_tree() {
         ("count".to_string(), JsonNode::new(JsonValue::Number(42.0))),
     ])));
 
+    let tree_copy = tree.clone();
     let mut state = EditorState::new(tree);
 
-    // Initially with auto-expansion: 4 lines visible ([0]=user, [0,0]=name, [0,1]=email, [1]=count)
+    // Manually expand to test navigation
+    state.tree_view_mut().expand_all(&tree_copy);
+    state.rebuild_tree_view();
+
+    // After expansion: 4 lines visible ([0]=user, [0,0]=name, [0,1]=email, [1]=count)
     assert_eq!(state.tree_view().lines().len(), 4);
     assert_eq!(state.cursor().path(), &[0]);
 
