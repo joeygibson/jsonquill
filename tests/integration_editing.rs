@@ -489,3 +489,134 @@ fn test_cancel_add_during_value_entry() {
     // Verify no new element was created (still just 1 element)
     assert_eq!(state.tree_view().lines().len(), 1);
 }
+
+#[test]
+fn test_add_boolean_to_array() {
+    use jeditor::editor::state::EditorState;
+    use jeditor::document::node::{JsonNode, JsonValue};
+    use jeditor::document::tree::JsonTree;
+
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Array(vec![
+        JsonNode::new(JsonValue::Number(1.0)),
+    ])));
+    let mut state = EditorState::new(tree);
+
+    state.cursor_mut().set_path(vec![0]);
+    state.start_add_operation();
+
+    state.clear_edit_buffer();
+    for ch in "true".chars() {
+        state.push_to_edit_buffer(ch);
+    }
+
+    state.commit_add_operation().unwrap();
+
+    let node = state.tree().get_node(&[1]).unwrap();
+    match node.value() {
+        JsonValue::Boolean(b) => assert_eq!(*b, true),
+        _ => panic!("Expected boolean"),
+    }
+}
+
+#[test]
+fn test_add_null_to_array() {
+    use jeditor::editor::state::EditorState;
+    use jeditor::document::node::{JsonNode, JsonValue};
+    use jeditor::document::tree::JsonTree;
+
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Array(vec![
+        JsonNode::new(JsonValue::Number(1.0)),
+    ])));
+    let mut state = EditorState::new(tree);
+
+    state.cursor_mut().set_path(vec![0]);
+    state.start_add_operation();
+
+    state.clear_edit_buffer();
+    for ch in "null".chars() {
+        state.push_to_edit_buffer(ch);
+    }
+
+    state.commit_add_operation().unwrap();
+
+    let node = state.tree().get_node(&[1]).unwrap();
+    assert!(matches!(node.value(), JsonValue::Null));
+}
+
+#[test]
+fn test_add_creates_undo_checkpoint() {
+    use jeditor::editor::state::EditorState;
+    use jeditor::document::node::{JsonNode, JsonValue};
+    use jeditor::document::tree::JsonTree;
+
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Array(vec![
+        JsonNode::new(JsonValue::Number(1.0)),
+    ])));
+    let mut state = EditorState::new(tree);
+
+    state.cursor_mut().set_path(vec![0]);
+    state.start_add_operation();
+
+    state.clear_edit_buffer();
+    for ch in "42".chars() {
+        state.push_to_edit_buffer(ch);
+    }
+
+    state.commit_add_operation().unwrap();
+
+    // Verify element was added
+    assert!(state.tree().get_node(&[1]).is_some());
+
+    // Undo
+    state.undo();
+
+    // Verify element was removed
+    assert!(state.tree().get_node(&[1]).is_none());
+}
+
+#[test]
+fn test_cursor_moves_to_new_node() {
+    use jeditor::editor::state::EditorState;
+    use jeditor::document::node::{JsonNode, JsonValue};
+    use jeditor::document::tree::JsonTree;
+
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Array(vec![
+        JsonNode::new(JsonValue::Number(1.0)),
+        JsonNode::new(JsonValue::Number(2.0)),
+    ])));
+    let mut state = EditorState::new(tree);
+
+    // Start at first element
+    state.cursor_mut().set_path(vec![0]);
+
+    state.start_add_operation();
+    state.clear_edit_buffer();
+    for ch in "99".chars() {
+        state.push_to_edit_buffer(ch);
+    }
+    state.commit_add_operation().unwrap();
+
+    // Cursor should have moved to newly created element at position 1
+    assert_eq!(state.cursor().path(), &[1]);
+}
+
+#[test]
+fn test_add_to_root_scalar_fails() {
+    use jeditor::editor::state::{EditorState, MessageLevel};
+    use jeditor::document::node::{JsonNode, JsonValue};
+    use jeditor::document::tree::JsonTree;
+
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Number(42.0)));
+    let mut state = EditorState::new(tree);
+
+    // Cursor is at root
+    state.start_add_operation();
+
+    // Should have error message
+    if let Some(msg) = state.message() {
+        assert_eq!(msg.level, MessageLevel::Error);
+        assert!(msg.text.contains("Cannot add sibling to root"));
+    } else {
+        panic!("Expected error message");
+    }
+}
