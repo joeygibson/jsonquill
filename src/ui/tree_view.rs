@@ -217,8 +217,8 @@ impl TreeViewState {
                         path.iter().copied().chain(std::iter::once(i)).collect();
                     let expanded = self.is_expanded(&child_path);
 
-                    // Use collapsed preview for unexpanded containers
-                    let value_preview = if !expanded && child.value().is_container() {
+                    // Always use collapsed preview for containers
+                    let value_preview = if child.value().is_container() {
                         format_collapsed_preview(child, 60)
                     } else {
                         self.get_value_preview(child.value())
@@ -245,8 +245,8 @@ impl TreeViewState {
                         path.iter().copied().chain(std::iter::once(i)).collect();
                     let expanded = self.is_expanded(&child_path);
 
-                    // Use collapsed preview for unexpanded containers
-                    let value_preview = if !expanded && child.value().is_container() {
+                    // Always use collapsed preview for containers
+                    let value_preview = if child.value().is_container() {
                         format_collapsed_preview(child, 60)
                     } else {
                         self.get_value_preview(child.value())
@@ -459,11 +459,11 @@ pub fn render_tree_view(
         }
 
         // Value
-        let value_color = if line.expandable && !line.expanded {
-            // Collapsed containers use preview color
+        let value_color = if line.expandable {
+            // All containers use preview color (they show collapsed preview format)
             colors.preview
         } else {
-            // Scalars and expanded containers use their type-specific colors
+            // Scalars use their type-specific colors
             match line.value_type {
                 ValueType::String => colors.string,
                 ValueType::Number => colors.number,
