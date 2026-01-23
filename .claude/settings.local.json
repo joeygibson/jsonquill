@@ -53,7 +53,8 @@
       "Bash(cargo audit:*)",
       "Skill(domain-check)",
       "Bash(nslookup:*)",
-      "Bash(bc:*)"
+      "Bash(bc:*)",
+      "Bash(echo:*)"
     ]
   }
 }
