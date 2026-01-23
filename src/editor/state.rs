@@ -983,7 +983,7 @@ impl EditorState {
                     .collect();
                 serde_json::Value::Object(map)
             }
-            JsonValue::Array(elements) => {
+            JsonValue::Array(elements) | JsonValue::JsonlRoot(elements) => {
                 let arr: Vec<serde_json::Value> = elements
                     .iter()
                     .map(|v| self.node_to_serde_value(v.value()))
@@ -1304,7 +1304,7 @@ impl EditorState {
         if let Some(node) = self.tree.get_node(path) {
             // Check if node is editable (not a container)
             match node.value() {
-                crate::document::node::JsonValue::Object(_) | crate::document::node::JsonValue::Array(_) => {
+                crate::document::node::JsonValue::Object(_) | crate::document::node::JsonValue::Array(_) | crate::document::node::JsonValue::JsonlRoot(_) => {
                     return; // Can't edit containers
                 }
                 crate::document::node::JsonValue::String(s) => {
@@ -1383,7 +1383,7 @@ impl EditorState {
                     // This shouldn't happen since we checked for "null" above
                     JsonValue::Null
                 }
-                JsonValue::Object(_) | JsonValue::Array(_) => {
+                JsonValue::Object(_) | JsonValue::Array(_) | JsonValue::JsonlRoot(_) => {
                     return Err(anyhow!("Cannot edit container types"));
                 }
             }

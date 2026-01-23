@@ -130,7 +130,7 @@ impl JsonTree {
                 JsonValue::Object(entries) => {
                     current = &entries.get(index)?.1;
                 }
-                JsonValue::Array(elements) => {
+                JsonValue::Array(elements) | JsonValue::JsonlRoot(elements) => {
                     current = elements.get(index)?;
                 }
                 _ => return None,
@@ -180,7 +180,7 @@ impl JsonTree {
                 JsonValue::Object(entries) => {
                     current = &mut entries.get_mut(index)?.1;
                 }
-                JsonValue::Array(elements) => {
+                JsonValue::Array(elements) | JsonValue::JsonlRoot(elements) => {
                     current = elements.get_mut(index)?;
                 }
                 _ => return None,
@@ -215,7 +215,7 @@ impl JsonTree {
                 }
                 entries.remove(index);
             }
-            JsonValue::Array(elements) => {
+            JsonValue::Array(elements) | JsonValue::JsonlRoot(elements) => {
                 if index >= elements.len() {
                     return Err(anyhow!("Index {} out of bounds for array with {} elements", index, elements.len()));
                 }
@@ -297,7 +297,7 @@ impl JsonTree {
 
         // Insert into array
         match target.value_mut() {
-            JsonValue::Array(elements) => {
+            JsonValue::Array(elements) | JsonValue::JsonlRoot(elements) => {
                 if index > elements.len() {
                     return Err(anyhow!("Index {} out of bounds for array with {} elements", index, elements.len()));
                 }

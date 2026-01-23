@@ -68,6 +68,7 @@ impl ValueType {
             JsonValue::Number(_) => ValueType::Number,
             JsonValue::Boolean(_) => ValueType::Boolean,
             JsonValue::Null => ValueType::Null,
+            JsonValue::JsonlRoot(_) => ValueType::Array, // Treat JSONL root like array for display
         }
     }
 }
@@ -156,7 +157,7 @@ impl TreeViewState {
                     }
                 }
             }
-            JsonValue::Array(elements) => {
+            JsonValue::Array(elements) | JsonValue::JsonlRoot(elements) => {
                 for (i, child) in elements.iter().enumerate() {
                     let child_path: Vec<usize> = path.iter().copied().chain(std::iter::once(i)).collect();
                     if child.value().is_container() {
@@ -191,7 +192,7 @@ impl TreeViewState {
                     }
                 }
             }
-            JsonValue::Array(elements) => {
+            JsonValue::Array(elements) | JsonValue::JsonlRoot(elements) => {
                 for (i, child) in elements.iter().enumerate() {
                     let child_path: Vec<usize> = path.iter().copied().chain(std::iter::once(i)).collect();
                     let expanded = self.is_expanded(&child_path);
@@ -218,7 +219,7 @@ impl TreeViewState {
     fn get_value_preview(&self, value: &JsonValue) -> String {
         match value {
             JsonValue::Object(entries) => format!("{{ {} fields }}", entries.len()),
-            JsonValue::Array(elements) => format!("[ {} items ]", elements.len()),
+            JsonValue::Array(elements) | JsonValue::JsonlRoot(elements) => format!("[ {} items ]", elements.len()),
             JsonValue::String(s) => format!("\"{}\"", s),
             JsonValue::Number(n) => n.to_string(),
             JsonValue::Boolean(b) => b.to_string(),

@@ -143,7 +143,7 @@ fn serialize_node(
             result.push('}');
             result
         }
-        JsonValue::Array(elements) => {
+        JsonValue::Array(elements) | JsonValue::JsonlRoot(elements) => {
             if elements.is_empty() {
                 return "[]".to_string();
             }
