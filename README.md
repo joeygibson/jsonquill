@@ -56,6 +56,14 @@ jsonquill
 
 # Specify theme
 jsonquill --theme default-light file.json
+
+# Pipe JSON from stdin
+cat file.json | jsonquill
+echo '{"name": "example", "count": 42}' | jsonquill
+
+# Fetch and edit JSON from an API
+curl https://api.example.com/data | jsonquill
+curl -s https://jsonplaceholder.typicode.com/users/1 | jsonquill
 ```
 
 ## Key Bindings
