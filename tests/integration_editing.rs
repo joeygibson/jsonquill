@@ -424,3 +424,35 @@ fn test_add_field_to_object() {
     // Verify cursor moved
     assert_eq!(state.cursor().path(), &[1]);
 }
+
+#[test]
+fn test_add_with_empty_key_fails() {
+    use jeditor::editor::state::{EditorState, AddModeStage, MessageLevel};
+    use jeditor::document::node::{JsonNode, JsonValue};
+    use jeditor::document::tree::JsonTree;
+
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
+        ("name".to_string(), JsonNode::new(JsonValue::String("Alice".to_string()))),
+    ])));
+    let mut state = EditorState::new(tree);
+
+    state.cursor_mut().set_path(vec![0]);
+    state.start_add_operation();
+
+    // Verify in AwaitingKey stage
+    assert!(matches!(state.add_mode_stage(), &AddModeStage::AwaitingKey));
+
+    // Try to transition without entering a key
+    state.transition_add_to_value();
+
+    // Should still be in AwaitingKey
+    assert!(matches!(state.add_mode_stage(), &AddModeStage::AwaitingKey));
+
+    // Should have error message
+    if let Some(msg) = state.message() {
+        assert_eq!(msg.level, MessageLevel::Error);
+        assert!(msg.text.contains("Key cannot be empty"));
+    } else {
+        panic!("Expected error message");
+    }
+}

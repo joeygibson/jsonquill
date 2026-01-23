@@ -296,6 +296,38 @@ impl InputHandler {
                         }
                     }
                 }
+
+                // Handle key input during AwaitingKey stage (before Insert mode)
+                use crate::editor::state::AddModeStage;
+                if matches!(state.add_mode_stage(), &AddModeStage::AwaitingKey) {
+                    match key {
+                        Key::Char('\n') => {
+                            // Enter pressed - transition to value stage
+                            state.transition_add_to_value();
+                            return Ok(false);
+                        }
+                        Key::Char(c) if c.is_ascii() && !c.is_control() => {
+                            // Regular character - add to key buffer
+                            state.push_to_add_key_buffer(c);
+                            return Ok(false);
+                        }
+                        Key::Backspace => {
+                            // Backspace - remove from key buffer
+                            state.pop_from_add_key_buffer();
+                            return Ok(false);
+                        }
+                        Key::Esc => {
+                            // Escape - cancel add operation
+                            state.cancel_add_operation();
+                            state.set_mode(EditorMode::Normal);
+                            return Ok(false);
+                        }
+                        _ => {
+                            // Ignore other keys
+                            return Ok(false);
+                        }
+                    }
+                }
             }
 
             let input_event = map_key_event(Event::Key(key), state.mode());
