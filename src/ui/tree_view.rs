@@ -448,12 +448,18 @@ pub fn render_tree_view(
         }
 
         // Value
-        let value_color = match line.value_type {
-            ValueType::String => colors.string,
-            ValueType::Number => colors.number,
-            ValueType::Boolean => colors.boolean,
-            ValueType::Null => colors.null,
-            ValueType::Object | ValueType::Array => colors.foreground,
+        let value_color = if line.expandable && !line.expanded {
+            // Collapsed containers use preview color
+            colors.preview
+        } else {
+            // Scalars and expanded containers use their type-specific colors
+            match line.value_type {
+                ValueType::String => colors.string,
+                ValueType::Number => colors.number,
+                ValueType::Boolean => colors.boolean,
+                ValueType::Null => colors.null,
+                ValueType::Object | ValueType::Array => colors.foreground,
+            }
         };
 
         spans.push(Span::styled(
