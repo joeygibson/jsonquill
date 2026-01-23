@@ -95,6 +95,10 @@ pub fn render_help_overlay(f: &mut Frame, colors: &ThemeColors, scroll: usize) {
             Span::raw("Paste after/before cursor"),
         ]),
         Line::from(vec![
+            Span::styled("  a             ", Style::default().fg(colors.number)),
+            Span::raw("Add new field/element after cursor"),
+        ]),
+        Line::from(vec![
             Span::styled("  u             ", Style::default().fg(colors.number)),
             Span::raw("Undo last change"),
         ]),
