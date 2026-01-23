@@ -92,6 +92,17 @@ pub enum MessageLevel {
     Error,
 }
 
+/// Stage of the add operation state machine.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum AddModeStage {
+    /// Not in add mode
+    None,
+    /// Pressed 'a' in object, waiting for key input
+    AwaitingKey,
+    /// Key entered or skipped (arrays), waiting for value input
+    AwaitingValue,
+}
+
 pub struct EditorState {
     tree: JsonTree,
     mode: EditorMode,
@@ -120,6 +131,9 @@ pub struct EditorState {
     scroll_offset: usize,
     viewport_height: usize,
     undo_tree: super::undo::UndoTree,
+    add_mode_stage: AddModeStage,
+    add_key_buffer: String,
+    add_insertion_point: Option<Vec<usize>>,
 }
 
 impl EditorState {
@@ -193,6 +207,9 @@ impl EditorState {
             scroll_offset: 0,
             viewport_height: 20,
             undo_tree,
+            add_mode_stage: AddModeStage::None,
+            add_key_buffer: String::new(),
+            add_insertion_point: None,
         }
     }
 
@@ -1563,5 +1580,10 @@ impl EditorState {
         } else {
             false
         }
+    }
+
+    /// Returns the current add mode stage.
+    pub fn add_mode_stage(&self) -> &AddModeStage {
+        &self.add_mode_stage
     }
 }

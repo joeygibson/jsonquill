@@ -1223,3 +1223,15 @@ fn test_edit_kill_to_end() {
     assert_eq!(state.edit_buffer().unwrap(), "");
     assert_eq!(state.edit_cursor_position(), 0);
 }
+
+#[test]
+fn test_add_mode_stage_default() {
+    use jeditor::editor::state::{EditorState, AddModeStage};
+    use jeditor::document::node::{JsonNode, JsonValue};
+    use jeditor::document::tree::JsonTree;
+
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Null));
+    let state = EditorState::new(tree);
+
+    assert!(matches!(state.add_mode_stage(), &AddModeStage::None));
+}
