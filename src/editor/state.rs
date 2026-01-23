@@ -198,8 +198,11 @@ impl EditorState {
     /// ```
     pub fn new(tree: JsonTree) -> Self {
         let mut tree_view = TreeViewState::new();
-        // Expand all nodes by default for single JSON files
-        tree_view.expand_all(&tree);
+        // Expand all nodes by default for regular JSON files
+        // JSONL files start collapsed to show previews
+        if !matches!(tree.root().value(), JsonValue::JsonlRoot(_)) {
+            tree_view.expand_all(&tree);
+        }
         tree_view.rebuild(&tree);
 
         // Initialize cursor to first visible line if available
@@ -711,7 +714,21 @@ impl EditorState {
     /// ```
     pub fn toggle_expand_at_cursor(&mut self) {
         let current_path = self.cursor.path().to_vec();
-        self.tree_view.toggle_expand(&current_path);
+
+        // Check if we're expanding a JSONL line (direct child of JsonlRoot)
+        let is_jsonl_line = current_path.len() == 1
+            && matches!(self.tree.root().value(), JsonValue::JsonlRoot(_));
+
+        let was_expanded = self.tree_view.is_expanded(&current_path);
+
+        if is_jsonl_line && !was_expanded {
+            // Expanding a JSONL line - expand entire tree within it
+            self.tree_view.expand_node_and_descendants(&self.tree, &current_path);
+        } else {
+            // Normal toggle for non-JSONL or collapsing
+            self.tree_view.toggle_expand(&current_path);
+        }
+
         self.tree_view.rebuild(&self.tree);
     }
 

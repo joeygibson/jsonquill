@@ -129,6 +129,19 @@ impl TreeViewState {
         self.expanded_paths.contains(path)
     }
 
+    /// Expands a specific node and all its descendants.
+    ///
+    /// This is used when expanding JSONL lines to show the entire tree within the line.
+    pub fn expand_node_and_descendants(&mut self, tree: &JsonTree, path: &[usize]) {
+        // First expand the node itself
+        self.expanded_paths.insert(path.to_vec());
+
+        // Then expand all descendants
+        if let Some(node) = tree.get_node(path) {
+            self.expand_all_recursive(node, path);
+        }
+    }
+
     /// Rebuilds the list of visible lines from the JSON tree.
     ///
     /// This should be called after the tree changes or expand/collapse state changes.

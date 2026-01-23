@@ -74,14 +74,15 @@ JSON Quill supports JSONL (JSON Lines) files with the `.jsonl` or `.ndjson` exte
 # Open a JSONL file
 jsonquill data.jsonl
 
-# Each line displays as a collapsed object
-# Press l or → to expand a line
+# Each line starts collapsed showing a preview
+# Press l or → to expand a line and see its contents
 # Edit fields within expanded lines normally
+# Press h or ← to collapse a line back to preview
 ```
 
 **JSONL Features:**
 - Each line parsed as separate JSON object
-- Lines start collapsed showing preview
+- Lines start collapsed showing detailed preview (e.g., `(3) {id: 1, name: "Alice", ...}`)
 - Flat display (no nesting at root level)
 - Save preserves line-by-line format
 - All edit operations work within lines
