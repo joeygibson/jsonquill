@@ -225,6 +225,53 @@ impl TreeViewState {
             JsonValue::Null => "null".to_string(),
         }
     }
+
+    /// Updates expanded paths after inserting a node at the given path.
+    ///
+    /// When a node is inserted, all subsequent siblings and their descendants
+    /// need their indices shifted by 1. This method updates the expanded_paths
+    /// set to reflect the new indices after insertion.
+    ///
+    /// # Arguments
+    /// * `insertion_path` - The path where the new node was inserted
+    pub fn update_paths_after_insertion(&mut self, insertion_path: &[usize]) {
+        if insertion_path.is_empty() {
+            return;
+        }
+
+        let parent_path = &insertion_path[..insertion_path.len() - 1];
+        let insertion_idx = insertion_path[insertion_path.len() - 1];
+
+        // Collect paths that need updating
+        let paths_to_update: Vec<Vec<usize>> = self
+            .expanded_paths
+            .iter()
+            .filter(|path| {
+                // Check if this path is affected by the insertion
+                if path.len() < parent_path.len() + 1 {
+                    return false;
+                }
+
+                // Check if path has the same parent
+                if &path[..parent_path.len()] != parent_path {
+                    return false;
+                }
+
+                // Check if the index at the insertion level is >= insertion_idx
+                path[parent_path.len()] >= insertion_idx
+            })
+            .cloned()
+            .collect();
+
+        // Remove old paths and add updated paths
+        for old_path in paths_to_update {
+            self.expanded_paths.remove(&old_path);
+
+            let mut new_path = old_path.clone();
+            new_path[parent_path.len()] += 1;
+            self.expanded_paths.insert(new_path);
+        }
+    }
 }
 
 impl Default for TreeViewState {

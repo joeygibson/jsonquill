@@ -1804,6 +1804,9 @@ impl EditorState {
             }
         }
 
+        // Update expanded paths to account for shifted indices after insertion
+        self.tree_view_mut().update_paths_after_insertion(&insertion_path);
+
         // Rebuild tree view to show new node
         self.rebuild_tree_view();
 
@@ -1814,8 +1817,9 @@ impl EditorState {
         self.mark_dirty();
         self.checkpoint();
 
-        // Clear add operation state
+        // Clear add operation state and edit buffer
         self.cancel_add_operation();
+        self.cancel_editing();
 
         Ok(())
     }
