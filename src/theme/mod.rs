@@ -105,8 +105,5 @@ pub fn get_builtin_theme(name: &str) -> Option<Theme> {
 /// assert!(themes.contains(&"default-light".to_string()));
 /// ```
 pub fn list_builtin_themes() -> Vec<String> {
-    vec![
-        "default-dark".to_string(),
-        "default-light".to_string(),
-    ]
+    vec!["default-dark".to_string(), "default-light".to_string()]
 }

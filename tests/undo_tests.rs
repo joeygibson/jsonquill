@@ -5,8 +5,14 @@ use jsonquill::editor::state::EditorState;
 #[test]
 fn test_undo_after_delete() {
     let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
-        ("key1".to_string(), JsonNode::new(JsonValue::String("value1".to_string()))),
-        ("key2".to_string(), JsonNode::new(JsonValue::String("value2".to_string()))),
+        (
+            "key1".to_string(),
+            JsonNode::new(JsonValue::String("value1".to_string())),
+        ),
+        (
+            "key2".to_string(),
+            JsonNode::new(JsonValue::String("value2".to_string())),
+        ),
     ])));
     let mut state = EditorState::new(tree);
 
@@ -28,9 +34,10 @@ fn test_undo_after_delete() {
 
 #[test]
 fn test_redo_after_undo() {
-    let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
-        ("key".to_string(), JsonNode::new(JsonValue::String("value".to_string()))),
-    ])));
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![(
+        "key".to_string(),
+        JsonNode::new(JsonValue::String("value".to_string())),
+    )])));
     let mut state = EditorState::new(tree);
 
     // Delete and undo
@@ -101,9 +108,9 @@ fn test_redo_at_end_returns_false() {
 
 #[test]
 fn test_undo_after_paste() {
-    let tree = JsonTree::new(JsonNode::new(JsonValue::Array(vec![
-        JsonNode::new(JsonValue::Number(1.0)),
-    ])));
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Array(vec![JsonNode::new(
+        JsonValue::Number(1.0),
+    )])));
     let mut state = EditorState::new(tree);
 
     // Yank and paste

@@ -7,6 +7,8 @@
 //!
 //! Example status line: `NORMAL | data.json [+]`
 
+use crate::editor::state::EditorState;
+use crate::theme::colors::ThemeColors;
 use ratatui::{
     layout::Rect,
     style::Style,
@@ -14,8 +16,6 @@ use ratatui::{
     widgets::Paragraph,
     Frame,
 };
-use crate::editor::state::EditorState;
-use crate::theme::colors::ThemeColors;
 
 /// Renders the status line showing mode, filename, and dirty indicator.
 ///
@@ -44,12 +44,7 @@ use crate::theme::colors::ThemeColors;
 /// jsonquill::ui::status_line::render_status_line(f, area, &state, &theme.colors);
 /// # }
 /// ```
-pub fn render_status_line(
-    f: &mut Frame,
-    area: Rect,
-    state: &EditorState,
-    colors: &ThemeColors,
-) {
+pub fn render_status_line(f: &mut Frame, area: Rect, state: &EditorState, colors: &ThemeColors) {
     let mode_text = format!("{}", state.mode());
     let filename = state.filename().unwrap_or("[No Name]");
     let dirty_indicator = if state.is_dirty() { " [+]" } else { "" };
@@ -90,12 +85,12 @@ pub fn render_status_line(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::document::node::{JsonNode, JsonValue};
+    use crate::document::tree::JsonTree;
+    use crate::editor::state::EditorState;
+    use crate::theme;
     use ratatui::backend::TestBackend;
     use ratatui::Terminal;
-    use crate::editor::state::EditorState;
-    use crate::document::tree::JsonTree;
-    use crate::document::node::{JsonNode, JsonValue};
-    use crate::theme;
 
     #[test]
     fn test_status_line_no_filename() {
@@ -105,17 +100,23 @@ mod tests {
         let state = EditorState::new(tree);
         let theme = theme::get_builtin_theme("default-dark").unwrap();
 
-        terminal.draw(|f| {
-            let area = f.area();
-            render_status_line(f, area, &state, &theme.colors);
-        }).unwrap();
+        terminal
+            .draw(|f| {
+                let area = f.area();
+                render_status_line(f, area, &state, &theme.colors);
+            })
+            .unwrap();
 
         let buffer = terminal.backend().buffer();
         let content = buffer.content();
 
         // Should display [No Name] when no filename is set
         let text: String = content.iter().take(80).map(|c| c.symbol()).collect();
-        assert!(text.contains("[No Name]"), "Status line should show [No Name]: {}", text);
+        assert!(
+            text.contains("[No Name]"),
+            "Status line should show [No Name]: {}",
+            text
+        );
     }
 
     #[test]
@@ -127,16 +128,22 @@ mod tests {
         state.set_filename("test.json".to_string());
         let theme = theme::get_builtin_theme("default-dark").unwrap();
 
-        terminal.draw(|f| {
-            let area = f.area();
-            render_status_line(f, area, &state, &theme.colors);
-        }).unwrap();
+        terminal
+            .draw(|f| {
+                let area = f.area();
+                render_status_line(f, area, &state, &theme.colors);
+            })
+            .unwrap();
 
         let buffer = terminal.backend().buffer();
         let content = buffer.content();
 
         let text: String = content.iter().take(80).map(|c| c.symbol()).collect();
-        assert!(text.contains("test.json"), "Status line should show filename: {}", text);
+        assert!(
+            text.contains("test.json"),
+            "Status line should show filename: {}",
+            text
+        );
     }
 
     #[test]
@@ -148,16 +155,22 @@ mod tests {
         state.mark_dirty();
         let theme = theme::get_builtin_theme("default-dark").unwrap();
 
-        terminal.draw(|f| {
-            let area = f.area();
-            render_status_line(f, area, &state, &theme.colors);
-        }).unwrap();
+        terminal
+            .draw(|f| {
+                let area = f.area();
+                render_status_line(f, area, &state, &theme.colors);
+            })
+            .unwrap();
 
         let buffer = terminal.backend().buffer();
         let content = buffer.content();
 
         let text: String = content.iter().take(80).map(|c| c.symbol()).collect();
-        assert!(text.contains("[+]"), "Status line should show dirty indicator: {}", text);
+        assert!(
+            text.contains("[+]"),
+            "Status line should show dirty indicator: {}",
+            text
+        );
     }
 
     #[test]
@@ -170,16 +183,22 @@ mod tests {
         // Don't mark as dirty
         let theme = theme::get_builtin_theme("default-dark").unwrap();
 
-        terminal.draw(|f| {
-            let area = f.area();
-            render_status_line(f, area, &state, &theme.colors);
-        }).unwrap();
+        terminal
+            .draw(|f| {
+                let area = f.area();
+                render_status_line(f, area, &state, &theme.colors);
+            })
+            .unwrap();
 
         let buffer = terminal.backend().buffer();
         let content = buffer.content();
 
         let text: String = content.iter().take(80).map(|c| c.symbol()).collect();
-        assert!(!text.contains("[+]"), "Clean file should not show dirty indicator: {}", text);
+        assert!(
+            !text.contains("[+]"),
+            "Clean file should not show dirty indicator: {}",
+            text
+        );
     }
 
     #[test]
@@ -191,12 +210,20 @@ mod tests {
 
         // Test NORMAL mode
         let state = EditorState::new(tree);
-        terminal.draw(|f| {
-            render_status_line(f, f.area(), &state, &theme.colors);
-        }).unwrap();
+        terminal
+            .draw(|f| {
+                render_status_line(f, f.area(), &state, &theme.colors);
+            })
+            .unwrap();
 
-        let text: String = terminal.backend().buffer().content().iter()
-            .take(80).map(|c| c.symbol()).collect();
+        let text: String = terminal
+            .backend()
+            .buffer()
+            .content()
+            .iter()
+            .take(80)
+            .map(|c| c.symbol())
+            .collect();
         assert!(text.contains("NORMAL"), "Should show NORMAL mode: {}", text);
     }
 }

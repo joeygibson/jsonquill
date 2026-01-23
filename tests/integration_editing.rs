@@ -1,13 +1,16 @@
 use jsonquill::document::node::{JsonNode, JsonValue};
 use jsonquill::document::tree::JsonTree;
-use jsonquill::editor::state::EditorState;
 use jsonquill::editor::mode::EditorMode;
+use jsonquill::editor::state::EditorState;
 
 #[test]
 fn test_full_edit_workflow() {
     // Create initial document
     let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
-        ("name".to_string(), JsonNode::new(JsonValue::String("Alice".to_string()))),
+        (
+            "name".to_string(),
+            JsonNode::new(JsonValue::String("Alice".to_string())),
+        ),
         ("age".to_string(), JsonNode::new(JsonValue::Number(30.0))),
     ])));
     let mut state = EditorState::new(tree);
@@ -76,9 +79,10 @@ fn test_full_yank_paste_workflow() {
 
 #[test]
 fn test_edit_cancel_workflow() {
-    let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
-        ("name".to_string(), JsonNode::new(JsonValue::String("Alice".to_string()))),
-    ])));
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![(
+        "name".to_string(),
+        JsonNode::new(JsonValue::String("Alice".to_string())),
+    )])));
     let mut state = EditorState::new(tree);
 
     // Start editing
@@ -314,9 +318,9 @@ fn test_cursor_position() {
 
 #[test]
 fn test_add_string_to_array() {
-    use jsonquill::editor::state::EditorState;
     use jsonquill::document::node::{JsonNode, JsonValue};
     use jsonquill::document::tree::JsonTree;
+    use jsonquill::editor::state::EditorState;
 
     let tree = JsonTree::new(JsonNode::new(JsonValue::Array(vec![
         JsonNode::new(JsonValue::Number(1.0)),
@@ -356,13 +360,13 @@ fn test_add_string_to_array() {
 
 #[test]
 fn test_add_number_to_array() {
-    use jsonquill::editor::state::EditorState;
     use jsonquill::document::node::{JsonNode, JsonValue};
     use jsonquill::document::tree::JsonTree;
+    use jsonquill::editor::state::EditorState;
 
-    let tree = JsonTree::new(JsonNode::new(JsonValue::Array(vec![
-        JsonNode::new(JsonValue::Number(1.0)),
-    ])));
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Array(vec![JsonNode::new(
+        JsonValue::Number(1.0),
+    )])));
     let mut state = EditorState::new(tree);
 
     state.cursor_mut().set_path(vec![0]);
@@ -385,13 +389,14 @@ fn test_add_number_to_array() {
 
 #[test]
 fn test_add_field_to_object() {
-    use jsonquill::editor::state::EditorState;
     use jsonquill::document::node::{JsonNode, JsonValue};
     use jsonquill::document::tree::JsonTree;
+    use jsonquill::editor::state::EditorState;
 
-    let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
-        ("name".to_string(), JsonNode::new(JsonValue::String("Alice".to_string()))),
-    ])));
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![(
+        "name".to_string(),
+        JsonNode::new(JsonValue::String("Alice".to_string())),
+    )])));
     let mut state = EditorState::new(tree);
 
     state.cursor_mut().set_path(vec![0]);
@@ -427,13 +432,14 @@ fn test_add_field_to_object() {
 
 #[test]
 fn test_add_with_empty_key_fails() {
-    use jsonquill::editor::state::{EditorState, AddModeStage, MessageLevel};
     use jsonquill::document::node::{JsonNode, JsonValue};
     use jsonquill::document::tree::JsonTree;
+    use jsonquill::editor::state::{AddModeStage, EditorState, MessageLevel};
 
-    let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
-        ("name".to_string(), JsonNode::new(JsonValue::String("Alice".to_string()))),
-    ])));
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![(
+        "name".to_string(),
+        JsonNode::new(JsonValue::String("Alice".to_string())),
+    )])));
     let mut state = EditorState::new(tree);
 
     state.cursor_mut().set_path(vec![0]);
@@ -459,14 +465,14 @@ fn test_add_with_empty_key_fails() {
 
 #[test]
 fn test_cancel_add_during_value_entry() {
-    use jsonquill::editor::state::{EditorState, AddModeStage};
-    use jsonquill::editor::mode::EditorMode;
     use jsonquill::document::node::{JsonNode, JsonValue};
     use jsonquill::document::tree::JsonTree;
+    use jsonquill::editor::mode::EditorMode;
+    use jsonquill::editor::state::{AddModeStage, EditorState};
 
-    let tree = JsonTree::new(JsonNode::new(JsonValue::Array(vec![
-        JsonNode::new(JsonValue::Number(1.0)),
-    ])));
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Array(vec![JsonNode::new(
+        JsonValue::Number(1.0),
+    )])));
     let mut state = EditorState::new(tree);
 
     state.cursor_mut().set_path(vec![0]);
@@ -492,13 +498,13 @@ fn test_cancel_add_during_value_entry() {
 
 #[test]
 fn test_add_boolean_to_array() {
-    use jsonquill::editor::state::EditorState;
     use jsonquill::document::node::{JsonNode, JsonValue};
     use jsonquill::document::tree::JsonTree;
+    use jsonquill::editor::state::EditorState;
 
-    let tree = JsonTree::new(JsonNode::new(JsonValue::Array(vec![
-        JsonNode::new(JsonValue::Number(1.0)),
-    ])));
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Array(vec![JsonNode::new(
+        JsonValue::Number(1.0),
+    )])));
     let mut state = EditorState::new(tree);
 
     state.cursor_mut().set_path(vec![0]);
@@ -520,13 +526,13 @@ fn test_add_boolean_to_array() {
 
 #[test]
 fn test_add_null_to_array() {
-    use jsonquill::editor::state::EditorState;
     use jsonquill::document::node::{JsonNode, JsonValue};
     use jsonquill::document::tree::JsonTree;
+    use jsonquill::editor::state::EditorState;
 
-    let tree = JsonTree::new(JsonNode::new(JsonValue::Array(vec![
-        JsonNode::new(JsonValue::Number(1.0)),
-    ])));
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Array(vec![JsonNode::new(
+        JsonValue::Number(1.0),
+    )])));
     let mut state = EditorState::new(tree);
 
     state.cursor_mut().set_path(vec![0]);
@@ -545,13 +551,13 @@ fn test_add_null_to_array() {
 
 #[test]
 fn test_add_creates_undo_checkpoint() {
-    use jsonquill::editor::state::EditorState;
     use jsonquill::document::node::{JsonNode, JsonValue};
     use jsonquill::document::tree::JsonTree;
+    use jsonquill::editor::state::EditorState;
 
-    let tree = JsonTree::new(JsonNode::new(JsonValue::Array(vec![
-        JsonNode::new(JsonValue::Number(1.0)),
-    ])));
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Array(vec![JsonNode::new(
+        JsonValue::Number(1.0),
+    )])));
     let mut state = EditorState::new(tree);
 
     state.cursor_mut().set_path(vec![0]);
@@ -576,9 +582,9 @@ fn test_add_creates_undo_checkpoint() {
 
 #[test]
 fn test_cursor_moves_to_new_node() {
-    use jsonquill::editor::state::EditorState;
     use jsonquill::document::node::{JsonNode, JsonValue};
     use jsonquill::document::tree::JsonTree;
+    use jsonquill::editor::state::EditorState;
 
     let tree = JsonTree::new(JsonNode::new(JsonValue::Array(vec![
         JsonNode::new(JsonValue::Number(1.0)),
@@ -602,9 +608,9 @@ fn test_cursor_moves_to_new_node() {
 
 #[test]
 fn test_add_to_root_scalar_fails() {
-    use jsonquill::editor::state::{EditorState, MessageLevel};
     use jsonquill::document::node::{JsonNode, JsonValue};
     use jsonquill::document::tree::JsonTree;
+    use jsonquill::editor::state::{EditorState, MessageLevel};
 
     let tree = JsonTree::new(JsonNode::new(JsonValue::Number(42.0)));
     let mut state = EditorState::new(tree);
@@ -623,9 +629,9 @@ fn test_add_to_root_scalar_fails() {
 
 #[test]
 fn test_add_field_preserves_sibling_expansion_state() {
-    use jsonquill::editor::state::EditorState;
     use jsonquill::document::node::{JsonNode, JsonValue};
     use jsonquill::document::tree::JsonTree;
+    use jsonquill::editor::state::EditorState;
 
     // Create a document with nested objects
     let inner1 = vec![
@@ -637,8 +643,14 @@ fn test_add_field_preserves_sibling_expansion_state() {
         ("b".to_string(), JsonNode::new(JsonValue::Number(4.0))),
     ];
     let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
-        ("first".to_string(), JsonNode::new(JsonValue::Object(inner1))),
-        ("second".to_string(), JsonNode::new(JsonValue::Object(inner2))),
+        (
+            "first".to_string(),
+            JsonNode::new(JsonValue::Object(inner1)),
+        ),
+        (
+            "second".to_string(),
+            JsonNode::new(JsonValue::Object(inner2)),
+        ),
     ])));
     let mut state = EditorState::new(tree);
 
@@ -656,7 +668,7 @@ fn test_add_field_preserves_sibling_expansion_state() {
     assert!(state.tree_view().is_expanded(&[1]));
 
     // Add a new field after "first" (between index 0 and 1)
-    state.cursor_mut().set_path(vec![0]);  // Position on "first"
+    state.cursor_mut().set_path(vec![0]); // Position on "first"
     state.start_add_operation();
 
     // Enter key "middle"
@@ -690,21 +702,29 @@ fn test_add_field_preserves_sibling_expansion_state() {
 
 #[test]
 fn test_add_field_preserves_child_expansion_state() {
-    use jsonquill::editor::state::EditorState;
     use jsonquill::document::node::{JsonNode, JsonValue};
     use jsonquill::document::tree::JsonTree;
+    use jsonquill::editor::state::EditorState;
 
     // Simulate the exact scenario: company with headquarters that has nested structure
     let headquarters = vec![
-        ("address".to_string(), JsonNode::new(JsonValue::String("123 Main St".to_string()))),
-        ("city".to_string(), JsonNode::new(JsonValue::String("NYC".to_string()))),
+        (
+            "address".to_string(),
+            JsonNode::new(JsonValue::String("123 Main St".to_string())),
+        ),
+        (
+            "city".to_string(),
+            JsonNode::new(JsonValue::String("NYC".to_string())),
+        ),
     ];
-    let company = vec![
-        ("headquarters".to_string(), JsonNode::new(JsonValue::Object(headquarters))),
-    ];
-    let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
-        ("company".to_string(), JsonNode::new(JsonValue::Object(company))),
-    ])));
+    let company = vec![(
+        "headquarters".to_string(),
+        JsonNode::new(JsonValue::Object(headquarters)),
+    )];
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![(
+        "company".to_string(),
+        JsonNode::new(JsonValue::Object(company)),
+    )])));
     let mut state = EditorState::new(tree);
 
     // Expand the nested structure:
@@ -719,7 +739,10 @@ fn test_add_field_preserves_child_expansion_state() {
     state.rebuild_tree_view();
 
     // Verify headquarters is expanded before adding
-    assert!(state.tree_view().is_expanded(&[0, 0]), "headquarters should be expanded initially");
+    assert!(
+        state.tree_view().is_expanded(&[0, 0]),
+        "headquarters should be expanded initially"
+    );
 
     // Position cursor on headquarters (the first field of company)
     state.cursor_mut().set_path(vec![0, 0]);
@@ -757,41 +780,78 @@ fn test_add_field_preserves_child_expansion_state() {
 
 #[test]
 fn test_add_field_with_detailed_expansion_tracking() {
-    use jsonquill::editor::state::EditorState;
     use jsonquill::document::node::{JsonNode, JsonValue};
     use jsonquill::document::tree::JsonTree;
+    use jsonquill::editor::state::EditorState;
 
     // Create a more complex structure to test
     let address_obj = vec![
-        ("street".to_string(), JsonNode::new(JsonValue::String("123 Main".to_string()))),
-        ("city".to_string(), JsonNode::new(JsonValue::String("NYC".to_string()))),
-        ("zip".to_string(), JsonNode::new(JsonValue::String("10001".to_string()))),
+        (
+            "street".to_string(),
+            JsonNode::new(JsonValue::String("123 Main".to_string())),
+        ),
+        (
+            "city".to_string(),
+            JsonNode::new(JsonValue::String("NYC".to_string())),
+        ),
+        (
+            "zip".to_string(),
+            JsonNode::new(JsonValue::String("10001".to_string())),
+        ),
     ];
     let headquarters = vec![
-        ("address".to_string(), JsonNode::new(JsonValue::Object(address_obj))),
-        ("phone".to_string(), JsonNode::new(JsonValue::String("555-1234".to_string()))),
+        (
+            "address".to_string(),
+            JsonNode::new(JsonValue::Object(address_obj)),
+        ),
+        (
+            "phone".to_string(),
+            JsonNode::new(JsonValue::String("555-1234".to_string())),
+        ),
     ];
     let company = vec![
-        ("name".to_string(), JsonNode::new(JsonValue::String("Acme Corp".to_string()))),
-        ("headquarters".to_string(), JsonNode::new(JsonValue::Object(headquarters))),
+        (
+            "name".to_string(),
+            JsonNode::new(JsonValue::String("Acme Corp".to_string())),
+        ),
+        (
+            "headquarters".to_string(),
+            JsonNode::new(JsonValue::Object(headquarters)),
+        ),
     ];
-    let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
-        ("company".to_string(), JsonNode::new(JsonValue::Object(company))),
-    ])));
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![(
+        "company".to_string(),
+        JsonNode::new(JsonValue::Object(company)),
+    )])));
     let mut state = EditorState::new(tree);
 
     // EditorState::new() auto-expands all nodes, so they should already be expanded
     println!("Initial expansion state (should all be true):");
     println!("  [0] (company): {}", state.tree_view().is_expanded(&[0]));
-    println!("  [0, 1] (headquarters): {}", state.tree_view().is_expanded(&[0, 1]));
-    println!("  [0, 1, 0] (address): {}", state.tree_view().is_expanded(&[0, 1, 0]));
+    println!(
+        "  [0, 1] (headquarters): {}",
+        state.tree_view().is_expanded(&[0, 1])
+    );
+    println!(
+        "  [0, 1, 0] (address): {}",
+        state.tree_view().is_expanded(&[0, 1, 0])
+    );
 
     println!("\n=== BEFORE adding employees ===");
     println!("Tree structure:");
-    println!("[0] = company (expanded: {})", state.tree_view().is_expanded(&[0]));
+    println!(
+        "[0] = company (expanded: {})",
+        state.tree_view().is_expanded(&[0])
+    );
     println!("[0, 0] = name");
-    println!("[0, 1] = headquarters (expanded: {})", state.tree_view().is_expanded(&[0, 1]));
-    println!("[0, 1, 0] = address (expanded: {})", state.tree_view().is_expanded(&[0, 1, 0]));
+    println!(
+        "[0, 1] = headquarters (expanded: {})",
+        state.tree_view().is_expanded(&[0, 1])
+    );
+    println!(
+        "[0, 1, 0] = address (expanded: {})",
+        state.tree_view().is_expanded(&[0, 1, 0])
+    );
     println!("[0, 1, 1] = phone");
 
     // Position on "headquarters" to add after it
@@ -810,15 +870,33 @@ fn test_add_field_with_detailed_expansion_tracking() {
 
     println!("\n=== AFTER adding employees ===");
     println!("Tree structure:");
-    println!("[0] = company (expanded: {})", state.tree_view().is_expanded(&[0]));
+    println!(
+        "[0] = company (expanded: {})",
+        state.tree_view().is_expanded(&[0])
+    );
     println!("[0, 0] = name");
-    println!("[0, 1] = headquarters (expanded: {})", state.tree_view().is_expanded(&[0, 1]));
-    println!("[0, 1, 0] = address (expanded: {})", state.tree_view().is_expanded(&[0, 1, 0]));
+    println!(
+        "[0, 1] = headquarters (expanded: {})",
+        state.tree_view().is_expanded(&[0, 1])
+    );
+    println!(
+        "[0, 1, 0] = address (expanded: {})",
+        state.tree_view().is_expanded(&[0, 1, 0])
+    );
     println!("[0, 1, 1] = phone");
     println!("[0, 2] = employees (NEW)");
 
     // Verify everything is still expanded
-    assert!(state.tree_view().is_expanded(&[0]), "company should be expanded");
-    assert!(state.tree_view().is_expanded(&[0, 1]), "headquarters should be expanded");
-    assert!(state.tree_view().is_expanded(&[0, 1, 0]), "address should be expanded");
+    assert!(
+        state.tree_view().is_expanded(&[0]),
+        "company should be expanded"
+    );
+    assert!(
+        state.tree_view().is_expanded(&[0, 1]),
+        "headquarters should be expanded"
+    );
+    assert!(
+        state.tree_view().is_expanded(&[0, 1, 0]),
+        "address should be expanded"
+    );
 }

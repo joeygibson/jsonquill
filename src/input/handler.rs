@@ -1,8 +1,9 @@
 //! Input event handler for polling and processing keyboard events.
 
 use super::keys::{map_key_event, InputEvent};
-use crate::editor::state::EditorState;
+use crate::config::Config;
 use crate::editor::mode::EditorMode;
+use crate::editor::state::EditorState;
 use anyhow::{Context, Result};
 use std::fs::File;
 use std::io::{self};
@@ -151,7 +152,10 @@ impl InputHandler {
                             match state.commit_editing() {
                                 Ok(_) => {
                                     state.set_mode(EditorMode::Normal);
-                                    state.set_message("Value updated".to_string(), MessageLevel::Info);
+                                    state.set_message(
+                                        "Value updated".to_string(),
+                                        MessageLevel::Info,
+                                    );
                                 }
                                 Err(e) => {
                                     state.set_message(
@@ -255,10 +259,8 @@ impl InputHandler {
                                 MessageLevel::Info,
                             );
                         } else {
-                            state.set_message(
-                                "No matches found".to_string(),
-                                MessageLevel::Warning,
-                            );
+                            state
+                                .set_message("No matches found".to_string(), MessageLevel::Warning);
                         }
                         return Ok(false);
                     }
@@ -381,7 +383,10 @@ impl InputHandler {
                         state.set_mode(EditorMode::Insert);
                         state.set_message("-- INSERT --".to_string(), MessageLevel::Info);
                     } else {
-                        state.set_message("Cannot edit this node type".to_string(), MessageLevel::Error);
+                        state.set_message(
+                            "Cannot edit this node type".to_string(),
+                            MessageLevel::Error,
+                        );
                     }
                 }
                 InputEvent::EnterCommandMode => {
@@ -516,7 +521,10 @@ impl InputHandler {
                                     MessageLevel::Info,
                                 );
                             } else {
-                                state.set_message("Node deleted (yanked)".to_string(), MessageLevel::Info);
+                                state.set_message(
+                                    "Node deleted (yanked)".to_string(),
+                                    MessageLevel::Info,
+                                );
                             }
                         }
                     } else {
@@ -532,10 +540,7 @@ impl InputHandler {
                             state.set_message("Node pasted after".to_string(), MessageLevel::Info);
                         }
                         Err(e) => {
-                            state.set_message(
-                                format!("Paste failed: {}", e),
-                                MessageLevel::Error,
-                            );
+                            state.set_message(format!("Paste failed: {}", e), MessageLevel::Error);
                         }
                     }
                 }
@@ -547,10 +552,7 @@ impl InputHandler {
                             state.set_message("Node pasted before".to_string(), MessageLevel::Info);
                         }
                         Err(e) => {
-                            state.set_message(
-                                format!("Paste failed: {}", e),
-                                MessageLevel::Error,
-                            );
+                            state.set_message(format!("Paste failed: {}", e), MessageLevel::Error);
                         }
                     }
                 }
@@ -562,7 +564,7 @@ impl InputHandler {
                         // Save the file
                         if let Some(filename) = state.filename() {
                             use crate::file::saver::save_json_file;
-                            match save_json_file(filename, state.tree(), 2, false) {
+                            match save_json_file(filename, state.tree(), &Config::default()) {
                                 Ok(_) => {
                                     state.clear_dirty();
                                     return Ok(true); // Quit after saving
@@ -575,7 +577,10 @@ impl InputHandler {
                                 }
                             }
                         } else {
-                            state.set_message("No filename (use :w <filename>)".to_string(), MessageLevel::Error);
+                            state.set_message(
+                                "No filename (use :w <filename>)".to_string(),
+                                MessageLevel::Error,
+                            );
                         }
                     } else {
                         // First 'Z' press - set pending
@@ -615,7 +620,10 @@ impl InputHandler {
                     if state.undo() {
                         state.set_message("Undo".to_string(), MessageLevel::Info);
                     } else {
-                        state.set_message("Already at oldest change".to_string(), MessageLevel::Info);
+                        state.set_message(
+                            "Already at oldest change".to_string(),
+                            MessageLevel::Info,
+                        );
                     }
                 }
                 InputEvent::Redo => {
@@ -624,14 +632,19 @@ impl InputHandler {
                     if state.redo() {
                         state.set_message("Redo".to_string(), MessageLevel::Info);
                     } else {
-                        state.set_message("Already at newest change".to_string(), MessageLevel::Info);
+                        state.set_message(
+                            "Already at newest change".to_string(),
+                            MessageLevel::Info,
+                        );
                     }
                 }
                 InputEvent::Add => {
                     state.clear_pending();
                     state.start_add_operation();
                 }
-                InputEvent::InsertCharacter(_) | InputEvent::InsertBackspace | InputEvent::InsertEnter => {
+                InputEvent::InsertCharacter(_)
+                | InputEvent::InsertBackspace
+                | InputEvent::InsertEnter => {
                     state.clear_pending();
                     // These are handled earlier in insert mode, should never reach here
                 }
@@ -708,17 +721,11 @@ impl InputHandler {
                             MessageLevel::Info,
                         );
                     } else {
-                        state.set_message(
-                            "Settings saved".to_string(),
-                            MessageLevel::Info,
-                        );
+                        state.set_message("Settings saved".to_string(), MessageLevel::Info);
                     }
                 }
                 Err(e) => {
-                    state.set_message(
-                        format!("Error saving config: {}", e),
-                        MessageLevel::Error,
-                    );
+                    state.set_message(format!("Error saving config: {}", e), MessageLevel::Error);
                 }
             }
             return Ok(false);
@@ -731,11 +738,12 @@ impl InputHandler {
             if let Some(setting_name) = setting.strip_suffix('?') {
                 match setting_name {
                     "number" => {
-                        let value = if state.show_line_numbers() { "on" } else { "off" };
-                        state.set_message(
-                            format!("number is {}", value),
-                            MessageLevel::Info,
-                        );
+                        let value = if state.show_line_numbers() {
+                            "on"
+                        } else {
+                            "off"
+                        };
+                        state.set_message(format!("number is {}", value), MessageLevel::Info);
                     }
                     _ => {
                         state.set_message(
@@ -758,10 +766,7 @@ impl InputHandler {
                     state.set_message("Line numbers disabled".to_string(), MessageLevel::Info);
                 }
                 _ => {
-                    state.set_message(
-                        format!("Unknown setting: {}", setting),
-                        MessageLevel::Error,
-                    );
+                    state.set_message(format!("Unknown setting: {}", setting), MessageLevel::Error);
                 }
             }
             return Ok(false);
@@ -801,34 +806,25 @@ impl InputHandler {
                 // :w filename - save to new file and update internal filename
                 let filename = cmd[2..].trim().to_string();
                 if filename.is_empty() {
-                    state.set_message(
-                        "No file name specified".to_string(),
-                        MessageLevel::Error,
-                    );
+                    state.set_message("No file name specified".to_string(), MessageLevel::Error);
                     return Ok(false);
                 }
 
-                match save_json_file(&filename, state.tree(), 2, false) {
+                match save_json_file(&filename, state.tree(), &Config::default()) {
                     Ok(_) => {
                         state.set_filename(filename.clone());
                         state.clear_dirty();
-                        state.set_message(
-                            format!("\"{}\" written", filename),
-                            MessageLevel::Info,
-                        );
+                        state.set_message(format!("\"{}\" written", filename), MessageLevel::Info);
                     }
                     Err(e) => {
-                        state.set_message(
-                            format!("Error saving file: {}", e),
-                            MessageLevel::Error,
-                        );
+                        state.set_message(format!("Error saving file: {}", e), MessageLevel::Error);
                     }
                 }
                 return Ok(false);
             }
             "w" => {
                 if let Some(filename) = state.filename().map(|s| s.to_string()) {
-                    match save_json_file(&filename, state.tree(), 2, false) {
+                    match save_json_file(&filename, state.tree(), &Config::default()) {
                         Ok(_) => {
                             state.clear_dirty();
                             state.set_message(
@@ -860,31 +856,25 @@ impl InputHandler {
                 };
 
                 if filename.is_empty() {
-                    state.set_message(
-                        "No file name specified".to_string(),
-                        MessageLevel::Error,
-                    );
+                    state.set_message("No file name specified".to_string(), MessageLevel::Error);
                     return Ok(false);
                 }
 
-                match save_json_file(&filename, state.tree(), 2, false) {
+                match save_json_file(&filename, state.tree(), &Config::default()) {
                     Ok(_) => {
                         state.set_filename(filename);
                         state.clear_dirty();
                         return Ok(true);
                     }
                     Err(e) => {
-                        state.set_message(
-                            format!("Error saving file: {}", e),
-                            MessageLevel::Error,
-                        );
+                        state.set_message(format!("Error saving file: {}", e), MessageLevel::Error);
                         return Ok(false);
                     }
                 }
             }
             "wq" | "x" => {
                 if let Some(filename) = state.filename().map(|s| s.to_string()) {
-                    match save_json_file(&filename, state.tree(), 2, false) {
+                    match save_json_file(&filename, state.tree(), &Config::default()) {
                         Ok(_) => {
                             state.clear_dirty();
                             return Ok(true);
@@ -910,10 +900,7 @@ impl InputHandler {
                 return Ok(false);
             }
             _ => {
-                state.set_message(
-                    format!("Unknown command: {}", command),
-                    MessageLevel::Error,
-                );
+                state.set_message(format!("Unknown command: {}", command), MessageLevel::Error);
                 return Ok(false);
             }
         }
@@ -929,10 +916,10 @@ impl Default for InputHandler {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use termion::event::Key;
-    use crate::editor::mode::EditorMode;
     use crate::document::node::{JsonNode, JsonValue};
     use crate::document::tree::JsonTree;
+    use crate::editor::mode::EditorMode;
+    use termion::event::Key;
 
     #[test]
     fn test_handler_creation() {
@@ -1027,8 +1014,8 @@ mod tests {
 
     #[test]
     fn test_write_with_new_filename() {
-        use tempfile::TempDir;
         use std::fs;
+        use tempfile::TempDir;
 
         let handler = InputHandler::new();
         let tree = JsonTree::new(JsonNode::new(JsonValue::Number(42.0)));
@@ -1068,8 +1055,8 @@ mod tests {
 
     #[test]
     fn test_wq_with_new_filename() {
-        use tempfile::TempDir;
         use std::fs;
+        use tempfile::TempDir;
 
         let handler = InputHandler::new();
         let tree = JsonTree::new(JsonNode::new(JsonValue::String("test".to_string())));

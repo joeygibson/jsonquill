@@ -1,0 +1,3 @@
+{"id":1,"name":"Alice Smith","email":"alice@example.com","age":30,"active":true,"roles":["admin","user"]}
+{"id":2,"name":"Bob Jones","email":"bob@example.com","age":25,"active":true,"roles":["user"]}
+{"id":3,"name":"Charlie Brown","email":"charlie@example.com","age":35,"active":false,"roles":["user","guest"]}

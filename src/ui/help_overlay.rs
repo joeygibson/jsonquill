@@ -1,5 +1,6 @@
 //! Help overlay for displaying keybindings and commands.
 
+use crate::theme::colors::ThemeColors;
 use ratatui::{
     layout::{Alignment, Constraint, Direction, Layout, Rect},
     style::{Modifier, Style},
@@ -7,7 +8,6 @@ use ratatui::{
     widgets::{Block, Borders, Clear, Paragraph, Wrap},
     Frame,
 };
-use crate::theme::colors::ThemeColors;
 
 /// Renders a centered help overlay showing keybindings and commands.
 ///
@@ -31,9 +31,10 @@ pub fn render_help_overlay(f: &mut Frame, colors: &ThemeColors, scroll: usize) {
 
     let help_text = vec![
         Line::from(""),
-        Line::from(vec![
-            Span::styled("Navigation", Style::default().fg(colors.key).add_modifier(Modifier::BOLD)),
-        ]),
+        Line::from(vec![Span::styled(
+            "Navigation",
+            Style::default().fg(colors.key).add_modifier(Modifier::BOLD),
+        )]),
         Line::from(vec![
             Span::styled("  j/k           ", Style::default().fg(colors.number)),
             Span::raw("Move cursor down/up (prefix with count)"),
@@ -67,9 +68,10 @@ pub fn render_help_overlay(f: &mut Frame, colors: &ThemeColors, scroll: usize) {
             Span::raw("Also work for navigation"),
         ]),
         Line::from(""),
-        Line::from(vec![
-            Span::styled("Modes", Style::default().fg(colors.key).add_modifier(Modifier::BOLD)),
-        ]),
+        Line::from(vec![Span::styled(
+            "Modes",
+            Style::default().fg(colors.key).add_modifier(Modifier::BOLD),
+        )]),
         Line::from(vec![
             Span::styled("  i             ", Style::default().fg(colors.number)),
             Span::raw("Enter INSERT mode (edit values/keys)"),
@@ -83,9 +85,10 @@ pub fn render_help_overlay(f: &mut Frame, colors: &ThemeColors, scroll: usize) {
             Span::raw("Return to NORMAL mode"),
         ]),
         Line::from(""),
-        Line::from(vec![
-            Span::styled("Editing (NORMAL mode)", Style::default().fg(colors.key).add_modifier(Modifier::BOLD)),
-        ]),
+        Line::from(vec![Span::styled(
+            "Editing (NORMAL mode)",
+            Style::default().fg(colors.key).add_modifier(Modifier::BOLD),
+        )]),
         Line::from(vec![
             Span::styled("  dd            ", Style::default().fg(colors.number)),
             Span::raw("Delete current node (prefix with count)"),
@@ -111,9 +114,10 @@ pub fn render_help_overlay(f: &mut Frame, colors: &ThemeColors, scroll: usize) {
             Span::raw("Redo last undone change"),
         ]),
         Line::from(""),
-        Line::from(vec![
-            Span::styled("Search", Style::default().fg(colors.key).add_modifier(Modifier::BOLD)),
-        ]),
+        Line::from(vec![Span::styled(
+            "Search",
+            Style::default().fg(colors.key).add_modifier(Modifier::BOLD),
+        )]),
         Line::from(vec![
             Span::styled("  /             ", Style::default().fg(colors.number)),
             Span::raw("Search in keys and values"),
@@ -123,9 +127,10 @@ pub fn render_help_overlay(f: &mut Frame, colors: &ThemeColors, scroll: usize) {
             Span::raw("Jump to next search result"),
         ]),
         Line::from(""),
-        Line::from(vec![
-            Span::styled("Commands", Style::default().fg(colors.key).add_modifier(Modifier::BOLD)),
-        ]),
+        Line::from(vec![Span::styled(
+            "Commands",
+            Style::default().fg(colors.key).add_modifier(Modifier::BOLD),
+        )]),
         Line::from(vec![
             Span::styled("  :w            ", Style::default().fg(colors.number)),
             Span::raw("Write (save) file"),
@@ -171,9 +176,10 @@ pub fn render_help_overlay(f: &mut Frame, colors: &ThemeColors, scroll: usize) {
             Span::raw("Redo last undone change"),
         ]),
         Line::from(""),
-        Line::from(vec![
-            Span::styled("Other", Style::default().fg(colors.key).add_modifier(Modifier::BOLD)),
-        ]),
+        Line::from(vec![Span::styled(
+            "Other",
+            Style::default().fg(colors.key).add_modifier(Modifier::BOLD),
+        )]),
         Line::from(vec![
             Span::styled("  q             ", Style::default().fg(colors.number)),
             Span::raw("Quit (NORMAL mode only)"),
@@ -183,9 +189,12 @@ pub fn render_help_overlay(f: &mut Frame, colors: &ThemeColors, scroll: usize) {
             Span::raw("Toggle this help"),
         ]),
         Line::from(""),
-        Line::from(vec![
-            Span::styled("↑/↓ or j/k to scroll • ? or Esc to close", Style::default().fg(colors.info).add_modifier(Modifier::ITALIC)),
-        ]),
+        Line::from(vec![Span::styled(
+            "↑/↓ or j/k to scroll • ? or Esc to close",
+            Style::default()
+                .fg(colors.info)
+                .add_modifier(Modifier::ITALIC),
+        )]),
     ];
 
     let paragraph = Paragraph::new(help_text)

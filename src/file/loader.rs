@@ -3,7 +3,7 @@
 //! This module provides functions to load JSON documents from files or stdin,
 //! parsing them into `JsonTree` structures that can be edited by jeditor.
 
-use crate::document::parser::parse_json;
+use crate::document::parser::{parse_json, parse_value};
 use crate::document::tree::JsonTree;
 use anyhow::{Context, Result};
 use std::fs;
@@ -42,8 +42,17 @@ use std::path::Path;
 /// - The file cannot be read (permissions, etc.)
 /// - The file contents are not valid JSON
 pub fn load_json_file<P: AsRef<Path>>(path: P) -> Result<JsonTree> {
-    let content =
-        fs::read_to_string(path.as_ref()).context("Failed to read file")?;
+    let path_ref = path.as_ref();
+
+    // Check if this is a JSONL file
+    if let Some(ext) = path_ref.extension() {
+        if ext == "jsonl" || ext == "ndjson" {
+            return load_jsonl_file(path_ref);
+        }
+    }
+
+    // Regular JSON
+    let content = fs::read_to_string(path_ref).context("Failed to read file")?;
 
     parse_json(&content).context("Failed to parse JSON")
 }
@@ -85,6 +94,33 @@ pub fn load_json_from_stdin() -> Result<JsonTree> {
         .context("Failed to read from stdin")?;
 
     parse_json(&buffer).context("Failed to parse JSON from stdin")
+}
+
+/// Loads and parses a JSONL (JSON Lines) file from the filesystem.
+///
+/// Each line in the file must be a valid JSON value. Blank lines are skipped.
+/// The result is a JsonTree with a JsonlRoot containing all lines.
+pub fn load_jsonl_file<P: AsRef<Path>>(path: P) -> Result<JsonTree> {
+    use crate::document::node::{JsonNode, JsonValue};
+
+    let content = fs::read_to_string(path.as_ref()).context("Failed to read JSONL file")?;
+
+    let mut lines = Vec::new();
+
+    for (line_num, line) in content.lines().enumerate() {
+        if line.trim().is_empty() {
+            continue; // Skip blank lines
+        }
+
+        let value: serde_json::Value = serde_json::from_str(line)
+            .with_context(|| format!("Invalid JSON on line {}", line_num + 1))?;
+
+        let node = parse_value(&value);
+        lines.push(node);
+    }
+
+    let root = JsonNode::new(JsonValue::JsonlRoot(lines));
+    Ok(JsonTree::new(root))
 }
 
 #[cfg(test)]

@@ -69,6 +69,13 @@ Implemented modules:
 - **src/file/** - JSON file loading and saving (filesystem and stdin piping supported)
 - **src/config/** - Configuration structures
 
+**JSONL Handling:**
+- `JsonValue::JsonlRoot` variant distinguishes JSONL from regular arrays
+- Flat rendering in tree view (no root container)
+- Separate save logic (one JSON object per line)
+- Lines stored as `Vec<JsonNode>` in JsonlRoot variant
+- Collapsed previews show inline content for all containers
+
 ## Current Status
 
 **Working Features:**
@@ -100,6 +107,8 @@ Implemented modules:
 - ✅ Default dark theme (gray/black, not blue)
 - ✅ Undo/redo (`u` to undo, `Ctrl-r` to redo, `:undo`, `:redo`)
 - ✅ Add scalar values (`a` to add after current node)
+- ✅ JSONL (.jsonl, .ndjson) file support
+- ✅ Collapsed object/array previews (jless-style)
 - ✅ All tests passing
 
 **Known Issues / TODO:**
@@ -115,7 +124,6 @@ Implemented modules:
 **Advanced Features:**
 - ❌ **No named registers** - `"ayy`, `"ap` for named register operations
 - ❌ **No structural search** - `:find`, `:path` for JSONPath-style queries
-- ❌ **No JSONL support** - Line-based JSON editing not implemented
 - ❌ **No format preservation** - Original formatting not preserved on save
 - ❌ **No lazy loading** - Large files (≥100MB) not optimized
 - ❌ **No advanced undo** - `g-`/`g+`, `:earlier`/`:later`, `:undolist` not implemented

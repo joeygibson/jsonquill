@@ -193,10 +193,7 @@ fn test_config_clone() {
     assert_eq!(config1.validation_mode, config2.validation_mode);
     assert_eq!(config1.create_backup, config2.create_backup);
     assert_eq!(config1.undo_limit, config2.undo_limit);
-    assert_eq!(
-        config1.sync_unnamed_register,
-        config2.sync_unnamed_register
-    );
+    assert_eq!(config1.sync_unnamed_register, config2.sync_unnamed_register);
     assert_eq!(config1.lazy_load_threshold, config2.lazy_load_threshold);
 }
 

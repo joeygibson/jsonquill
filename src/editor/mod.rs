@@ -20,7 +20,7 @@
 //! assert_eq!(mode, EditorMode::Normal);
 //! ```
 
-pub mod mode;
 pub mod cursor;
+pub mod mode;
 pub mod state;
 pub mod undo;

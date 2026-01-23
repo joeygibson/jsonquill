@@ -45,6 +45,8 @@ pub enum JsonValue {
     Boolean(bool),
     /// A JSON null value
     Null,
+    /// A JSONL document root containing lines (each line is a JsonNode)
+    JsonlRoot(Vec<JsonNode>),
 }
 
 /// A JSON value wrapped with metadata for tracking changes and formatting.
@@ -106,7 +108,7 @@ impl JsonValue {
         matches!(self, JsonValue::Array(_))
     }
 
-    /// Returns true if this value is a container (object or array).
+    /// Returns true if this value is a container (object, array, or JSONL root).
     ///
     /// # Example
     ///
@@ -123,7 +125,10 @@ impl JsonValue {
     /// assert!(!num.is_container());
     /// ```
     pub fn is_container(&self) -> bool {
-        self.is_object() || self.is_array()
+        matches!(
+            self,
+            JsonValue::Object(_) | JsonValue::Array(_) | JsonValue::JsonlRoot(_)
+        )
     }
 }
 

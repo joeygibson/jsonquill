@@ -1,13 +1,13 @@
+pub mod edit_prompt;
+pub mod help_overlay;
 /// UI module for jeditor terminal interface.
 ///
 /// This module provides the main UI structure for rendering the terminal interface,
 /// including layout management and widget composition.
 pub mod layout;
+pub mod message_area;
 pub mod status_line;
 pub mod tree_view;
-pub mod message_area;
-pub mod help_overlay;
-pub mod edit_prompt;
 
 use anyhow::Result;
 use ratatui::backend::Backend;
@@ -155,19 +155,14 @@ impl UI {
             );
 
             // Status line
-            status_line::render_status_line(
-                f,
-                chunks[1],
-                state,
-                &self.theme.colors,
-            );
+            status_line::render_status_line(f, chunks[1], state, &self.theme.colors);
 
             // Render key prompt if in AwaitingKey stage
             use crate::editor::state::AddModeStage;
             if matches!(state.add_mode_stage(), AddModeStage::AwaitingKey) {
                 // Render key prompt similar to command/search prompt
+                use ratatui::style::{Modifier, Style};
                 use ratatui::text::{Line, Span};
-                use ratatui::style::{Style, Modifier};
                 use ratatui::widgets::Paragraph;
 
                 let key_prompt = format!("Key: {}", state.add_key_buffer());
@@ -193,12 +188,7 @@ impl UI {
                 );
             } else {
                 // Message area
-                message_area::render_message_area(
-                    f,
-                    chunks[2],
-                    state,
-                    &self.theme.colors,
-                );
+                message_area::render_message_area(f, chunks[2], state, &self.theme.colors);
             }
 
             // Help overlay (rendered on top if visible)
@@ -232,10 +222,10 @@ mod tests {
 
     #[test]
     fn test_render_executes() {
+        use crate::document::node::{JsonNode, JsonValue};
+        use crate::document::tree::JsonTree;
         use ratatui::backend::TestBackend;
         use ratatui::Terminal;
-        use crate::document::tree::JsonTree;
-        use crate::document::node::{JsonNode, JsonValue};
 
         let theme = get_builtin_theme("default-dark").unwrap();
         let ui = UI::new(theme);
@@ -252,10 +242,10 @@ mod tests {
 
     #[test]
     fn test_render_with_status_line() {
+        use crate::document::node::{JsonNode, JsonValue};
+        use crate::document::tree::JsonTree;
         use ratatui::backend::TestBackend;
         use ratatui::Terminal;
-        use crate::document::tree::JsonTree;
-        use crate::document::node::{JsonNode, JsonValue};
 
         let theme = get_builtin_theme("default-dark").unwrap();
         let ui = UI::new(theme);

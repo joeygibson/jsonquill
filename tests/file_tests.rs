@@ -1,5 +1,6 @@
 //! Integration tests for file I/O operations.
 
+use jsonquill::config::Config;
 use jsonquill::document::node::{JsonNode, JsonValue};
 use jsonquill::document::tree::JsonTree;
 use jsonquill::file::loader::load_json_file;
@@ -101,7 +102,7 @@ fn test_save_simple_json_file() {
     let tree = JsonTree::new(JsonNode::new(JsonValue::Object(obj)));
 
     let temp_file = NamedTempFile::new().unwrap();
-    save_json_file(temp_file.path(), &tree, 2, false).unwrap();
+    save_json_file(temp_file.path(), &tree, &Config::default()).unwrap();
 
     let content = std::fs::read_to_string(temp_file.path()).unwrap();
     assert!(content.contains("\"name\""));
@@ -117,10 +118,7 @@ fn test_save_complex_json_file() {
             "name".to_string(),
             JsonNode::new(JsonValue::String("Alice".to_string())),
         ),
-        (
-            "age".to_string(),
-            JsonNode::new(JsonValue::Number(30.0)),
-        ),
+        ("age".to_string(), JsonNode::new(JsonValue::Number(30.0))),
         (
             "active".to_string(),
             JsonNode::new(JsonValue::Boolean(true)),
@@ -145,7 +143,7 @@ fn test_save_complex_json_file() {
     let tree = JsonTree::new(JsonNode::new(JsonValue::Object(obj)));
 
     let temp_file = NamedTempFile::new().unwrap();
-    save_json_file(temp_file.path(), &tree, 2, false).unwrap();
+    save_json_file(temp_file.path(), &tree, &Config::default()).unwrap();
 
     let content = std::fs::read_to_string(temp_file.path()).unwrap();
 
@@ -165,47 +163,54 @@ fn test_save_with_different_indentation() {
         "nested_key".to_string(),
         JsonNode::new(JsonValue::String("nested_value".to_string())),
     )];
-    let obj = vec![(
-        "key".to_string(),
-        JsonNode::new(JsonValue::Object(inner)),
-    )];
+    let obj = vec![("key".to_string(), JsonNode::new(JsonValue::Object(inner)))];
     let tree = JsonTree::new(JsonNode::new(JsonValue::Object(obj)));
 
     // Test with 2 spaces
     let temp_file = NamedTempFile::new().unwrap();
-    save_json_file(temp_file.path(), &tree, 2, false).unwrap();
+    save_json_file(temp_file.path(), &tree, &Config::default()).unwrap();
     let content = std::fs::read_to_string(temp_file.path()).unwrap();
     assert!(content.contains("  \"key\""));
 
     // Test with 4 spaces
     let temp_file = NamedTempFile::new().unwrap();
-    save_json_file(temp_file.path(), &tree, 4, false).unwrap();
+    save_json_file(
+        temp_file.path(),
+        &tree,
+        &Config {
+            indent_size: 4,
+            ..Config::default()
+        },
+    )
+    .unwrap();
     let content = std::fs::read_to_string(temp_file.path()).unwrap();
     assert!(content.contains("    \"key\""));
 }
 
 #[test]
 fn test_save_creates_backup() {
-    let obj = vec![(
-        "version".to_string(),
-        JsonNode::new(JsonValue::Number(1.0)),
-    )];
+    let obj = vec![("version".to_string(), JsonNode::new(JsonValue::Number(1.0)))];
     let tree = JsonTree::new(JsonNode::new(JsonValue::Object(obj)));
 
     let temp_file = NamedTempFile::new().unwrap();
 
     // First save
-    save_json_file(temp_file.path(), &tree, 2, false).unwrap();
+    save_json_file(temp_file.path(), &tree, &Config::default()).unwrap();
 
     // Update tree
-    let obj = vec![(
-        "version".to_string(),
-        JsonNode::new(JsonValue::Number(2.0)),
-    )];
+    let obj = vec![("version".to_string(), JsonNode::new(JsonValue::Number(2.0)))];
     let tree = JsonTree::new(JsonNode::new(JsonValue::Object(obj)));
 
     // Second save with backup
-    save_json_file(temp_file.path(), &tree, 2, true).unwrap();
+    save_json_file(
+        temp_file.path(),
+        &tree,
+        &Config {
+            create_backup: true,
+            ..Config::default()
+        },
+    )
+    .unwrap();
 
     // Check backup exists
     let backup_path = temp_file.path().with_extension("jsonquill.bak");
@@ -222,14 +227,11 @@ fn test_save_creates_backup() {
 
 #[test]
 fn test_save_without_backup_no_backup_file() {
-    let obj = vec![(
-        "test".to_string(),
-        JsonNode::new(JsonValue::Boolean(true)),
-    )];
+    let obj = vec![("test".to_string(), JsonNode::new(JsonValue::Boolean(true)))];
     let tree = JsonTree::new(JsonNode::new(JsonValue::Object(obj)));
 
     let temp_file = NamedTempFile::new().unwrap();
-    save_json_file(temp_file.path(), &tree, 2, false).unwrap();
+    save_json_file(temp_file.path(), &tree, &Config::default()).unwrap();
 
     let backup_path = temp_file.path().with_extension("jeditor.bak");
     assert!(!backup_path.exists());
@@ -254,10 +256,7 @@ fn test_roundtrip_save_and_load() {
             "user".to_string(),
             JsonNode::new(JsonValue::Object(user_obj)),
         ),
-        (
-            "count".to_string(),
-            JsonNode::new(JsonValue::Number(42.0)),
-        ),
+        ("count".to_string(), JsonNode::new(JsonValue::Number(42.0))),
         (
             "active".to_string(),
             JsonNode::new(JsonValue::Boolean(true)),
@@ -268,7 +267,7 @@ fn test_roundtrip_save_and_load() {
 
     // Save to file
     let temp_file = NamedTempFile::new().unwrap();
-    save_json_file(temp_file.path(), &original_tree, 2, false).unwrap();
+    save_json_file(temp_file.path(), &original_tree, &Config::default()).unwrap();
 
     // Load from file
     let loaded_tree = load_json_file(temp_file.path()).unwrap();
@@ -332,7 +331,7 @@ fn test_save_special_characters() {
     let tree = JsonTree::new(JsonNode::new(JsonValue::Object(obj)));
 
     let temp_file = NamedTempFile::new().unwrap();
-    save_json_file(temp_file.path(), &tree, 2, false).unwrap();
+    save_json_file(temp_file.path(), &tree, &Config::default()).unwrap();
 
     // Load it back and verify
     let loaded_tree = load_json_file(temp_file.path()).unwrap();
@@ -372,7 +371,7 @@ fn test_save_empty_containers() {
     let tree = JsonTree::new(JsonNode::new(JsonValue::Object(obj)));
 
     let temp_file = NamedTempFile::new().unwrap();
-    save_json_file(temp_file.path(), &tree, 2, false).unwrap();
+    save_json_file(temp_file.path(), &tree, &Config::default()).unwrap();
 
     let content = std::fs::read_to_string(temp_file.path()).unwrap();
     assert!(content.contains("{}"));

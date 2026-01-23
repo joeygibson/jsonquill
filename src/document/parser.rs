@@ -89,8 +89,7 @@ use serde_json::Value as SerdeValue;
 /// assert!(parse_json(invalid_json).is_err());
 /// ```
 pub fn parse_json(json_str: &str) -> Result<JsonTree> {
-    let serde_value: SerdeValue =
-        serde_json::from_str(json_str).context("Failed to parse JSON")?;
+    let serde_value: SerdeValue = serde_json::from_str(json_str).context("Failed to parse JSON")?;
 
     let root = convert_serde_value(serde_value, Some(json_str.to_string()));
     Ok(JsonTree::new(root))
@@ -114,25 +113,33 @@ pub fn parse_json(json_str: &str) -> Result<JsonTree> {
 /// - The converted value
 /// - `modified: false` (since it's freshly parsed, not user-modified)
 /// - `original_text` preserved only for the root node
+pub fn parse_value(value: &SerdeValue) -> JsonNode {
+    convert_serde_value_impl(value, None)
+}
+
 fn convert_serde_value(value: SerdeValue, original_text: Option<String>) -> JsonNode {
+    convert_serde_value_impl(&value, original_text)
+}
+
+fn convert_serde_value_impl(value: &SerdeValue, original_text: Option<String>) -> JsonNode {
     let json_value = match value {
         SerdeValue::Object(map) => {
             let entries = map
-                .into_iter()
-                .map(|(k, v)| (k, convert_serde_value(v, None)))
+                .iter()
+                .map(|(k, v)| (k.clone(), convert_serde_value_impl(v, None)))
                 .collect();
             JsonValue::Object(entries)
         }
         SerdeValue::Array(arr) => {
             let elements = arr
-                .into_iter()
-                .map(|v| convert_serde_value(v, None))
+                .iter()
+                .map(|v| convert_serde_value_impl(v, None))
                 .collect();
             JsonValue::Array(elements)
         }
-        SerdeValue::String(s) => JsonValue::String(s),
+        SerdeValue::String(s) => JsonValue::String(s.clone()),
         SerdeValue::Number(n) => JsonValue::Number(n.as_f64().unwrap_or(0.0)),
-        SerdeValue::Bool(b) => JsonValue::Boolean(b),
+        SerdeValue::Bool(b) => JsonValue::Boolean(*b),
         SerdeValue::Null => JsonValue::Null,
     };
 

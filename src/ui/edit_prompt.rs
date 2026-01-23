@@ -1,11 +1,11 @@
+use crate::theme::colors::ThemeColors;
 use ratatui::{
     layout::Rect,
-    style::{Style, Modifier},
+    style::{Modifier, Style},
     text::{Line, Span},
     widgets::Paragraph,
     Frame,
 };
-use crate::theme::colors::ThemeColors;
 
 /// Renders the edit prompt showing the current edit buffer content with cursor.
 pub fn render_edit_prompt(
@@ -76,8 +76,7 @@ pub fn render_edit_prompt(
     }
 
     let line = Line::from(spans);
-    let prompt = Paragraph::new(line)
-        .style(Style::default().bg(colors.background));
+    let prompt = Paragraph::new(line).style(Style::default().bg(colors.background));
 
     f.render_widget(prompt, area);
 }
