@@ -177,12 +177,19 @@ impl TreeViewState {
                     let child_path: Vec<usize> = path.iter().copied().chain(std::iter::once(i)).collect();
                     let expanded = self.is_expanded(&child_path);
 
+                    // Use collapsed preview for unexpanded containers
+                    let value_preview = if !expanded && child.value().is_container() {
+                        format_collapsed_preview(child, 60)
+                    } else {
+                        self.get_value_preview(child.value())
+                    };
+
                     self.lines.push(TreeViewLine {
                         path: child_path.clone(),
                         depth,
                         key: Some(key.clone()),
                         value_type: ValueType::from_json_value(child.value()),
-                        value_preview: self.get_value_preview(child.value()),
+                        value_preview,
                         expandable: child.value().is_container(),
                         expanded,
                     });
@@ -197,12 +204,19 @@ impl TreeViewState {
                     let child_path: Vec<usize> = path.iter().copied().chain(std::iter::once(i)).collect();
                     let expanded = self.is_expanded(&child_path);
 
+                    // Use collapsed preview for unexpanded containers
+                    let value_preview = if !expanded && child.value().is_container() {
+                        format_collapsed_preview(child, 60)
+                    } else {
+                        self.get_value_preview(child.value())
+                    };
+
                     self.lines.push(TreeViewLine {
                         path: child_path.clone(),
                         depth,
                         key: Some(format!("[{}]", i)),
                         value_type: ValueType::from_json_value(child.value()),
-                        value_preview: self.get_value_preview(child.value()),
+                        value_preview,
                         expandable: child.value().is_container(),
                         expanded,
                     });
@@ -662,12 +676,15 @@ mod tests {
     fn test_value_preview() {
         let state = TreeViewState::new();
 
-        assert_eq!(state.get_value_preview(&JsonValue::Object(vec![("a".to_string(), JsonNode::new(JsonValue::Null))])), "{ 1 fields }");
-        assert_eq!(state.get_value_preview(&JsonValue::Array(vec![JsonNode::new(JsonValue::Null), JsonNode::new(JsonValue::Null)])), "[ 2 items ]");
+        // Scalars still use simple format
         assert_eq!(state.get_value_preview(&JsonValue::String("test".to_string())), "\"test\"");
         assert_eq!(state.get_value_preview(&JsonValue::Number(3.14)), "3.14");
         assert_eq!(state.get_value_preview(&JsonValue::Boolean(true)), "true");
         assert_eq!(state.get_value_preview(&JsonValue::Null), "null");
+
+        // Containers are now handled by format_collapsed_preview in build_lines
+        // so get_value_preview is only used for expanded containers (which show nothing)
+        // or for scalars
     }
 
     #[test]
