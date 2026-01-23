@@ -420,6 +420,142 @@ pub fn render_tree_view(
     f.render_widget(paragraph, area);
 }
 
+/// Formats a number as an integer if it has no fractional part, otherwise as a float.
+fn format_number(n: f64) -> String {
+    if n.fract() == 0.0 {
+        format!("{}", n as i64)
+    } else {
+        format!("{}", n)
+    }
+}
+
+/// Formats a collapsed preview of a JSON node similar to jless.
+///
+/// Format: (N) {key1: val1, key2: val2, ...} for objects
+///         (N) [elem1, elem2, ...] for arrays
+///
+/// Truncates at max_chars with "..." if needed.
+pub fn format_collapsed_preview(node: &JsonNode, max_chars: usize) -> String {
+    match node.value() {
+        JsonValue::Object(fields) => format_collapsed_object(fields, max_chars),
+        JsonValue::Array(elements) => format_collapsed_array(elements, max_chars),
+        JsonValue::JsonlRoot(lines) => {
+            // Shouldn't happen, but treat like array
+            format_collapsed_array(lines, max_chars)
+        }
+        JsonValue::String(s) => format!("\"{}\"", s),
+        JsonValue::Number(n) => format_number(*n),
+        JsonValue::Boolean(b) => format!("{}", b),
+        JsonValue::Null => "null".to_string(),
+    }
+}
+
+fn format_collapsed_object(fields: &[(String, JsonNode)], max_chars: usize) -> String {
+    if fields.is_empty() {
+        return "{…}".to_string();
+    }
+
+    let count = fields.len();
+    let mut preview = format!("({}) {{", count);
+    let mut truncated = false;
+
+    for (i, (key, value)) in fields.iter().enumerate() {
+        // Check if we need to truncate (leave room for "..." and "}")
+        if preview.len() + key.len() + 10 > max_chars {
+            preview.push_str("...");
+            truncated = true;
+            break;
+        }
+
+        // Add key
+        preview.push_str(key);
+        preview.push_str(": ");
+
+        // Add value
+        let value_str = match value.value() {
+            JsonValue::Object(_) => "{…}".to_string(),
+            JsonValue::Array(_) | JsonValue::JsonlRoot(_) => "[…]".to_string(),
+            JsonValue::String(s) => {
+                let quoted = format!("\"{}\"", s);
+                if preview.len() + quoted.len() > max_chars {
+                    // Use char-based truncation to avoid UTF-8 boundary panics
+                    let truncated: String = s.chars().take(10).collect();
+                    format!("\"{}...\"", truncated)
+                } else {
+                    quoted
+                }
+            }
+            JsonValue::Number(n) => format_number(*n),
+            JsonValue::Boolean(b) => format!("{}", b),
+            JsonValue::Null => "null".to_string(),
+        };
+
+        preview.push_str(&value_str);
+
+        // Add comma if not last
+        if i < fields.len() - 1 {
+            preview.push_str(", ");
+        }
+    }
+
+    // Close brace if we didn't truncate
+    if !truncated {
+        preview.push('}');
+    }
+
+    preview
+}
+
+fn format_collapsed_array(elements: &[JsonNode], max_chars: usize) -> String {
+    if elements.is_empty() {
+        return "[…]".to_string();
+    }
+
+    let count = elements.len();
+    let mut preview = format!("({}) [", count);
+    let mut truncated = false;
+
+    for (i, element) in elements.iter().enumerate() {
+        // Check if we need to truncate (leave room for "..." and "]")
+        if preview.len() + 10 > max_chars {
+            preview.push_str("...");
+            truncated = true;
+            break;
+        }
+
+        let value_str = match element.value() {
+            JsonValue::Object(_) => "{…}".to_string(),
+            JsonValue::Array(_) | JsonValue::JsonlRoot(_) => "[…]".to_string(),
+            JsonValue::String(s) => {
+                let quoted = format!("\"{}\"", s);
+                // Check length to avoid exceeding max_chars with long strings
+                if preview.len() + quoted.len() > max_chars {
+                    // Use char-based truncation to avoid UTF-8 boundary panics
+                    let truncated_str: String = s.chars().take(10).collect();
+                    format!("\"{}...\"", truncated_str)
+                } else {
+                    quoted
+                }
+            }
+            JsonValue::Number(n) => format_number(*n),
+            JsonValue::Boolean(b) => format!("{}", b),
+            JsonValue::Null => "null".to_string(),
+        };
+
+        preview.push_str(&value_str);
+
+        if i < elements.len() - 1 {
+            preview.push_str(", ");
+        }
+    }
+
+    if !truncated {
+        preview.push(']');
+    }
+
+    preview
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -665,5 +801,88 @@ mod tests {
                 assert!(triangle_pos < key_pos, "Triangle should appear before the key on the left side");
             }
         }
+    }
+
+    #[test]
+    fn test_format_collapsed_preview_simple_object() {
+        use crate::document::node::{JsonNode, JsonValue};
+
+        let obj = JsonNode::new(JsonValue::Object(vec![
+            ("id".to_string(), JsonNode::new(JsonValue::Number(1.0))),
+            ("name".to_string(), JsonNode::new(JsonValue::String("Alice".to_string()))),
+        ]));
+
+        let preview = format_collapsed_preview(&obj, 100);
+        assert_eq!(preview, "(2) {id: 1, name: \"Alice\"}");
+    }
+
+    #[test]
+    fn test_format_collapsed_preview_nested_object() {
+        use crate::document::node::{JsonNode, JsonValue};
+
+        let obj = JsonNode::new(JsonValue::Object(vec![
+            ("id".to_string(), JsonNode::new(JsonValue::Number(1.0))),
+            ("user".to_string(), JsonNode::new(JsonValue::Object(vec![
+                ("name".to_string(), JsonNode::new(JsonValue::String("Alice".to_string()))),
+            ]))),
+        ]));
+
+        let preview = format_collapsed_preview(&obj, 100);
+        assert_eq!(preview, "(2) {id: 1, user: {…}}");
+    }
+
+    #[test]
+    fn test_format_collapsed_preview_array() {
+        use crate::document::node::{JsonNode, JsonValue};
+
+        let arr = JsonNode::new(JsonValue::Array(vec![
+            JsonNode::new(JsonValue::Number(1.0)),
+            JsonNode::new(JsonValue::Number(2.0)),
+            JsonNode::new(JsonValue::Number(3.0)),
+        ]));
+
+        let preview = format_collapsed_preview(&arr, 100);
+        assert_eq!(preview, "(3) [1, 2, 3]");
+    }
+
+    #[test]
+    fn test_format_collapsed_preview_truncation() {
+        use crate::document::node::{JsonNode, JsonValue};
+
+        let obj = JsonNode::new(JsonValue::Object(vec![
+            ("id".to_string(), JsonNode::new(JsonValue::Number(1.0))),
+            ("name".to_string(), JsonNode::new(JsonValue::String("Alice".to_string()))),
+            ("email".to_string(), JsonNode::new(JsonValue::String("alice@example.com".to_string()))),
+            ("active".to_string(), JsonNode::new(JsonValue::Boolean(true))),
+        ]));
+
+        let preview = format_collapsed_preview(&obj, 40);
+        assert!(preview.len() <= 43); // Allow a bit of overflow for "..."
+        assert!(preview.contains("..."));
+    }
+
+    #[test]
+    fn test_format_collapsed_preview_utf8_truncation() {
+        use crate::document::node::{JsonNode, JsonValue};
+
+        // Test with multi-byte UTF-8 characters (emoji, Chinese, etc.)
+        let obj = JsonNode::new(JsonValue::Object(vec![
+            ("emoji".to_string(), JsonNode::new(JsonValue::String("🌟✨🎉🎊🎈".to_string()))),
+            ("chinese".to_string(), JsonNode::new(JsonValue::String("你好世界这是一个很长的字符串".to_string()))),
+        ]));
+
+        // This should not panic even with multi-byte characters
+        let preview = format_collapsed_preview(&obj, 40);
+        assert!(preview.contains("..."));
+
+        // Test array with UTF-8 strings
+        let arr = JsonNode::new(JsonValue::Array(vec![
+            JsonNode::new(JsonValue::String("🌟✨🎉🎊🎈🎁🎀🎂".to_string())),
+            JsonNode::new(JsonValue::String("你好世界这是一个很长的字符串".to_string())),
+        ]));
+
+        // This should also not panic
+        let preview = format_collapsed_preview(&arr, 40);
+        assert!(preview.contains("..."));
     }
 }
