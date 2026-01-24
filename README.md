@@ -12,6 +12,9 @@ A terminal-based structural JSON editor with vim-style keybindings.
 
 ## Status
 
+[![CI](https://github.com/joeygibson/jsonquill/workflows/CI/badge.svg)](https://github.com/joeygibson/jsonquill/actions/workflows/ci.yml)
+[![Release](https://github.com/joeygibson/jsonquill/workflows/Release/badge.svg)](https://github.com/joeygibson/jsonquill/actions/workflows/release.yml)
+
 **Alpha Release** - Core functionality is implemented and usable. The editor supports:
 - JSON file loading and editing
 - Tree-based navigation with vim keybindings
