@@ -107,7 +107,7 @@ jsonquill data.jsonl
 
 | Key | Action | Description |
 |-----|--------|-------------|
-| `i` | Enter INSERT mode | Edit value of current node |
+| `e` | Enter INSERT mode | Edit value of current node |
 | `:` | Enter COMMAND mode | Execute commands (`:w`, `:q`, etc.) |
 | `/` | Enter SEARCH mode | Search in keys and values |
 | `Esc` | Return to NORMAL mode | Exit INSERT, COMMAND, or SEARCH mode |
@@ -116,8 +116,8 @@ jsonquill data.jsonl
 
 | Key | Action | Notes |
 |-----|--------|-------|
-| `a` | Add new scalar field/element | Objects: prompts for key then value<br>Arrays: prompts for value directly |
-| `A` | Add empty array `[]` | Adds after current node |
+| `i` | Add new scalar field/element | Objects: prompts for key then value<br>Arrays: prompts for value directly |
+| `a` | Add empty array `[]` | Adds after current node |
 | `o` | Add empty object `{}` | Adds after current node |
 | `r` | Rename object key | Only works on object keys (not array elements) |
 | `dd` | Delete current node | Supports count prefix (e.g., `3dd` deletes 3 nodes) |

@@ -73,7 +73,7 @@ pub fn render_help_overlay(f: &mut Frame, colors: &ThemeColors, scroll: usize) {
             Style::default().fg(colors.key).add_modifier(Modifier::BOLD),
         )]),
         Line::from(vec![
-            Span::styled("  i             ", Style::default().fg(colors.number)),
+            Span::styled("  e             ", Style::default().fg(colors.number)),
             Span::raw("Enter INSERT mode (edit values/keys)"),
         ]),
         Line::from(vec![
@@ -102,11 +102,11 @@ pub fn render_help_overlay(f: &mut Frame, colors: &ThemeColors, scroll: usize) {
             Span::raw("Paste after/before cursor"),
         ]),
         Line::from(vec![
-            Span::styled("  a             ", Style::default().fg(colors.number)),
+            Span::styled("  i             ", Style::default().fg(colors.number)),
             Span::raw("Add scalar (inside containers, after scalars)"),
         ]),
         Line::from(vec![
-            Span::styled("  A             ", Style::default().fg(colors.number)),
+            Span::styled("  a             ", Style::default().fg(colors.number)),
             Span::raw("Add empty array [] after cursor"),
         ]),
         Line::from(vec![

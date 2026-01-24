@@ -1036,7 +1036,7 @@ mod tests {
         let mut state = EditorState::new(tree);
         assert_eq!(*state.mode(), EditorMode::Normal);
 
-        let event = Event::Key(Key::Char('i'));
+        let event = Event::Key(Key::Char('e'));
         let should_quit = handler.handle_event(event, &mut state).unwrap();
 
         assert!(!should_quit);

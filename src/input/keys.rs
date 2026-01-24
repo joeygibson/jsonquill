@@ -115,7 +115,6 @@ pub fn map_key_event(event: Event, mode: &EditorMode) -> InputEvent {
             Key::Char('k') => InputEvent::MoveUp,
             Key::Char('h') => InputEvent::MoveLeft,
             Key::Char('l') => InputEvent::MoveRight,
-            Key::Char('i') => InputEvent::EnterInsertMode,
             Key::Char(':') => InputEvent::EnterCommandMode,
             Key::Char('/') => InputEvent::EnterSearchMode,
             Key::Char('n') => InputEvent::NextSearchResult,
@@ -127,8 +126,9 @@ pub fn map_key_event(event: Event, mode: &EditorMode) -> InputEvent {
             Key::Char('g') => InputEvent::JumpToTop,
             Key::Char('G') => InputEvent::JumpToBottom,
             Key::Char('u') => InputEvent::Undo,
-            Key::Char('a') => InputEvent::Add,
-            Key::Char('A') => InputEvent::AddArray,
+            Key::Char('e') => InputEvent::EnterInsertMode,
+            Key::Char('i') => InputEvent::Add,
+            Key::Char('a') => InputEvent::AddArray,
             Key::Char('o') => InputEvent::AddObject,
             Key::Char('r') => InputEvent::Rename,
             Key::Down => InputEvent::MoveDown,
@@ -200,7 +200,7 @@ mod tests {
     #[test]
     fn test_normal_mode_enter_modes() {
         assert_eq!(
-            map_key_event(Event::Key(Key::Char('i')), &EditorMode::Normal),
+            map_key_event(Event::Key(Key::Char('e')), &EditorMode::Normal),
             InputEvent::EnterInsertMode
         );
         assert_eq!(

@@ -159,7 +159,7 @@ n           - Jump to next search result
 Esc         - Exit SEARCH mode
 
 # Modes
-i           - Enter INSERT mode on current node
+e           - Enter INSERT mode (edit current value)
 :           - Enter COMMAND mode
 /           - Enter SEARCH mode
 Esc         - Return to NORMAL mode
@@ -205,13 +205,13 @@ Esc         - Cancel editing and return to NORMAL mode
 # Editing (NORMAL mode)
 Commands can be prefixed with a count (e.g., `3dd` to delete 3 nodes, `5yy` to yank 5 nodes).
 
-a           - Add scalar value (context-sensitive)
+i           - Insert/add scalar value (context-sensitive)
             - On a container (object/array): adds first child inside the container
             - On a scalar: adds sibling after it
             - Arrays: immediately enter Insert mode to type value
             - Objects: prompt for key, then enter Insert mode for value
             - Values are parsed: true/false → boolean, null → null, numbers → number, else → string
-A           - Add empty array [] after current node
+a           - Add empty array [] after current node
             - Arrays: adds directly
             - Objects: prompts for key first
 o           - Add empty object {} after current node
