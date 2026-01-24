@@ -17,7 +17,7 @@ These global standards apply to ALL projects and override defaults when they con
 
 ## Project Overview
 
-**jeditor** is a terminal-based structural JSON editor built in Rust. It provides vim-style keybindings for navigating and editing JSON documents in a tree-like structure, making it easy to work with complex JSON files directly in the terminal.
+**jsonquill** is a terminal-based structural JSON editor built in Rust. It provides vim-style keybindings for navigating and editing JSON documents in a tree-like structure, making it easy to work with complex JSON files directly in the terminal.
 
 ## Development Commands
 
@@ -94,7 +94,7 @@ Implemented modules:
 - ✅ Search functionality (`/` to search, `n` for next result)
 - ✅ Theme system (`:theme` to list, `:theme <name>` to switch)
 - ✅ Settings system (`:set` to view, `:set <option>` to change)
-- ✅ Config file support (`~/.config/jeditor/config.toml`, `:set save` to persist)
+- ✅ Config file support (`~/.config/jsonquill/config.toml`, `:set save` to persist)
 - ✅ Yank operation (`yy` copies to clipboard including system clipboard)
 - ✅ Delete operation (`dd` removes nodes from tree)
 - ✅ Paste operation (`p` inserts yanked nodes after, `P` inserts before)
@@ -107,15 +107,13 @@ Implemented modules:
 - ✅ Default dark theme (gray/black, not blue)
 - ✅ Undo/redo (`u` to undo, `Ctrl-r` to redo, `:undo`, `:redo`)
 - ✅ Add scalar values (`a` to add after current node)
+- ✅ Add object/array containers (`o` to add object, `A` to add array)
+- ✅ Rename object keys (`r` to rename key)
 - ✅ JSONL (.jsonl, .ndjson) file support
 - ✅ Collapsed object/array previews (jless-style)
 - ✅ All tests passing
 
 **Known Issues / TODO:**
-
-**High Priority (Core Editing):**
-- ❌ **No add operations for objects/arrays** - `a` only adds scalars, `ao/aa` not implemented
-- ❌ **No rename operation** - `r` to rename object keys not implemented
 
 **Navigation Enhancements:**
 - ❌ **No sibling navigation** - `{/}` to jump to previous/next sibling not implemented
@@ -133,15 +131,15 @@ Implemented modules:
 
 ```bash
 # Open a JSON file
-./target/release/jeditor foo.json
+./target/release/jsonquill foo.json
 
 # Pipe JSON from stdin (requires /dev/tty for keyboard input)
-cat foo.json | ./target/release/jeditor
-echo '{"key": "value"}' | ./target/release/jeditor
-curl https://api.example.com/data | ./target/release/jeditor
+cat foo.json | ./target/release/jsonquill
+echo '{"key": "value"}' | ./target/release/jsonquill
+curl https://api.example.com/data | ./target/release/jsonquill
 
 # Start with empty document (interactive mode)
-./target/release/jeditor
+./target/release/jsonquill
 
 # Navigation (NORMAL mode)
 Movement commands can be prefixed with a count (e.g., `3j` to move down 3 lines, `5k` to move up 5 lines).
@@ -207,10 +205,21 @@ Esc         - Cancel editing and return to NORMAL mode
 # Editing (NORMAL mode)
 Commands can be prefixed with a count (e.g., `3dd` to delete 3 nodes, `5yy` to yank 5 nodes).
 
-a           - Add scalar value after current node
+a           - Add scalar value (context-sensitive)
+            - On a container (object/array): adds first child inside the container
+            - On a scalar: adds sibling after it
             - Arrays: immediately enter Insert mode to type value
             - Objects: prompt for key, then enter Insert mode for value
             - Values are parsed: true/false → boolean, null → null, numbers → number, else → string
+A           - Add empty array [] after current node
+            - Arrays: adds directly
+            - Objects: prompts for key first
+o           - Add empty object {} after current node
+            - Arrays: adds directly
+            - Objects: prompts for key first
+r           - Rename object key (only works on object keys, not array elements)
+            - Pre-populates with current key name
+            - Enter to commit, Esc to cancel
 yy          - Yank (copy) current node to clipboard
 dd          - Delete current node (removes from tree)
 p           - Paste clipboard content after current node
@@ -234,7 +243,7 @@ j/k or ↑/↓  - Scroll help when open
 
 ## Configuration
 
-jeditor supports a configuration file at `~/.config/jeditor/config.toml`.
+jsonquill supports a configuration file at `~/.config/jsonquill/config.toml`.
 
 ### Config File Format
 
@@ -278,17 +287,17 @@ The config file is created automatically when you run `:set save` for the first 
 
 ### Loading Settings
 
-Settings are loaded automatically when jeditor starts:
+Settings are loaded automatically when jsonquill starts:
 1. Default values are used as a baseline
 2. Config file values override defaults (if the file exists)
 3. Command-line arguments override config file values
 
 ## Stdin Piping
 
-jeditor supports reading JSON data from stdin while maintaining full keyboard interactivity. This is accomplished using `/dev/tty` for keyboard input:
+jsonquill supports reading JSON data from stdin while maintaining full keyboard interactivity. This is accomplished using `/dev/tty` for keyboard input:
 
 **How it works:**
-1. When stdin is piped (not a terminal), jeditor detects this automatically
+1. When stdin is piped (not a terminal), jsonquill detects this automatically
 2. JSON data is read from stdin before setting up the terminal UI
 3. The input handler opens `/dev/tty` for keyboard events
 4. termion reads keyboard input from the controlling terminal (`/dev/tty`)
@@ -302,12 +311,12 @@ jeditor supports reading JSON data from stdin while maintaining full keyboard in
 **Examples:**
 ```bash
 # Read JSON from curl
-curl https://api.github.com/users/octocat | jeditor
+curl https://api.github.com/users/octocat | jsonquill
 
 # Read from file via cat
-cat config.json | jeditor
+cat config.json | jsonquill
 
 # Read from echo
-echo '{"test": [1,2,3]}' | jeditor
+echo '{"test": [1,2,3]}' | jsonquill
 ```
 

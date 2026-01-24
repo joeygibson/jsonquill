@@ -1,13 +1,13 @@
-//! Theme system for jeditor.
+//! Theme system for jsonquill.
 //!
-//! This module provides the theme infrastructure for jeditor, including:
+//! This module provides the theme infrastructure for jsonquill, including:
 //! - Color definitions ([`colors`] module)
 //! - Theme data structure ([`Theme`])
 //! - Built-in theme access ([`get_builtin_theme`])
 //!
 //! # Built-in Themes
 //!
-//! jeditor includes two built-in themes:
+//! jsonquill includes two built-in themes:
 //! - `"default-dark"`: A dark theme optimized for low-light environments
 //! - `"default-light"`: A light theme for well-lit environments
 //!
@@ -28,7 +28,7 @@ pub mod colors;
 
 use colors::ThemeColors;
 
-/// A color theme for the jeditor terminal UI.
+/// A color theme for the jsonquill terminal UI.
 ///
 /// Each theme has a name and a set of colors defined by [`ThemeColors`].
 /// Themes can be loaded from the built-in set using [`get_builtin_theme`].

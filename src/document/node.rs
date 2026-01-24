@@ -1,7 +1,7 @@
 //! JSON node representation with metadata tracking.
 //!
 //! This module provides the core data structures for representing JSON documents
-//! in jeditor. Each JSON value is wrapped in a `JsonNode` that tracks metadata
+//! in jsonquill. Each JSON value is wrapped in a `JsonNode` that tracks metadata
 //! such as modification status and original formatting, enabling format-preserving
 //! edits and efficient change tracking.
 //!
@@ -16,7 +16,7 @@
 //!
 //! // Create a complex nested structure
 //! let object = JsonNode::new(JsonValue::Object(vec![
-//!     ("name".to_string(), JsonNode::new(JsonValue::String("jeditor".to_string()))),
+//!     ("name".to_string(), JsonNode::new(JsonValue::String("jsonquill".to_string()))),
 //!     ("version".to_string(), JsonNode::new(JsonValue::Number(1.0))),
 //! ]));
 //!
@@ -51,7 +51,7 @@ pub enum JsonValue {
 
 /// A JSON value wrapped with metadata for tracking changes and formatting.
 ///
-/// `JsonNode` is the primary type used throughout jeditor to represent JSON data.
+/// `JsonNode` is the primary type used throughout jsonquill to represent JSON data.
 /// It wraps a `JsonValue` with `NodeMetadata` to track whether the node has been
 /// modified and preserve original formatting information for format-preserving edits.
 #[derive(Debug, Clone, PartialEq)]

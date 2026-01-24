@@ -1,6 +1,6 @@
-//! Configuration system for jeditor.
+//! Configuration system for jsonquill.
 //!
-//! This module provides the configuration structure for jeditor with sensible defaults
+//! This module provides the configuration structure for jsonquill with sensible defaults
 //! and support for serialization/deserialization via serde. Configuration can be loaded
 //! from TOML files and merged with command-line arguments.
 //!
@@ -24,9 +24,9 @@
 
 use serde::{Deserialize, Serialize};
 
-/// Configuration for the jeditor application.
+/// Configuration for the jsonquill application.
 ///
-/// This structure contains all configurable settings for jeditor, including
+/// This structure contains all configurable settings for jsonquill, including
 /// display preferences, editing behavior, performance tuning, and feature flags.
 /// All fields have sensible defaults via `Config::default()`.
 ///

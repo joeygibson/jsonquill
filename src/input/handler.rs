@@ -129,39 +129,58 @@ impl InputHandler {
             if *state.mode() == EditorMode::Insert {
                 match key {
                     Key::Char('\n') => {
-                        // Check if we're in add operation
-                        use crate::editor::state::AddModeStage;
-                        if matches!(state.add_mode_stage(), &AddModeStage::AwaitingValue) {
-                            // Commit add operation
-                            match state.commit_add_operation() {
+                        // Check if we're in rename mode
+                        if state.is_renaming_key() {
+                            // Commit rename operation
+                            use crate::editor::state::MessageLevel;
+                            match state.commit_rename() {
                                 Ok(_) => {
                                     state.set_mode(EditorMode::Normal);
                                 }
                                 Err(e) => {
-                                    use crate::editor::state::MessageLevel;
                                     state.set_message(
-                                        format!("Add failed: {}", e),
+                                        format!("Rename failed: {}", e),
                                         MessageLevel::Error,
                                     );
-                                    state.cancel_add_operation();
+                                    state.cancel_rename();
+                                    state.set_mode(EditorMode::Normal);
                                 }
                             }
                         } else {
-                            // Normal commit editing
-                            use crate::editor::state::MessageLevel;
-                            match state.commit_editing() {
-                                Ok(_) => {
-                                    state.set_mode(EditorMode::Normal);
-                                    state.set_message(
-                                        "Value updated".to_string(),
-                                        MessageLevel::Info,
-                                    );
+                            // Check if we're in add operation
+                            use crate::editor::state::AddModeStage;
+                            if matches!(state.add_mode_stage(), &AddModeStage::AwaitingValue) {
+                                // Commit add operation
+                                match state.commit_add_operation() {
+                                    Ok(_) => {
+                                        state.set_mode(EditorMode::Normal);
+                                    }
+                                    Err(e) => {
+                                        use crate::editor::state::MessageLevel;
+                                        state.set_message(
+                                            format!("Add failed: {}", e),
+                                            MessageLevel::Error,
+                                        );
+                                        state.cancel_add_operation();
+                                    }
                                 }
-                                Err(e) => {
-                                    state.set_message(
-                                        format!("Invalid value: {}", e),
-                                        MessageLevel::Error,
-                                    );
+                            } else {
+                                // Normal commit editing
+                                use crate::editor::state::MessageLevel;
+                                match state.commit_editing() {
+                                    Ok(_) => {
+                                        state.set_mode(EditorMode::Normal);
+                                        state.set_message(
+                                            "Value updated".to_string(),
+                                            MessageLevel::Info,
+                                        );
+                                    }
+                                    Err(e) => {
+                                        state.set_message(
+                                            format!("Invalid value: {}", e),
+                                            MessageLevel::Error,
+                                        );
+                                    }
                                 }
                             }
                         }
@@ -200,19 +219,28 @@ impl InputHandler {
                         return Ok(false);
                     }
                     Key::Esc => {
-                        // Check if we're in add operation
-                        use crate::editor::state::AddModeStage;
-                        if matches!(state.add_mode_stage(), &AddModeStage::AwaitingValue) {
-                            // Cancel add operation
-                            state.cancel_editing();
-                            state.cancel_add_operation();
+                        // Check if we're in rename mode
+                        if state.is_renaming_key() {
+                            // Cancel rename operation
+                            state.cancel_rename();
+                            state.set_mode(EditorMode::Normal);
+                            use crate::editor::state::MessageLevel;
+                            state.set_message("Rename cancelled".to_string(), MessageLevel::Info);
                         } else {
-                            // Normal cancel editing
-                            state.cancel_editing();
+                            // Check if we're in add operation
+                            use crate::editor::state::AddModeStage;
+                            if matches!(state.add_mode_stage(), &AddModeStage::AwaitingValue) {
+                                // Cancel add operation
+                                state.cancel_editing();
+                                state.cancel_add_operation();
+                            } else {
+                                // Normal cancel editing
+                                state.cancel_editing();
+                            }
+                            state.set_mode(EditorMode::Normal);
+                            use crate::editor::state::MessageLevel;
+                            state.set_message("Edit cancelled".to_string(), MessageLevel::Info);
                         }
-                        state.set_mode(EditorMode::Normal);
-                        use crate::editor::state::MessageLevel;
-                        state.set_message("Edit cancelled".to_string(), MessageLevel::Info);
                         return Ok(false);
                     }
                     _ => return Ok(false),
@@ -327,17 +355,41 @@ impl InputHandler {
                     }
                 }
 
+
                 // Handle key input during AwaitingKey stage (before Insert mode)
                 use crate::editor::state::AddModeStage;
                 if matches!(state.add_mode_stage(), &AddModeStage::AwaitingKey) {
                     match key {
                         Key::Char('\n') => {
-                            // Enter pressed - transition to value stage
-                            state.transition_add_to_value();
+                            // Enter pressed - check if this is a container add or scalar add
+                            // Container adds have the node stored in clipboard temporarily
+                            if state.has_clipboard() {
+                                // This is a container add (ao/aa) - commit directly
+                                use crate::editor::state::MessageLevel;
+                                match state.commit_container_add() {
+                                    Ok(_) => {
+                                        // Success message set in commit_container_add
+                                    }
+                                    Err(e) => {
+                                        state.set_message(
+                                            format!("Add failed: {}", e),
+                                            MessageLevel::Error,
+                                        );
+                                        state.cancel_add_operation();
+                                    }
+                                }
+                            } else {
+                                // This is a scalar add - transition to value stage
+                                state.transition_add_to_value();
+                            }
                             return Ok(false);
                         }
                         Key::Char(c) if c.is_ascii() && !c.is_control() => {
                             // Regular character - add to key buffer
+                            // Clear message on first input to show clean key entry area
+                            if state.add_key_buffer().is_empty() {
+                                state.clear_message();
+                            }
                             state.push_to_add_key_buffer(c);
                             return Ok(false);
                         }
@@ -480,6 +532,7 @@ impl InputHandler {
                         }
                     } else {
                         // First 'y' press - set pending
+                        state.clear_message();
                         state.set_pending_command('y');
                     }
                 }
@@ -529,6 +582,7 @@ impl InputHandler {
                         }
                     } else {
                         // First 'd' press - set pending
+                        state.clear_message();
                         state.set_pending_command('d');
                     }
                 }
@@ -584,6 +638,7 @@ impl InputHandler {
                         }
                     } else {
                         // First 'Z' press - set pending
+                        state.clear_message();
                         state.set_pending_command('Z');
                     }
                 }
@@ -599,6 +654,7 @@ impl InputHandler {
                         state.jump_to_top();
                     } else {
                         // First 'g' press - set pending
+                        state.clear_message();
                         state.set_pending_command('g');
                     }
                 }
@@ -641,6 +697,18 @@ impl InputHandler {
                 InputEvent::Add => {
                     state.clear_pending();
                     state.start_add_operation();
+                }
+                InputEvent::AddArray => {
+                    state.clear_pending();
+                    state.start_add_container_operation(false); // false = array
+                }
+                InputEvent::AddObject => {
+                    state.clear_pending();
+                    state.start_add_container_operation(true); // true = object
+                }
+                InputEvent::Rename => {
+                    state.clear_pending();
+                    state.start_rename_operation();
                 }
                 InputEvent::InsertCharacter(_)
                 | InputEvent::InsertBackspace

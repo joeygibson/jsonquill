@@ -103,7 +103,19 @@ pub fn render_help_overlay(f: &mut Frame, colors: &ThemeColors, scroll: usize) {
         ]),
         Line::from(vec![
             Span::styled("  a             ", Style::default().fg(colors.number)),
-            Span::raw("Add new field/element after cursor"),
+            Span::raw("Add scalar (inside containers, after scalars)"),
+        ]),
+        Line::from(vec![
+            Span::styled("  A             ", Style::default().fg(colors.number)),
+            Span::raw("Add empty array [] after cursor"),
+        ]),
+        Line::from(vec![
+            Span::styled("  o             ", Style::default().fg(colors.number)),
+            Span::raw("Add empty object {} after cursor"),
+        ]),
+        Line::from(vec![
+            Span::styled("  r             ", Style::default().fg(colors.number)),
+            Span::raw("Rename object key (objects only)"),
         ]),
         Line::from(vec![
             Span::styled("  u             ", Style::default().fg(colors.number)),

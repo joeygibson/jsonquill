@@ -51,8 +51,14 @@ pub enum InputEvent {
     Undo,
     /// Redo last undone change
     Redo,
-    /// Start add operation
+    /// Start add scalar operation
     Add,
+    /// Add empty array
+    AddArray,
+    /// Add empty object
+    AddObject,
+    /// Rename object key
+    Rename,
     /// Insert a character in insert mode
     InsertCharacter(char),
     /// Backspace in insert mode
@@ -122,6 +128,9 @@ pub fn map_key_event(event: Event, mode: &EditorMode) -> InputEvent {
             Key::Char('G') => InputEvent::JumpToBottom,
             Key::Char('u') => InputEvent::Undo,
             Key::Char('a') => InputEvent::Add,
+            Key::Char('A') => InputEvent::AddArray,
+            Key::Char('o') => InputEvent::AddObject,
+            Key::Char('r') => InputEvent::Rename,
             Key::Down => InputEvent::MoveDown,
             Key::Up => InputEvent::MoveUp,
             Key::Left => InputEvent::MoveLeft,

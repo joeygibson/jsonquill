@@ -47,7 +47,7 @@ fn test_create_object_node() {
     let object = JsonNode::new(JsonValue::Object(vec![
         (
             "name".to_string(),
-            JsonNode::new(JsonValue::String("jeditor".to_string())),
+            JsonNode::new(JsonValue::String("jsonquill".to_string())),
         ),
         ("version".to_string(), JsonNode::new(JsonValue::Number(1.0))),
     ]));

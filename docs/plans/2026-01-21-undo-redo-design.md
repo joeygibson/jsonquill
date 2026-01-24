@@ -5,7 +5,7 @@
 
 ## Overview
 
-Implement vim-style undo/redo with branching undo tree support for jeditor. This allows users to undo tree modifications (delete, paste, value edits) and navigate through edit history.
+Implement vim-style undo/redo with branching undo tree support for jsonquill. This allows users to undo tree modifications (delete, paste, value edits) and navigate through edit history.
 
 ## Requirements
 

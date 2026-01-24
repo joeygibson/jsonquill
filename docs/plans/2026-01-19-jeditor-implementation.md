@@ -1,4 +1,4 @@
-# jeditor Implementation Plan
+# jsonquill Implementation Plan
 
 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
 
@@ -23,7 +23,7 @@
 
 ```toml
 [package]
-name = "jeditor"
+name = "jsonquill"
 version = "0.1.0"
 edition = "2021"
 
@@ -47,7 +47,7 @@ tempfile = "3.13"
 use anyhow::Result;
 
 fn main() -> Result<()> {
-    println!("jeditor v0.1.0");
+    println!("jsonquill v0.1.0");
     Ok(())
 }
 ```
@@ -73,7 +73,7 @@ Expected: Compiles successfully
 
 ```bash
 git add Cargo.toml src/
-git commit -m "feat: initialize jeditor project with dependencies
+git commit -m "feat: initialize jsonquill project with dependencies
 
 Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>"
 ```
@@ -91,7 +91,7 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>"
 
 ```rust
 // tests/document_tests.rs
-use jeditor::document::node::{JsonNode, JsonValue};
+use jsonquill::document::node::{JsonNode, JsonValue};
 
 #[test]
 fn test_create_string_node() {
@@ -209,8 +209,8 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>"
 
 ```rust
 // tests/document_tests.rs (add to file)
-use jeditor::document::tree::JsonTree;
-use jeditor::document::node::{JsonNode, JsonValue};
+use jsonquill::document::tree::JsonTree;
+use jsonquill::document::node::{JsonNode, JsonValue};
 
 #[test]
 fn test_create_empty_object_tree() {
@@ -347,7 +347,7 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>"
 
 ```rust
 // tests/document_tests.rs (add)
-use jeditor::document::parser::parse_json;
+use jsonquill::document::parser::parse_json;
 
 #[test]
 fn test_parse_simple_object() {
@@ -467,7 +467,7 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>"
 
 ```rust
 // tests/editor_tests.rs
-use jeditor::editor::mode::EditorMode;
+use jsonquill::editor::mode::EditorMode;
 
 #[test]
 fn test_mode_starts_normal() {
@@ -550,9 +550,9 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>"
 
 ```rust
 // tests/editor_tests.rs (add)
-use jeditor::editor::state::EditorState;
-use jeditor::document::node::{JsonNode, JsonValue};
-use jeditor::document::tree::JsonTree;
+use jsonquill::editor::state::EditorState;
+use jsonquill::document::node::{JsonNode, JsonValue};
+use jsonquill::document::tree::JsonTree;
 
 #[test]
 fn test_editor_state_creation() {
@@ -713,7 +713,7 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>"
 
 ```rust
 // tests/config_tests.rs
-use jeditor::config::Config;
+use jsonquill::config::Config;
 
 #[test]
 fn test_config_defaults() {
@@ -834,7 +834,7 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>"
 
 ```rust
 // tests/theme_tests.rs
-use jeditor::theme::{Theme, get_builtin_theme};
+use jsonquill::theme::{Theme, get_builtin_theme};
 
 #[test]
 fn test_default_dark_theme_exists() {
@@ -1057,7 +1057,7 @@ fn main() -> Result<()> {
     execute!(terminal.backend_mut(), LeaveAlternateScreen)?;
     terminal.show_cursor()?;
 
-    println!("jeditor v0.1.0 - TUI initialized successfully");
+    println!("jsonquill v0.1.0 - TUI initialized successfully");
     Ok(())
 }
 ```
@@ -1335,12 +1335,12 @@ use ratatui::{backend::CrosstermBackend, Terminal};
 use std::io;
 use std::time::Duration;
 
-use jeditor::document::node::{JsonNode, JsonValue};
-use jeditor::document::tree::JsonTree;
-use jeditor::editor::state::EditorState;
-use jeditor::input::InputHandler;
-use jeditor::theme::get_builtin_theme;
-use jeditor::ui::UI;
+use jsonquill::document::node::{JsonNode, JsonValue};
+use jsonquill::document::tree::JsonTree;
+use jsonquill::editor::state::EditorState;
+use jsonquill::input::InputHandler;
+use jsonquill::theme::get_builtin_theme;
+use jsonquill::ui::UI;
 
 fn main() -> Result<()> {
     // Setup terminal
@@ -1913,7 +1913,7 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>"
 
 ```rust
 // tests/file_tests.rs
-use jeditor::file::loader::load_json_file;
+use jsonquill::file::loader::load_json_file;
 use tempfile::NamedTempFile;
 use std::io::Write;
 
@@ -2001,9 +2001,9 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>"
 
 ```rust
 // tests/file_tests.rs (add)
-use jeditor::file::saver::save_json_file;
-use jeditor::document::node::{JsonNode, JsonValue};
-use jeditor::document::tree::JsonTree;
+use jsonquill::file::saver::save_json_file;
+use jsonquill::document::node::{JsonNode, JsonValue};
+use jsonquill::document::tree::JsonTree;
 
 #[test]
 fn test_save_json_file() {
@@ -2046,7 +2046,7 @@ pub fn save_json_file<P: AsRef<Path>>(
 
     // Create backup if requested and file exists
     if create_backup && path.exists() {
-        let backup_path = path.with_extension("jeditor.bak");
+        let backup_path = path.with_extension("jsonquill.bak");
         fs::copy(path, backup_path)
             .context("Failed to create backup")?;
     }
@@ -2150,7 +2150,7 @@ use clap::Parser;
 use std::path::PathBuf;
 
 #[derive(Parser, Debug)]
-#[command(name = "jeditor")]
+#[command(name = "jsonquill")]
 #[command(version = "0.1.0")]
 #[command(about = "A terminal-based JSON editor", long_about = None)]
 pub struct Cli {
@@ -2193,14 +2193,14 @@ use ratatui::{backend::CrosstermBackend, Terminal};
 use std::io;
 use std::time::Duration;
 
-use jeditor::cli::Cli;
-use jeditor::document::node::{JsonNode, JsonValue};
-use jeditor::document::tree::JsonTree;
-use jeditor::editor::state::EditorState;
-use jeditor::input::InputHandler;
-use jeditor::theme::get_builtin_theme;
-use jeditor::ui::UI;
-use jeditor::file::loader::{load_json_file, load_json_from_stdin};
+use jsonquill::cli::Cli;
+use jsonquill::document::node::{JsonNode, JsonValue};
+use jsonquill::document::tree::JsonTree;
+use jsonquill::editor::state::EditorState;
+use jsonquill::input::InputHandler;
+use jsonquill::theme::get_builtin_theme;
+use jsonquill::ui::UI;
+use jsonquill::file::loader::{load_json_file, load_json_from_stdin};
 
 fn main() -> Result<()> {
     let cli = Cli::parse();
@@ -2293,7 +2293,7 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>"
 
 ## Summary and Next Steps
 
-This implementation plan covers the foundational architecture of jeditor:
+This implementation plan covers the foundational architecture of jsonquill:
 
 **Completed in this plan:**
 - ✅ Project structure and dependencies

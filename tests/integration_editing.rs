@@ -900,3 +900,336 @@ fn test_add_field_with_detailed_expansion_tracking() {
         "address should be expanded"
     );
 }
+
+#[test]
+fn test_add_object_with_o() {
+    use jsonquill::document::node::{JsonNode, JsonValue};
+    use jsonquill::document::tree::JsonTree;
+    use jsonquill::editor::state::EditorState;
+
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Array(vec![
+        JsonNode::new(JsonValue::Number(1.0)),
+    ])));
+    let mut state = EditorState::new(tree);
+
+    // Move to first element
+    state.cursor_mut().set_path(vec![0]);
+
+    // Use 'o' to add empty object (triggered by lowercase 'o' key)
+    state.start_add_container_operation(true); // true = object
+
+    // Verify empty object was added at position 1
+    let node = state.tree().get_node(&[1]).unwrap();
+    assert!(matches!(node.value(), JsonValue::Object(_)));
+    if let JsonValue::Object(entries) = node.value() {
+        assert_eq!(entries.len(), 0, "Object should be empty");
+    }
+
+    // Verify cursor moved to new object
+    assert_eq!(state.cursor().path(), &[1]);
+    assert!(state.is_dirty());
+}
+
+#[test]
+fn test_add_array_with_capital_a() {
+    use jsonquill::document::node::{JsonNode, JsonValue};
+    use jsonquill::document::tree::JsonTree;
+    use jsonquill::editor::state::EditorState;
+
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Array(vec![
+        JsonNode::new(JsonValue::Number(1.0)),
+    ])));
+    let mut state = EditorState::new(tree);
+
+    state.cursor_mut().set_path(vec![0]);
+
+    // Use 'A' to add empty array (triggered by capital 'A' key)
+    state.start_add_container_operation(false); // false = array
+
+    // Verify empty array was added
+    let node = state.tree().get_node(&[1]).unwrap();
+    assert!(matches!(node.value(), JsonValue::Array(_)));
+    if let JsonValue::Array(elements) = node.value() {
+        assert_eq!(elements.len(), 0, "Array should be empty");
+    }
+
+    assert_eq!(state.cursor().path(), &[1]);
+    assert!(state.is_dirty());
+}
+
+#[test]
+fn test_add_container_to_object_requires_key() {
+    use jsonquill::document::node::{JsonNode, JsonValue};
+    use jsonquill::document::tree::JsonTree;
+    use jsonquill::editor::state::{AddModeStage, EditorState};
+
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![(
+        "name".to_string(),
+        JsonNode::new(JsonValue::String("Alice".to_string())),
+    )])));
+    let mut state = EditorState::new(tree);
+
+    state.cursor_mut().set_path(vec![0]);
+
+    // Use ao to add empty object to an object parent
+    state.start_add_container_operation(true); // true = object
+
+    // Should be in AwaitingKey stage
+    assert!(matches!(state.add_mode_stage(), &AddModeStage::AwaitingKey));
+
+    // Type key "settings"
+    for ch in "settings".chars() {
+        state.push_to_add_key_buffer(ch);
+    }
+
+    // Commit container add
+    let result = state.commit_container_add();
+    assert!(result.is_ok());
+
+    // Verify empty object was added with the key
+    let node = state.tree().get_node(&[1]).unwrap();
+    assert!(matches!(node.value(), JsonValue::Object(_)));
+
+    // Verify it has the right key by checking the parent
+    let parent = state.tree().root();
+    if let JsonValue::Object(entries) = parent.value() {
+        assert_eq!(entries[1].0, "settings");
+    }
+}
+
+#[test]
+fn test_add_to_empty_array_with_a() {
+    use jsonquill::document::node::{JsonNode, JsonValue};
+    use jsonquill::document::tree::JsonTree;
+    use jsonquill::editor::state::EditorState;
+
+    // Create empty array
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Array(vec![])));
+    let mut state = EditorState::new(tree);
+
+    // Cursor is at root (the array itself)
+    assert_eq!(state.cursor().path(), &[] as &[usize]);
+
+    // Press 'a' to add first element
+    state.start_add_operation();
+
+    // Type value
+    for ch in "first".chars() {
+        state.push_to_edit_buffer(ch);
+    }
+
+    state.commit_add_operation().unwrap();
+
+    // Verify element was added
+    let node = state.tree().get_node(&[0]).unwrap();
+    match node.value() {
+        JsonValue::String(s) => assert_eq!(s, "first"),
+        _ => panic!("Expected string"),
+    }
+}
+
+#[test]
+fn test_add_to_empty_container_created_with_capital_a() {
+    use jsonquill::document::node::{JsonNode, JsonValue};
+    use jsonquill::document::tree::JsonTree;
+    use jsonquill::editor::state::EditorState;
+
+    // Start with array containing one element
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Array(vec![
+        JsonNode::new(JsonValue::Number(1.0)),
+    ])));
+    let mut state = EditorState::new(tree);
+
+    state.cursor_mut().set_path(vec![0]);
+
+    // Add empty array with 'A'
+    state.start_add_container_operation(false);
+
+    // Cursor should be on new empty array at [1]
+    assert_eq!(state.cursor().path(), &[1]);
+
+    // Now press 'a' to add first element to this empty array
+    state.start_add_operation();
+
+    // Type value
+    for ch in "test".chars() {
+        state.push_to_edit_buffer(ch);
+    }
+
+    state.commit_add_operation().unwrap();
+
+    // Verify element was added as first child of the array at [1]
+    let node = state.tree().get_node(&[1, 0]).unwrap();
+    match node.value() {
+        JsonValue::String(s) => assert_eq!(s, "test"),
+        _ => panic!("Expected string"),
+    }
+}
+
+#[test]
+fn test_rename_object_key() {
+    use jsonquill::document::node::{JsonNode, JsonValue};
+    use jsonquill::document::tree::JsonTree;
+    use jsonquill::editor::state::EditorState;
+
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![(
+        "oldName".to_string(),
+        JsonNode::new(JsonValue::String("value".to_string())),
+    )])));
+    let mut state = EditorState::new(tree);
+
+    state.cursor_mut().set_path(vec![0]);
+
+    // Start rename operation
+    state.start_rename_operation();
+
+    // Edit buffer should be pre-populated with "oldName"
+    assert_eq!(state.edit_buffer(), Some("oldName"));
+    assert!(state.is_renaming_key());
+
+    // Clear and type new name
+    state.clear_edit_buffer();
+    for ch in "newName".chars() {
+        state.push_to_edit_buffer(ch);
+    }
+
+    // Commit rename
+    let result = state.commit_rename();
+    assert!(result.is_ok());
+
+    // Verify key was renamed
+    let parent = state.tree().root();
+    if let JsonValue::Object(entries) = parent.value() {
+        assert_eq!(entries[0].0, "newName");
+    }
+
+    assert!(state.is_dirty());
+    assert!(!state.is_renaming_key());
+}
+
+#[test]
+fn test_rename_array_element_fails() {
+    use jsonquill::document::node::{JsonNode, JsonValue};
+    use jsonquill::document::tree::JsonTree;
+    use jsonquill::editor::state::{EditorState, MessageLevel};
+
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Array(vec![
+        JsonNode::new(JsonValue::Number(1.0)),
+    ])));
+    let mut state = EditorState::new(tree);
+
+    state.cursor_mut().set_path(vec![0]);
+
+    // Try to rename (should fail since it's an array element)
+    state.start_rename_operation();
+
+    // Should have error message
+    if let Some(msg) = state.message() {
+        assert_eq!(msg.level, MessageLevel::Error);
+        assert!(msg.text.contains("object keys"));
+    } else {
+        panic!("Expected error message");
+    }
+
+    // Should not be in rename mode
+    assert!(!state.is_renaming_key());
+}
+
+#[test]
+fn test_rename_duplicate_key_fails() {
+    use jsonquill::document::node::{JsonNode, JsonValue};
+    use jsonquill::document::tree::JsonTree;
+    use jsonquill::editor::state::EditorState;
+
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
+        ("first".to_string(), JsonNode::new(JsonValue::Number(1.0))),
+        ("second".to_string(), JsonNode::new(JsonValue::Number(2.0))),
+    ])));
+    let mut state = EditorState::new(tree);
+
+    // Try to rename "first" to "second" (which already exists)
+    state.cursor_mut().set_path(vec![0]);
+    state.start_rename_operation();
+
+    state.clear_edit_buffer();
+    for ch in "second".chars() {
+        state.push_to_edit_buffer(ch);
+    }
+
+    // Commit should fail
+    let result = state.commit_rename();
+    assert!(result.is_err());
+    assert!(result.unwrap_err().to_string().contains("already exists"));
+}
+
+#[test]
+fn test_rename_cancel() {
+    use jsonquill::document::node::{JsonNode, JsonValue};
+    use jsonquill::document::tree::JsonTree;
+    use jsonquill::editor::state::EditorState;
+
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![(
+        "original".to_string(),
+        JsonNode::new(JsonValue::Number(1.0)),
+    )])));
+    let mut state = EditorState::new(tree);
+
+    state.cursor_mut().set_path(vec![0]);
+    state.start_rename_operation();
+
+    // Type new name but then cancel
+    state.clear_edit_buffer();
+    for ch in "changed".chars() {
+        state.push_to_edit_buffer(ch);
+    }
+
+    state.cancel_rename();
+
+    // Verify key was NOT changed
+    let parent = state.tree().root();
+    if let JsonValue::Object(entries) = parent.value() {
+        assert_eq!(entries[0].0, "original");
+    }
+
+    assert!(!state.is_dirty());
+    assert!(!state.is_renaming_key());
+}
+
+#[test]
+fn test_rename_creates_undo_checkpoint() {
+    use jsonquill::document::node::{JsonNode, JsonValue};
+    use jsonquill::document::tree::JsonTree;
+    use jsonquill::editor::state::EditorState;
+
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![(
+        "before".to_string(),
+        JsonNode::new(JsonValue::Number(1.0)),
+    )])));
+    let mut state = EditorState::new(tree);
+
+    state.cursor_mut().set_path(vec![0]);
+    state.start_rename_operation();
+
+    state.clear_edit_buffer();
+    for ch in "after".chars() {
+        state.push_to_edit_buffer(ch);
+    }
+
+    state.commit_rename().unwrap();
+
+    // Verify rename happened
+    let parent = state.tree().root();
+    if let JsonValue::Object(entries) = parent.value() {
+        assert_eq!(entries[0].0, "after");
+    }
+
+    // Undo
+    state.undo();
+
+    // Verify key reverted
+    let parent = state.tree().root();
+    if let JsonValue::Object(entries) = parent.value() {
+        assert_eq!(entries[0].0, "before");
+    }
+}
+

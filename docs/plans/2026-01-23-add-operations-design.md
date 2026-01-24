@@ -46,7 +46,7 @@ Add support for inserting new scalar values (strings, numbers, booleans, null) i
 
 **Phase 2 (Future):** Detect sibling types and create matching empties (e.g., create `{}` when siblings are objects, then prompt for first key).
 
-**Phase 3 (Future):** Add dedicated commands like `ao` (add object), `aa` (add array) for explicit type creation.
+**Phase 3 (Implemented):** Add dedicated commands like `o` (add object), `A` (add array) for explicit type creation.
 
 ## State Management
 
@@ -320,13 +320,13 @@ When pressing `a` in an array, detect sibling types:
 - If all siblings are arrays: create `[]`
 - If mixed or all scalars: create empty string (current behavior)
 
-### Phase 3: Explicit Type Commands
+### Phase 3: Explicit Type Commands (Implemented)
 
 Add dedicated commands for specific types:
-- `ao` - add object (creates `{}`)
-- `aa` - add array (creates `[]`)
-- `as` - add string (creates `""`, current `a` behavior)
-- `an` - add null (creates `null`)
+- `o` - add object (creates `{}`) - **IMPLEMENTED**
+- `A` - add array (creates `[]`) - **IMPLEMENTED**
+- `a` - add scalar (auto-parsed: number/boolean/null/string) - **IMPLEMENTED**
+- Future: could add `as` for explicit string, `an` for explicit null if needed
 
 This gives users explicit control when needed while keeping `a` smart.
 

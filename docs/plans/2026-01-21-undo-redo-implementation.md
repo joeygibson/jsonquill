@@ -2,7 +2,7 @@
 
 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
 
-**Goal:** Implement vim-style branching undo/redo system for jeditor with `u`, `Ctrl-r`, `:undo`, and `:redo` commands.
+**Goal:** Implement vim-style branching undo/redo system for jsonquill with `u`, `Ctrl-r`, `:undo`, and `:redo` commands.
 
 **Architecture:** Build an undo tree that stores full snapshots of the JSON tree and cursor position before each mutation (delete, paste, edit). The tree preserves all edit branches, allowing navigation to previously undone states. Redo follows the newest child branch.
 
@@ -1283,9 +1283,9 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>"
 Create `tests/undo_tests.rs`:
 
 ```rust
-use jeditor::document::node::{JsonNode, JsonValue};
-use jeditor::document::tree::JsonTree;
-use jeditor::editor::state::EditorState;
+use jsonquill::document::node::{JsonNode, JsonValue};
+use jsonquill::document::tree::JsonTree;
+use jsonquill::editor::state::EditorState;
 
 #[test]
 fn test_undo_after_delete() {
@@ -1415,7 +1415,7 @@ fn test_undo_after_edit() {
 
     // Start editing
     state.cursor_mut().set_path(vec![]);
-    state.set_mode(jeditor::editor::mode::EditorMode::Insert);
+    state.set_mode(jsonquill::editor::mode::EditorMode::Insert);
     state.start_editing();
 
     // Type new value
@@ -1489,7 +1489,7 @@ In `CLAUDE.md`, find the "Working Features" section and update:
 - ✅ Search functionality (`/` to search, `n` for next result)
 - ✅ Theme system (`:theme` to list, `:theme <name>` to switch)
 - ✅ Settings system (`:set` to view, `:set <option>` to change)
-- ✅ Config file support (`~/.config/jeditor/config.toml`, `:set save` to persist)
+- ✅ Config file support (`~/.config/jsonquill/config.toml`, `:set save` to persist)
 - ✅ Yank operation (`yy` copies to clipboard including system clipboard)
 - ✅ Delete operation (`dd` removes nodes from tree)
 - ✅ Paste operation (`p` inserts yanked nodes after, `P` inserts before)
@@ -1521,7 +1521,7 @@ Update the "Known Issues / TODO" section:
 **Advanced Features:**
 - ❌ **No named registers** - `"ayy`, `"ap` for named register operations
 - ❌ **No structural search** - `:find`, `:path` for JSONPath-style queries
-- ❌ **Stdin piping not supported** - `cat file.json | jeditor` fails due to terminal I/O conflict
+- ❌ **Stdin piping not supported** - `cat file.json | jsonquill` fails due to terminal I/O conflict
 - ❌ **No JSONL support** - Line-based JSON editing not implemented
 - ❌ **No format preservation** - Original formatting not preserved on save
 - ❌ **No lazy loading** - Large files (≥100MB) not optimized
@@ -1598,7 +1598,7 @@ Create a test JSON file `test.json`:
 }
 ```
 
-Run: `./target/release/jeditor test.json`
+Run: `./target/release/jsonquill test.json`
 
 Test sequence:
 1. Navigate to "Alice" and press `dd` to delete

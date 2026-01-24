@@ -1,6 +1,6 @@
 pub mod edit_prompt;
 pub mod help_overlay;
-/// UI module for jeditor terminal interface.
+/// UI module for jsonquill terminal interface.
 ///
 /// This module provides the main UI structure for rendering the terminal interface,
 /// including layout management and widget composition.

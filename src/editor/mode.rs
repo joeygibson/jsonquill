@@ -1,7 +1,7 @@
 //! Editor mode management for modal editing.
 //!
 //! This module provides the `EditorMode` enum that represents the current editing
-//! mode in jeditor. Following vim-style modal editing, the editor can be in one
+//! mode in jsonquill. Following vim-style modal editing, the editor can be in one
 //! of three modes, each with different keybindings and behaviors.
 //!
 //! # Modes
@@ -29,7 +29,7 @@ use std::fmt;
 
 /// Represents the current editing mode of the editor.
 ///
-/// jeditor follows a vim-style modal editing paradigm where the behavior of
+/// jsonquill follows a vim-style modal editing paradigm where the behavior of
 /// keystrokes depends on the current mode. The mode is typically displayed
 /// in the status bar using the `Display` implementation.
 ///

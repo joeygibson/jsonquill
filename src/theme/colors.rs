@@ -1,12 +1,12 @@
-//! Color definitions for jeditor themes.
+//! Color definitions for jsonquill themes.
 //!
 //! This module defines the [`ThemeColors`] struct which contains all color
-//! values used in the jeditor terminal UI. Colors are organized into three
+//! values used in the jsonquill terminal UI. Colors are organized into three
 //! categories: syntax highlighting, UI elements, and semantic colors.
 
 use ratatui::style::Color;
 
-/// Defines all colors used in a jeditor theme.
+/// Defines all colors used in a jsonquill theme.
 ///
 /// Colors are organized into three main categories:
 /// - **Syntax colors**: Used for JSON syntax highlighting (keys, strings, numbers, etc.)

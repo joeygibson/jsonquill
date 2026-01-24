@@ -217,7 +217,7 @@ Expected: All tests pass (no test changes needed yet)
 **Step 14: Commit**
 
 ```bash
-cd /Users/jgibson/Projects/jeditor-worktrees/jsonl-support
+cd /Users/jgibson/Projects/jsonquill-worktrees/jsonl-support
 git add src/document/node.rs src/document/tree.rs src/file/saver.rs
 git commit -m "feat: add JsonValue::JsonlRoot variant for JSONL documents
 

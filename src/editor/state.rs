@@ -171,6 +171,8 @@ pub struct EditorState {
     add_mode_stage: AddModeStage,
     add_key_buffer: String,
     add_insertion_point: Option<Vec<usize>>,
+    is_renaming_key: bool,
+    rename_original_key: Option<String>,
 }
 
 impl EditorState {
@@ -250,6 +252,8 @@ impl EditorState {
             add_mode_stage: AddModeStage::None,
             add_key_buffer: String::new(),
             add_insertion_point: None,
+            is_renaming_key: false,
+            rename_original_key: None,
         }
     }
 
@@ -1701,6 +1705,9 @@ impl EditorState {
     pub fn start_add_operation(&mut self) {
         use crate::document::node::JsonValue;
 
+        // Clear any previous messages so the edit area is visible
+        self.clear_message();
+
         let current_path = self.cursor.path().to_vec();
 
         // Special case: if cursor is at root (empty path)
@@ -1721,6 +1728,8 @@ impl EditorState {
                             self.edit_cursor = 0;
                             self.set_mode(EditorMode::Insert);
                             self.reset_cursor_blink();
+                            // Set mode indicator message
+                            self.set_message("-- INSERT --".to_string(), MessageLevel::Info);
                         }
                         JsonValue::Object(_) => {
                             // Object: need key first
@@ -1741,7 +1750,42 @@ impl EditorState {
             return;
         }
 
-        // Get parent path (all but last index)
+        // Check if the current node (not parent) is a container
+        // If so, add INSIDE it rather than after it
+        if let Some(current_node) = self.tree.get_node(&current_path) {
+            match current_node.value() {
+                JsonValue::Array(_) => {
+                    // Current node is an array - add first child inside it
+                    self.add_mode_stage = AddModeStage::AwaitingValue;
+                    let mut insertion_path = current_path.clone();
+                    insertion_path.push(0); // Insert at position 0 (first child)
+                    self.add_insertion_point = Some(insertion_path);
+
+                    // Enter Insert mode with empty edit buffer
+                    self.edit_buffer = Some(String::new());
+                    self.edit_cursor = 0;
+                    self.set_mode(EditorMode::Insert);
+                    self.reset_cursor_blink();
+                    // Set mode indicator message
+                    self.set_message("-- INSERT --".to_string(), MessageLevel::Info);
+                    return;
+                }
+                JsonValue::Object(_) => {
+                    // Current node is an object - add first child inside it
+                    self.add_mode_stage = AddModeStage::AwaitingKey;
+                    let mut insertion_path = current_path.clone();
+                    insertion_path.push(0); // Insert at position 0 (first child)
+                    self.add_insertion_point = Some(insertion_path);
+                    // Stay in Normal mode, wait for key input
+                    return;
+                }
+                _ => {
+                    // Current node is a scalar, fall through to add sibling
+                }
+            }
+        }
+
+        // Current node is a scalar - add sibling after it in parent container
         let parent_path = &current_path[..current_path.len() - 1];
         let current_index = current_path[current_path.len() - 1];
 
@@ -1772,6 +1816,8 @@ impl EditorState {
                 self.edit_cursor = 0;
                 self.set_mode(EditorMode::Insert);
                 self.reset_cursor_blink();
+                // Set mode indicator message
+                self.set_message("-- INSERT --".to_string(), MessageLevel::Info);
             }
             JsonValue::Object(_) => {
                 // Adding to object: need key first
@@ -1888,6 +1934,8 @@ impl EditorState {
             self.edit_cursor = 0;
             self.set_mode(EditorMode::Insert);
             self.reset_cursor_blink();
+            // Set mode indicator message
+            self.set_message("-- INSERT --".to_string(), MessageLevel::Info);
         }
     }
 
@@ -1896,5 +1944,312 @@ impl EditorState {
         self.add_mode_stage = AddModeStage::None;
         self.add_key_buffer.clear();
         self.add_insertion_point = None;
+    }
+
+    /// Starts an add container operation (ao for object, aa for array).
+    ///
+    /// Immediately adds an empty container {} or [] without going through
+    /// the value input stage. For objects, prompts for key name first.
+    ///
+    /// # Arguments
+    ///
+    /// * `is_object` - true for object {}, false for array []
+    pub fn start_add_container_operation(&mut self, is_object: bool) {
+        use crate::document::node::JsonValue;
+
+        // Clear any previous messages so the edit area is visible
+        self.clear_message();
+
+        let current_path = self.cursor.path().to_vec();
+
+        // Create the container node
+        let container_node = if is_object {
+            JsonNode::new(JsonValue::Object(vec![]))
+        } else {
+            JsonNode::new(JsonValue::Array(vec![]))
+        };
+
+        // Determine insertion point and parent type
+        let (insertion_path, parent_is_object) = if current_path.is_empty() {
+            // At root - check if root is a container
+            match self.tree.root().value() {
+                JsonValue::Object(_) => {
+                    self.add_mode_stage = AddModeStage::AwaitingKey;
+                    self.add_insertion_point = Some(vec![0]);
+                    // For object containers in object root, we need a key
+                    // Store the container temporarily and wait for key
+                    self.clipboard = Some(container_node);
+                    return;
+                }
+                JsonValue::Array(_) => (vec![0], false),
+                _ => {
+                    self.set_message(
+                        "Cannot add sibling to root node".to_string(),
+                        MessageLevel::Error,
+                    );
+                    return;
+                }
+            }
+        } else {
+            let parent_path = &current_path[..current_path.len() - 1];
+            let current_index = current_path[current_path.len() - 1];
+
+            let parent = if parent_path.is_empty() {
+                self.tree.root()
+            } else {
+                match self.tree.get_node(parent_path) {
+                    Some(node) => node,
+                    None => {
+                        self.set_message("Invalid cursor position".to_string(), MessageLevel::Error);
+                        return;
+                    }
+                }
+            };
+
+            let mut path = parent_path.to_vec();
+            path.push(current_index + 1);
+
+            match parent.value() {
+                JsonValue::Object(_) => {
+                    self.add_mode_stage = AddModeStage::AwaitingKey;
+                    self.add_insertion_point = Some(path);
+                    // For containers in objects, we need a key
+                    // Store the container temporarily and wait for key
+                    self.clipboard = Some(container_node);
+                    return;
+                }
+                JsonValue::Array(_) => (path, false),
+                _ => {
+                    self.set_message("Parent is not a container".to_string(), MessageLevel::Error);
+                    return;
+                }
+            }
+        };
+
+        // Insert directly into array (no key needed)
+        if !parent_is_object {
+            match self.tree.insert_node_in_array(&insertion_path, container_node) {
+                Ok(_) => {
+                    self.tree_view_mut()
+                        .update_paths_after_insertion(&insertion_path);
+                    self.rebuild_tree_view();
+                    self.cursor.set_path(insertion_path.clone());
+                    self.mark_dirty();
+                    self.checkpoint();
+
+                    let msg = if is_object {
+                        "Added empty object"
+                    } else {
+                        "Added empty array"
+                    };
+                    self.set_message(msg.to_string(), MessageLevel::Info);
+                }
+                Err(e) => {
+                    self.set_message(format!("Add failed: {}", e), MessageLevel::Error);
+                }
+            }
+        }
+    }
+
+    /// Starts a rename operation on the current object key.
+    ///
+    /// Checks if the cursor is on an object key (not array element, not root),
+    /// then enters Insert mode with the current key name pre-populated in the
+    /// edit buffer.
+    pub fn start_rename_operation(&mut self) {
+        use crate::document::node::JsonValue;
+
+        // Clear any previous messages so the edit area is visible
+        self.clear_message();
+
+        let current_path = self.cursor.path().to_vec();
+
+        // Can't rename root
+        if current_path.is_empty() {
+            self.set_message(
+                "Cannot rename root node".to_string(),
+                MessageLevel::Error,
+            );
+            return;
+        }
+
+        // Get parent to check if it's an object
+        let parent_path = &current_path[..current_path.len() - 1];
+        let current_index = current_path[current_path.len() - 1];
+
+        let parent = if parent_path.is_empty() {
+            self.tree.root()
+        } else {
+            match self.tree.get_node(parent_path) {
+                Some(node) => node,
+                None => {
+                    self.set_message("Invalid cursor position".to_string(), MessageLevel::Error);
+                    return;
+                }
+            }
+        };
+
+        // Check if parent is an object
+        if let JsonValue::Object(entries) = parent.value() {
+            // Get the current key name
+            if let Some((key, _)) = entries.get(current_index) {
+                let key_name = key.clone();
+
+                // Enter rename mode with key name in edit buffer
+                self.is_renaming_key = true;
+                self.rename_original_key = Some(key_name.clone());
+                self.edit_buffer = Some(key_name.clone());
+                self.edit_cursor = key_name.len();
+                self.set_mode(EditorMode::Insert);
+                self.reset_cursor_blink();
+                self.set_message("-- RENAME --".to_string(), MessageLevel::Info);
+            } else {
+                self.set_message("Invalid object index".to_string(), MessageLevel::Error);
+            }
+        } else {
+            self.set_message(
+                "Can only rename object keys, not array elements".to_string(),
+                MessageLevel::Error,
+            );
+        }
+    }
+
+    /// Commits the rename operation, updating the key name in the object.
+    pub fn commit_rename(&mut self) -> anyhow::Result<()> {
+        use anyhow::anyhow;
+        use crate::document::node::JsonValue;
+
+        let new_key = self
+            .edit_buffer
+            .as_ref()
+            .ok_or_else(|| anyhow!("No edit buffer"))?
+            .clone();
+
+        if new_key.is_empty() {
+            return Err(anyhow!("Key cannot be empty"));
+        }
+
+        let original_key = self
+            .rename_original_key
+            .as_ref()
+            .ok_or_else(|| anyhow!("No original key stored"))?
+            .clone();
+
+        // If key didn't change, just exit
+        if new_key == original_key {
+            self.cancel_rename();
+            return Ok(());
+        }
+
+        let current_path = self.cursor.path().to_vec();
+        if current_path.is_empty() {
+            return Err(anyhow!("Cannot rename root"));
+        }
+
+        let parent_path = &current_path[..current_path.len() - 1];
+        let current_index = current_path[current_path.len() - 1];
+
+        // Get parent and verify it's still an object
+        let parent = if parent_path.is_empty() {
+            self.tree.root_mut()
+        } else {
+            self.tree
+                .get_node_mut(parent_path)
+                .ok_or_else(|| anyhow!("Parent node not found"))?
+        };
+
+        if let JsonValue::Object(entries) = parent.value_mut() {
+            // Check if new key already exists
+            if entries.iter().any(|(k, _)| k == &new_key) {
+                return Err(anyhow!("Key '{}' already exists", new_key));
+            }
+
+            // Update the key at the current index
+            if let Some((key, _)) = entries.get_mut(current_index) {
+                *key = new_key.clone();
+
+                self.mark_dirty();
+                self.rebuild_tree_view();
+                self.checkpoint();
+                self.set_message(
+                    format!("Renamed '{}' to '{}'", original_key, new_key),
+                    MessageLevel::Info,
+                );
+            } else {
+                return Err(anyhow!("Invalid object index"));
+            }
+        } else {
+            return Err(anyhow!("Parent is not an object"));
+        }
+
+        self.cancel_rename();
+        Ok(())
+    }
+
+    /// Cancels the rename operation and clears related state.
+    pub fn cancel_rename(&mut self) {
+        self.is_renaming_key = false;
+        self.rename_original_key = None;
+        self.edit_buffer = None;
+        self.edit_cursor = 0;
+    }
+
+    /// Returns whether we're currently in rename mode.
+    pub fn is_renaming_key(&self) -> bool {
+        self.is_renaming_key
+    }
+
+    /// Commits a container add operation after receiving the key name.
+    ///
+    /// Called when user finishes entering a key name for adding a container
+    /// to an object. Retrieves the temporarily stored container from clipboard
+    /// and inserts it with the provided key.
+    pub fn commit_container_add(&mut self) -> anyhow::Result<()> {
+        use anyhow::anyhow;
+
+        // Get the container from temporary storage (clipboard)
+        let container_node = self
+            .clipboard
+            .take()
+            .ok_or_else(|| anyhow!("No container to add"))?;
+
+        // Get the key from add_key_buffer
+        let key = self.add_key_buffer.clone();
+        if key.is_empty() {
+            return Err(anyhow!("Key cannot be empty"));
+        }
+
+        // Get insertion point
+        let insertion_path = self
+            .add_insertion_point
+            .as_ref()
+            .ok_or_else(|| anyhow!("No insertion point set"))?
+            .clone();
+
+        // Insert the container with the key
+        self.tree
+            .insert_node_in_object(&insertion_path, key.clone(), container_node.clone())?;
+
+        self.tree_view_mut()
+            .update_paths_after_insertion(&insertion_path);
+        self.rebuild_tree_view();
+        self.cursor.set_path(insertion_path.clone());
+        self.mark_dirty();
+        self.checkpoint();
+
+        let container_type = match container_node.value() {
+            JsonValue::Object(_) => "object",
+            JsonValue::Array(_) => "array",
+            _ => "container",
+        };
+        self.set_message(
+            format!("Added empty {} '{}'", container_type, key),
+            MessageLevel::Info,
+        );
+
+        // Clear add operation state
+        self.cancel_add_operation();
+
+        Ok(())
     }
 }

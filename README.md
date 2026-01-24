@@ -116,7 +116,10 @@ jsonquill data.jsonl
 
 | Key | Action | Notes |
 |-----|--------|-------|
-| `a` | Add new field/element | Objects: prompts for key then value<br>Arrays: prompts for value directly |
+| `a` | Add new scalar field/element | Objects: prompts for key then value<br>Arrays: prompts for value directly |
+| `A` | Add empty array `[]` | Adds after current node |
+| `o` | Add empty object `{}` | Adds after current node |
+| `r` | Rename object key | Only works on object keys (not array elements) |
 | `dd` | Delete current node | Supports count prefix (e.g., `3dd` deletes 3 nodes) |
 | `yy` | Yank (copy) current node | Supports count prefix (e.g., `2yy` copies 2 nodes)<br>Copies to system clipboard |
 | `p` | Paste after cursor | Insert yanked content after current node |

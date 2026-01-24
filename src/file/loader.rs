@@ -1,7 +1,7 @@
 //! JSON file loading functionality.
 //!
 //! This module provides functions to load JSON documents from files or stdin,
-//! parsing them into `JsonTree` structures that can be edited by jeditor.
+//! parsing them into `JsonTree` structures that can be edited by jsonquill.
 
 use crate::document::parser::{parse_json, parse_value};
 use crate::document::tree::JsonTree;

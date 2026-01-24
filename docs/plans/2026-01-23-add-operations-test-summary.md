@@ -12,6 +12,8 @@
 - Undo: ✓ Can undo added elements
 - Error handling: ✓ Root scalar, empty keys
 
+## Completed Enhancements
+- Phase 3: Explicit type commands (o, A) - **COMPLETED 2026-01-23**
+
 ## Known Limitations (Future work)
 - Phase 2: Smart type detection for arrays of objects
-- Phase 3: Explicit type commands (ao, aa, as, an)

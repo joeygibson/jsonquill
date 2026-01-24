@@ -1,11 +1,11 @@
-# jeditor Design Document
+# jsonquill Design Document
 
 **Date:** 2026-01-19
 **Status:** Approved
 
 ## Overview
 
-jeditor is a terminal-based JSON editor written in Rust, inspired by jless. It provides structural editing of JSON and JSONL files with vim-style modal keybindings, syntax highlighting, and an interactive tree-based interface.
+jsonquill is a terminal-based JSON editor written in Rust, inspired by jless. It provides structural editing of JSON and JSONL files with vim-style modal keybindings, syntax highlighting, and an interactive tree-based interface.
 
 ## Core Features
 
@@ -51,7 +51,7 @@ jeditor is a terminal-based JSON editor written in Rust, inspired by jless. It p
 6. **File Manager**
    - Handles loading with size-based strategy switching
    - Saving with format preservation
-   - Optional backup creation (`.jeditor.bak`)
+   - Optional backup creation (`.jsonquill.bak`)
 
 ## UI Layout
 
@@ -195,7 +195,7 @@ jeditor is a terminal-based JSON editor written in Rust, inspired by jless. It p
 
 ### Config File
 
-Location: `~/.config/jeditor/config.toml`
+Location: `~/.config/jsonquill/config.toml`
 
 ```toml
 [general]
@@ -204,7 +204,7 @@ indent_size = 2  # display only
 show_line_numbers = true
 auto_save = false
 validation_mode = "strict"  # or "lenient"
-create_backup = false  # .jeditor.bak files
+create_backup = false  # .jsonquill.bak files
 
 [editor]
 undo_limit = 1000
@@ -253,7 +253,7 @@ lazy_load_threshold = 104857600  # 100MB
 
 ### Custom Themes
 
-Location: `~/.config/jeditor/themes/<name>.toml`
+Location: `~/.config/jsonquill/themes/<name>.toml`
 
 ```toml
 [syntax]
@@ -308,7 +308,7 @@ search_highlight = "#3e4451"
 ### Save Operations
 
 - `:w`: writes to original file
-- Optional `.jeditor.bak` backup (default: off, configurable)
+- Optional `.jsonquill.bak` backup (default: off, configurable)
 - Format preservation: unchanged nodes retain original whitespace
 - Changed nodes formatted with configured indent size
 - JSONL: only modified lines reformatted
@@ -317,9 +317,9 @@ search_highlight = "#3e4451"
 
 ### stdin/stdout Support
 
-- `cat file.json | jeditor`: opens stdin as temporary buffer
+- `cat file.json | jsonquill`: opens stdin as temporary buffer
 - `:w <filename>` required to save (no original file)
-- `jeditor < input.json > output.json` not supported (needs terminal control)
+- `jsonquill < input.json > output.json` not supported (needs terminal control)
 
 ## Error Handling
 
@@ -362,26 +362,26 @@ search_highlight = "#3e4451"
 
 ```bash
 # Open existing file
-jeditor data.json
+jsonquill data.json
 
 # Open JSONL file
-jeditor logs.jsonl
-jeditor --mode jsonl data.txt
+jsonquill logs.jsonl
+jsonquill --mode jsonl data.txt
 
 # Create new file (starts with empty object {})
-jeditor newfile.json
+jsonquill newfile.json
 
 # Read from stdin
-cat data.json | jeditor
+cat data.json | jsonquill
 
 # Start with empty document
-jeditor
+jsonquill
 ```
 
 ### Options
 
 ```
-jeditor [OPTIONS] [FILE]
+jsonquill [OPTIONS] [FILE]
 
 OPTIONS:
   -m, --mode <MODE>          Force file type: json or jsonl
