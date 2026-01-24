@@ -1233,3 +1233,77 @@ fn test_rename_creates_undo_checkpoint() {
     }
 }
 
+
+#[test]
+fn test_add_object_after_scalar_preserves_nested_sibling_expansion() {
+    use jsonquill::document::node::{JsonNode, JsonValue};
+    use jsonquill::document::tree::JsonTree;
+    use jsonquill::editor::state::EditorState;
+
+    // Recreate the exact structure from examples/foo.json
+    let coordinates = vec![
+        ("latitude".to_string(), JsonNode::new(JsonValue::Number(37.7749))),
+        ("longitude".to_string(), JsonNode::new(JsonValue::Number(-122.4194))),
+    ];
+    let address = vec![
+        ("street".to_string(), JsonNode::new(JsonValue::String("123 Innovation Drive".to_string()))),
+        ("city".to_string(), JsonNode::new(JsonValue::String("San Francisco".to_string()))),
+        ("coordinates".to_string(), JsonNode::new(JsonValue::Object(coordinates))),
+    ];
+    let headquarters = vec![
+        ("address".to_string(), JsonNode::new(JsonValue::Object(address))),
+        ("phone".to_string(), JsonNode::new(JsonValue::String("555-1234".to_string()))),
+    ];
+    let company = vec![
+        ("name".to_string(), JsonNode::new(JsonValue::String("TechCorp".to_string()))),
+        ("founded".to_string(), JsonNode::new(JsonValue::Number(2010.0))),
+        ("headquarters".to_string(), JsonNode::new(JsonValue::Object(headquarters))),
+    ];
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
+        ("company".to_string(), JsonNode::new(JsonValue::Object(company))),
+    ])));
+    let mut state = EditorState::new(tree);
+
+    // Verify deep nesting is expanded
+    assert!(state.tree_view().is_expanded(&[0])); // company
+    assert!(state.tree_view().is_expanded(&[0, 2])); // headquarters
+    assert!(state.tree_view().is_expanded(&[0, 2, 0])); // address
+    assert!(state.tree_view().is_expanded(&[0, 2, 0, 2])); // coordinates
+
+    // Position cursor on "name" (first field in company)
+    state.cursor_mut().set_path(vec![0, 0]);
+    
+    // Press 'o' to add an object after name
+    state.start_add_container_operation(true); // true = object
+    
+    // Enter key "xxx"
+    for ch in "xxx".chars() {
+        state.push_to_add_key_buffer(ch);
+    }
+    
+    // Commit
+    state.commit_container_add().unwrap();
+
+    // CRITICAL: headquarters and its children should still be expanded
+    // After insertion at [0, 1], indices shift:
+    // - name stays at [0, 0]
+    // - xxx is at [0, 1]
+    // - founded moves from [0, 1] to [0, 2]
+    // - headquarters moves from [0, 2] to [0, 3]
+    assert!(
+        state.tree_view().is_expanded(&[0]),
+        "company should still be expanded"
+    );
+    assert!(
+        state.tree_view().is_expanded(&[0, 3]),
+        "headquarters (now at [0, 3]) should still be expanded"
+    );
+    assert!(
+        state.tree_view().is_expanded(&[0, 3, 0]),
+        "address (now at [0, 3, 0]) should still be expanded"
+    );
+    assert!(
+        state.tree_view().is_expanded(&[0, 3, 0, 2]),
+        "coordinates (now at [0, 3, 0, 2]) should still be expanded"
+    );
+}

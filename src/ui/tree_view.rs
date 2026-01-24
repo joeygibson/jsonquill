@@ -334,10 +334,18 @@ impl TreeViewState {
             .cloned()
             .collect();
 
-        // Remove old paths and add updated paths
-        for old_path in paths_to_update {
-            self.expanded_paths.remove(&old_path);
+        // IMPORTANT: Remove ALL old paths first, then insert ALL new paths
+        // This prevents collisions where a new path matches an old path that hasn't been updated yet
+        // Example: when inserting at [0, 1], both [0, 3] and [0, 4] shift to [0, 4] and [0, 5]
+        // If we remove+insert one at a time, [0, 3]→[0, 4] would collide with existing [0, 4]
 
+        // First pass: remove all old paths
+        for old_path in &paths_to_update {
+            self.expanded_paths.remove(old_path);
+        }
+
+        // Second pass: insert all new paths
+        for old_path in paths_to_update {
             let mut new_path = old_path.clone();
             new_path[parent_path.len()] += 1;
             self.expanded_paths.insert(new_path);
