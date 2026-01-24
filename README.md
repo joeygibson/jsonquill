@@ -28,9 +28,7 @@ See [CLAUDE.md](CLAUDE.md) for detailed feature list and developer documentation
 
 - ✅ **Linux** (x86_64 glibc and musl)
 - ✅ **macOS** (Intel and Apple Silicon)
-- ❌ **Windows** (not currently supported - see [issue #1](https://github.com/joeygibson/jsonquill/issues) for future support)
-
-> **Note:** Windows support requires migrating from `termion` (Unix-only) to `crossterm` (cross-platform). Contributions welcome!
+- ❌ **Windows** (not currently supported)
 
 ## Description
 
