@@ -164,7 +164,7 @@ Esc         - Exit SEARCH mode
 # Modes
 e           - Enter INSERT mode (edit current value)
 :           - Enter COMMAND mode
-/           - Enter SEARCH mode
+/ or ?      - Enter SEARCH mode (forward / backward)
 Esc         - Return to NORMAL mode
 F1 / :help  - Toggle help overlay
 q           - Quit (warns if unsaved, use :q! to force)

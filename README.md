@@ -110,7 +110,7 @@ jsonquill data.jsonl
 | Key | Action | Description |
 |-----|--------|-------------|
 | `:` | Enter COMMAND mode | Execute commands (`:w`, `:q`, etc.) |
-| `/` | Enter SEARCH mode | Search in keys and values |
+| `/` / `?` | Enter SEARCH mode | Search forward/backward in keys and values |
 | `Esc` | Return to NORMAL mode | Exit INSERT, COMMAND, or SEARCH mode |
 
 ### Editing (NORMAL mode)
