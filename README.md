@@ -24,6 +24,14 @@ A terminal-based structural JSON editor with vim-style keybindings.
 
 See [CLAUDE.md](CLAUDE.md) for detailed feature list and developer documentation.
 
+## Platform Support
+
+- ✅ **Linux** (x86_64 glibc and musl)
+- ✅ **macOS** (Intel and Apple Silicon)
+- ❌ **Windows** (not currently supported - see [issue #1](https://github.com/joeygibson/jsonquill/issues) for future support)
+
+> **Note:** Windows support requires migrating from `termion` (Unix-only) to `crossterm` (cross-platform). Contributions welcome!
+
 ## Description
 
 JSON Quill is a Rust-based terminal application for viewing and editing JSON files in a structured, tree-like format. It provides an intuitive vim-style interface for navigating and manipulating complex JSON documents directly in the terminal.
