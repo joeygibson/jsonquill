@@ -107,7 +107,6 @@ jsonquill data.jsonl
 
 | Key | Action | Description |
 |-----|--------|-------------|
-| `e` | Enter INSERT mode | Edit value of current node |
 | `:` | Enter COMMAND mode | Execute commands (`:w`, `:q`, etc.) |
 | `/` | Enter SEARCH mode | Search in keys and values |
 | `Esc` | Return to NORMAL mode | Exit INSERT, COMMAND, or SEARCH mode |
@@ -116,6 +115,7 @@ jsonquill data.jsonl
 
 | Key | Action | Notes |
 |-----|--------|-------|
+| `e` | Edit current value | Enters INSERT mode to edit the value at cursor |
 | `i` | Add new scalar field/element | Objects: prompts for key then value<br>Arrays: prompts for value directly |
 | `a` | Add empty array `[]` | Adds after current node |
 | `o` | Add empty object `{}` | Adds after current node |
