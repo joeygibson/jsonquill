@@ -347,7 +347,6 @@ impl InputHandler {
                     }
                 }
 
-
                 // Handle key input during AwaitingKey stage (before Insert mode)
                 use crate::editor::state::AddModeStage;
                 if matches!(state.add_mode_stage(), &AddModeStage::AwaitingKey) {
@@ -854,7 +853,7 @@ impl InputHandler {
         match command {
             "help" => {
                 state.toggle_help();
-                return Ok(false);
+                Ok(false)
             }
             "q" => {
                 if state.is_dirty() {
@@ -864,18 +863,16 @@ impl InputHandler {
                     );
                     return Ok(false);
                 }
-                return Ok(true);
+                Ok(true)
             }
-            "q!" => {
-                return Ok(true);
-            }
+            "q!" => Ok(true),
             "undo" => {
                 if state.undo() {
                     state.set_message("Undo".to_string(), MessageLevel::Info);
                 } else {
                     state.set_message("Already at oldest change".to_string(), MessageLevel::Info);
                 }
-                return Ok(false);
+                Ok(false)
             }
             "redo" => {
                 if state.redo() {
@@ -883,7 +880,7 @@ impl InputHandler {
                 } else {
                     state.set_message("Already at newest change".to_string(), MessageLevel::Info);
                 }
-                return Ok(false);
+                Ok(false)
             }
             cmd if cmd.starts_with("w ") => {
                 // :w filename - save to new file and update internal filename
@@ -903,7 +900,7 @@ impl InputHandler {
                         state.set_message(format!("Error saving file: {}", e), MessageLevel::Error);
                     }
                 }
-                return Ok(false);
+                Ok(false)
             }
             "w" => {
                 if let Some(filename) = state.filename().map(|s| s.to_string()) {
@@ -928,14 +925,16 @@ impl InputHandler {
                         MessageLevel::Error,
                     );
                 }
-                return Ok(false);
+                Ok(false)
             }
             cmd if cmd.starts_with("wq ") || cmd.starts_with("x ") => {
                 // :wq filename or :x filename - save to new file, update filename, and quit
-                let filename = if cmd.starts_with("wq ") {
-                    cmd[3..].trim().to_string()
+                let filename = if let Some(stripped) = cmd.strip_prefix("wq ") {
+                    stripped.trim().to_string()
+                } else if let Some(stripped) = cmd.strip_prefix("x ") {
+                    stripped.trim().to_string()
                 } else {
-                    cmd[2..].trim().to_string()
+                    String::new()
                 };
 
                 if filename.is_empty() {
@@ -947,11 +946,11 @@ impl InputHandler {
                     Ok(_) => {
                         state.set_filename(filename);
                         state.clear_dirty();
-                        return Ok(true);
+                        Ok(true)
                     }
                     Err(e) => {
                         state.set_message(format!("Error saving file: {}", e), MessageLevel::Error);
-                        return Ok(false);
+                        Ok(false)
                     }
                 }
             }
@@ -960,14 +959,14 @@ impl InputHandler {
                     match save_json_file(&filename, state.tree(), &Config::default()) {
                         Ok(_) => {
                             state.clear_dirty();
-                            return Ok(true);
+                            Ok(true)
                         }
                         Err(e) => {
                             state.set_message(
                                 format!("Error saving file: {}", e),
                                 MessageLevel::Error,
                             );
-                            return Ok(false);
+                            Ok(false)
                         }
                     }
                 } else {
@@ -975,16 +974,16 @@ impl InputHandler {
                         "No file name (use :wq <filename>)".to_string(),
                         MessageLevel::Error,
                     );
-                    return Ok(false);
+                    Ok(false)
                 }
             }
             "" => {
                 // Empty command, do nothing
-                return Ok(false);
+                Ok(false)
             }
             _ => {
                 state.set_message(format!("Unknown command: {}", command), MessageLevel::Error);
-                return Ok(false);
+                Ok(false)
             }
         }
     }

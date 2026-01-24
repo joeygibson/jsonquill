@@ -907,9 +907,9 @@ fn test_add_object_with_o() {
     use jsonquill::document::tree::JsonTree;
     use jsonquill::editor::state::EditorState;
 
-    let tree = JsonTree::new(JsonNode::new(JsonValue::Array(vec![
-        JsonNode::new(JsonValue::Number(1.0)),
-    ])));
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Array(vec![JsonNode::new(
+        JsonValue::Number(1.0),
+    )])));
     let mut state = EditorState::new(tree);
 
     // Move to first element
@@ -936,9 +936,9 @@ fn test_add_array_with_capital_a() {
     use jsonquill::document::tree::JsonTree;
     use jsonquill::editor::state::EditorState;
 
-    let tree = JsonTree::new(JsonNode::new(JsonValue::Array(vec![
-        JsonNode::new(JsonValue::Number(1.0)),
-    ])));
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Array(vec![JsonNode::new(
+        JsonValue::Number(1.0),
+    )])));
     let mut state = EditorState::new(tree);
 
     state.cursor_mut().set_path(vec![0]);
@@ -1035,9 +1035,9 @@ fn test_add_to_empty_container_created_with_capital_a() {
     use jsonquill::editor::state::EditorState;
 
     // Start with array containing one element
-    let tree = JsonTree::new(JsonNode::new(JsonValue::Array(vec![
-        JsonNode::new(JsonValue::Number(1.0)),
-    ])));
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Array(vec![JsonNode::new(
+        JsonValue::Number(1.0),
+    )])));
     let mut state = EditorState::new(tree);
 
     state.cursor_mut().set_path(vec![0]);
@@ -1113,9 +1113,9 @@ fn test_rename_array_element_fails() {
     use jsonquill::document::tree::JsonTree;
     use jsonquill::editor::state::{EditorState, MessageLevel};
 
-    let tree = JsonTree::new(JsonNode::new(JsonValue::Array(vec![
-        JsonNode::new(JsonValue::Number(1.0)),
-    ])));
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Array(vec![JsonNode::new(
+        JsonValue::Number(1.0),
+    )])));
     let mut state = EditorState::new(tree);
 
     state.cursor_mut().set_path(vec![0]);
@@ -1233,7 +1233,6 @@ fn test_rename_creates_undo_checkpoint() {
     }
 }
 
-
 #[test]
 fn test_add_object_after_scalar_preserves_nested_sibling_expansion() {
     use jsonquill::document::node::{JsonNode, JsonValue};
@@ -1242,26 +1241,57 @@ fn test_add_object_after_scalar_preserves_nested_sibling_expansion() {
 
     // Recreate the exact structure from examples/foo.json
     let coordinates = vec![
-        ("latitude".to_string(), JsonNode::new(JsonValue::Number(37.7749))),
-        ("longitude".to_string(), JsonNode::new(JsonValue::Number(-122.4194))),
+        (
+            "latitude".to_string(),
+            JsonNode::new(JsonValue::Number(37.7749)),
+        ),
+        (
+            "longitude".to_string(),
+            JsonNode::new(JsonValue::Number(-122.4194)),
+        ),
     ];
     let address = vec![
-        ("street".to_string(), JsonNode::new(JsonValue::String("123 Innovation Drive".to_string()))),
-        ("city".to_string(), JsonNode::new(JsonValue::String("San Francisco".to_string()))),
-        ("coordinates".to_string(), JsonNode::new(JsonValue::Object(coordinates))),
+        (
+            "street".to_string(),
+            JsonNode::new(JsonValue::String("123 Innovation Drive".to_string())),
+        ),
+        (
+            "city".to_string(),
+            JsonNode::new(JsonValue::String("San Francisco".to_string())),
+        ),
+        (
+            "coordinates".to_string(),
+            JsonNode::new(JsonValue::Object(coordinates)),
+        ),
     ];
     let headquarters = vec![
-        ("address".to_string(), JsonNode::new(JsonValue::Object(address))),
-        ("phone".to_string(), JsonNode::new(JsonValue::String("555-1234".to_string()))),
+        (
+            "address".to_string(),
+            JsonNode::new(JsonValue::Object(address)),
+        ),
+        (
+            "phone".to_string(),
+            JsonNode::new(JsonValue::String("555-1234".to_string())),
+        ),
     ];
     let company = vec![
-        ("name".to_string(), JsonNode::new(JsonValue::String("TechCorp".to_string()))),
-        ("founded".to_string(), JsonNode::new(JsonValue::Number(2010.0))),
-        ("headquarters".to_string(), JsonNode::new(JsonValue::Object(headquarters))),
+        (
+            "name".to_string(),
+            JsonNode::new(JsonValue::String("TechCorp".to_string())),
+        ),
+        (
+            "founded".to_string(),
+            JsonNode::new(JsonValue::Number(2010.0)),
+        ),
+        (
+            "headquarters".to_string(),
+            JsonNode::new(JsonValue::Object(headquarters)),
+        ),
     ];
-    let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
-        ("company".to_string(), JsonNode::new(JsonValue::Object(company))),
-    ])));
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![(
+        "company".to_string(),
+        JsonNode::new(JsonValue::Object(company)),
+    )])));
     let mut state = EditorState::new(tree);
 
     // Verify deep nesting is expanded
@@ -1272,15 +1302,15 @@ fn test_add_object_after_scalar_preserves_nested_sibling_expansion() {
 
     // Position cursor on "name" (first field in company)
     state.cursor_mut().set_path(vec![0, 0]);
-    
+
     // Press 'o' to add an object after name
     state.start_add_container_operation(true); // true = object
-    
+
     // Enter key "xxx"
     for ch in "xxx".chars() {
         state.push_to_add_key_buffer(ch);
     }
-    
+
     // Commit
     state.commit_container_add().unwrap();
 
@@ -1315,15 +1345,17 @@ fn test_expand_all_expands_entire_subtree() {
     use jsonquill::editor::state::EditorState;
 
     // Create nested structure
-    let deep = vec![
-        ("x".to_string(), JsonNode::new(JsonValue::Number(1.0))),
-    ];
-    let nested = vec![
-        ("deep".to_string(), JsonNode::new(JsonValue::Object(deep))),
-    ];
+    let deep = vec![("x".to_string(), JsonNode::new(JsonValue::Number(1.0)))];
+    let nested = vec![("deep".to_string(), JsonNode::new(JsonValue::Object(deep)))];
     let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
-        ("nested".to_string(), JsonNode::new(JsonValue::Object(nested))),
-        ("other".to_string(), JsonNode::new(JsonValue::String("value".to_string()))),
+        (
+            "nested".to_string(),
+            JsonNode::new(JsonValue::Object(nested)),
+        ),
+        (
+            "other".to_string(),
+            JsonNode::new(JsonValue::String("value".to_string())),
+        ),
     ])));
     let mut state = EditorState::new(tree);
 
@@ -1339,8 +1371,14 @@ fn test_expand_all_expands_entire_subtree() {
     state.expand_all_at_cursor();
 
     // Verify everything is expanded
-    assert!(state.tree_view().is_expanded(&[0]), "nested should be expanded");
-    assert!(state.tree_view().is_expanded(&[0, 0]), "deep should be expanded");
+    assert!(
+        state.tree_view().is_expanded(&[0]),
+        "nested should be expanded"
+    );
+    assert!(
+        state.tree_view().is_expanded(&[0, 0]),
+        "deep should be expanded"
+    );
 }
 
 #[test]
@@ -1350,15 +1388,17 @@ fn test_collapse_all_collapses_entire_subtree() {
     use jsonquill::editor::state::EditorState;
 
     // Create nested structure
-    let deep = vec![
-        ("x".to_string(), JsonNode::new(JsonValue::Number(1.0))),
-    ];
-    let nested = vec![
-        ("deep".to_string(), JsonNode::new(JsonValue::Object(deep))),
-    ];
+    let deep = vec![("x".to_string(), JsonNode::new(JsonValue::Number(1.0)))];
+    let nested = vec![("deep".to_string(), JsonNode::new(JsonValue::Object(deep)))];
     let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
-        ("nested".to_string(), JsonNode::new(JsonValue::Object(nested))),
-        ("other".to_string(), JsonNode::new(JsonValue::String("value".to_string()))),
+        (
+            "nested".to_string(),
+            JsonNode::new(JsonValue::Object(nested)),
+        ),
+        (
+            "other".to_string(),
+            JsonNode::new(JsonValue::String("value".to_string())),
+        ),
     ])));
     let mut state = EditorState::new(tree);
 
@@ -1371,6 +1411,12 @@ fn test_collapse_all_collapses_entire_subtree() {
     state.collapse_all_at_cursor();
 
     // Verify everything is collapsed
-    assert!(!state.tree_view().is_expanded(&[0]), "nested should be collapsed");
-    assert!(!state.tree_view().is_expanded(&[0, 0]), "deep should be collapsed");
+    assert!(
+        !state.tree_view().is_expanded(&[0]),
+        "nested should be collapsed"
+    );
+    assert!(
+        !state.tree_view().is_expanded(&[0, 0]),
+        "deep should be collapsed"
+    );
 }

@@ -114,6 +114,11 @@ impl UndoTree {
         self.nodes.len()
     }
 
+    /// Returns true if the tree is empty.
+    pub fn is_empty(&self) -> bool {
+        self.nodes.is_empty()
+    }
+
     /// Returns the node limit.
     pub fn limit(&self) -> usize {
         self.limit

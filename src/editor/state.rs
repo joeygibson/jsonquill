@@ -722,14 +722,15 @@ impl EditorState {
         let current_path = self.cursor.path().to_vec();
 
         // Check if we're expanding a JSONL line (direct child of JsonlRoot)
-        let is_jsonl_line = current_path.len() == 1
-            && matches!(self.tree.root().value(), JsonValue::JsonlRoot(_));
+        let is_jsonl_line =
+            current_path.len() == 1 && matches!(self.tree.root().value(), JsonValue::JsonlRoot(_));
 
         let was_expanded = self.tree_view.is_expanded(&current_path);
 
         if is_jsonl_line && !was_expanded {
             // Expanding a JSONL line - expand entire tree within it
-            self.tree_view.expand_node_and_descendants(&self.tree, &current_path);
+            self.tree_view
+                .expand_node_and_descendants(&self.tree, &current_path);
         } else {
             // Normal toggle for non-JSONL or collapsing
             self.tree_view.toggle_expand(&current_path);
@@ -741,14 +742,16 @@ impl EditorState {
     /// Fully expands the node at the cursor and all its descendants.
     pub fn expand_all_at_cursor(&mut self) {
         let current_path = self.cursor.path().to_vec();
-        self.tree_view.expand_node_and_descendants(&self.tree, &current_path);
+        self.tree_view
+            .expand_node_and_descendants(&self.tree, &current_path);
         self.tree_view.rebuild(&self.tree);
     }
 
     /// Fully collapses the node at the cursor and all its descendants.
     pub fn collapse_all_at_cursor(&mut self) {
         let current_path = self.cursor.path().to_vec();
-        self.tree_view.collapse_node_and_descendants(&self.tree, &current_path);
+        self.tree_view
+            .collapse_node_and_descendants(&self.tree, &current_path);
         self.tree_view.rebuild(&self.tree);
     }
 
@@ -1385,7 +1388,7 @@ impl EditorState {
                 crate::document::node::JsonValue::Object(_)
                 | crate::document::node::JsonValue::Array(_)
                 | crate::document::node::JsonValue::JsonlRoot(_) => {
-                    return; // Can't edit containers
+                    // Can't edit containers
                 }
                 crate::document::node::JsonValue::String(s) => {
                     // Pre-populate with current string value (without JSON quotes)
@@ -2053,7 +2056,10 @@ impl EditorState {
                 match self.tree.get_node(parent_path) {
                     Some(node) => node,
                     None => {
-                        self.set_message("Invalid cursor position".to_string(), MessageLevel::Error);
+                        self.set_message(
+                            "Invalid cursor position".to_string(),
+                            MessageLevel::Error,
+                        );
                         return;
                     }
                 }
@@ -2081,7 +2087,10 @@ impl EditorState {
 
         // Insert directly into array (no key needed)
         if !parent_is_object {
-            match self.tree.insert_node_in_array(&insertion_path, container_node) {
+            match self
+                .tree
+                .insert_node_in_array(&insertion_path, container_node)
+            {
                 Ok(_) => {
                     self.tree_view_mut()
                         .update_paths_after_insertion(&insertion_path);
@@ -2119,10 +2128,7 @@ impl EditorState {
 
         // Can't rename root
         if current_path.is_empty() {
-            self.set_message(
-                "Cannot rename root node".to_string(),
-                MessageLevel::Error,
-            );
+            self.set_message("Cannot rename root node".to_string(), MessageLevel::Error);
             return;
         }
 
@@ -2169,8 +2175,8 @@ impl EditorState {
 
     /// Commits the rename operation, updating the key name in the object.
     pub fn commit_rename(&mut self) -> anyhow::Result<()> {
-        use anyhow::anyhow;
         use crate::document::node::JsonValue;
+        use anyhow::anyhow;
 
         let new_key = self
             .edit_buffer
