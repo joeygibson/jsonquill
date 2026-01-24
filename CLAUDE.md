@@ -146,6 +146,8 @@ Movement commands can be prefixed with a count (e.g., `3j` to move down 3 lines,
 
 j/k         - Move down/up
 h/l         - Collapse/expand node
+E           - Fully expand current node and all descendants
+C           - Fully collapse current node and all descendants
 gg          - Jump to top of document
 G           - Jump to bottom of document
 <count>g    - Jump to specific line number (e.g., `10g` goes to line 10)

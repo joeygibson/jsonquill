@@ -142,6 +142,19 @@ impl TreeViewState {
         }
     }
 
+    /// Collapses a specific node and all its descendants.
+    ///
+    /// Removes the expansion state for the node and all paths underneath it.
+    pub fn collapse_node_and_descendants(&mut self, tree: &JsonTree, path: &[usize]) {
+        // First collapse the node itself
+        self.expanded_paths.remove(path);
+
+        // Then collapse all descendants
+        if let Some(node) = tree.get_node(path) {
+            self.collapse_all_recursive(node, path);
+        }
+    }
+
     /// Rebuilds the list of visible lines from the JSON tree.
     ///
     /// This should be called after the tree changes or expand/collapse state changes.
@@ -215,6 +228,32 @@ impl TreeViewState {
                     if child.value().is_container() {
                         self.expanded_paths.insert(child_path.clone());
                         self.expand_all_recursive(child, &child_path);
+                    }
+                }
+            }
+            _ => {}
+        }
+    }
+
+    fn collapse_all_recursive(&mut self, node: &JsonNode, path: &[usize]) {
+        match node.value() {
+            JsonValue::Object(entries) => {
+                for (i, (_, child)) in entries.iter().enumerate() {
+                    let child_path: Vec<usize> =
+                        path.iter().copied().chain(std::iter::once(i)).collect();
+                    if child.value().is_container() {
+                        self.expanded_paths.remove(&child_path);
+                        self.collapse_all_recursive(child, &child_path);
+                    }
+                }
+            }
+            JsonValue::Array(elements) | JsonValue::JsonlRoot(elements) => {
+                for (i, child) in elements.iter().enumerate() {
+                    let child_path: Vec<usize> =
+                        path.iter().copied().chain(std::iter::once(i)).collect();
+                    if child.value().is_container() {
+                        self.expanded_paths.remove(&child_path);
+                        self.collapse_all_recursive(child, &child_path);
                     }
                 }
             }

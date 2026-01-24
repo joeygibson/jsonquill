@@ -500,6 +500,14 @@ impl InputHandler {
                         state.toggle_expand_at_cursor();
                     }
                 }
+                InputEvent::ExpandAll => {
+                    state.clear_pending();
+                    state.expand_all_at_cursor();
+                }
+                InputEvent::CollapseAll => {
+                    state.clear_pending();
+                    state.collapse_all_at_cursor();
+                }
                 InputEvent::Yank => {
                     use crate::editor::state::MessageLevel;
                     // Check if this is the second 'y' press

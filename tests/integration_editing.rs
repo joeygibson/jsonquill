@@ -1307,3 +1307,70 @@ fn test_add_object_after_scalar_preserves_nested_sibling_expansion() {
         "coordinates (now at [0, 3, 0, 2]) should still be expanded"
     );
 }
+
+#[test]
+fn test_expand_all_expands_entire_subtree() {
+    use jsonquill::document::node::{JsonNode, JsonValue};
+    use jsonquill::document::tree::JsonTree;
+    use jsonquill::editor::state::EditorState;
+
+    // Create nested structure
+    let deep = vec![
+        ("x".to_string(), JsonNode::new(JsonValue::Number(1.0))),
+    ];
+    let nested = vec![
+        ("deep".to_string(), JsonNode::new(JsonValue::Object(deep))),
+    ];
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
+        ("nested".to_string(), JsonNode::new(JsonValue::Object(nested))),
+        ("other".to_string(), JsonNode::new(JsonValue::String("value".to_string()))),
+    ])));
+    let mut state = EditorState::new(tree);
+
+    // Collapse all first
+    state.cursor_mut().set_path(vec![0]);
+    state.collapse_all_at_cursor();
+
+    // Verify everything is collapsed
+    assert!(!state.tree_view().is_expanded(&[0]));
+    assert!(!state.tree_view().is_expanded(&[0, 0]));
+
+    // Now expand all
+    state.expand_all_at_cursor();
+
+    // Verify everything is expanded
+    assert!(state.tree_view().is_expanded(&[0]), "nested should be expanded");
+    assert!(state.tree_view().is_expanded(&[0, 0]), "deep should be expanded");
+}
+
+#[test]
+fn test_collapse_all_collapses_entire_subtree() {
+    use jsonquill::document::node::{JsonNode, JsonValue};
+    use jsonquill::document::tree::JsonTree;
+    use jsonquill::editor::state::EditorState;
+
+    // Create nested structure
+    let deep = vec![
+        ("x".to_string(), JsonNode::new(JsonValue::Number(1.0))),
+    ];
+    let nested = vec![
+        ("deep".to_string(), JsonNode::new(JsonValue::Object(deep))),
+    ];
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
+        ("nested".to_string(), JsonNode::new(JsonValue::Object(nested))),
+        ("other".to_string(), JsonNode::new(JsonValue::String("value".to_string()))),
+    ])));
+    let mut state = EditorState::new(tree);
+
+    // Everything starts expanded
+    assert!(state.tree_view().is_expanded(&[0]));
+    assert!(state.tree_view().is_expanded(&[0, 0]));
+
+    // Collapse all
+    state.cursor_mut().set_path(vec![0]);
+    state.collapse_all_at_cursor();
+
+    // Verify everything is collapsed
+    assert!(!state.tree_view().is_expanded(&[0]), "nested should be collapsed");
+    assert!(!state.tree_view().is_expanded(&[0, 0]), "deep should be collapsed");
+}

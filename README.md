@@ -97,6 +97,8 @@ jsonquill data.jsonl
 | `↓` / `↑` | Move down / up | Arrow keys also work |
 | `h` / `l` | Collapse / expand node | Toggle node expansion state |
 | `←` / `→` | Collapse / expand node | Arrow keys also work |
+| `E` | Fully expand subtree | Expands current node and all descendants |
+| `C` | Fully collapse subtree | Collapses current node and all descendants |
 | `gg` | Jump to top of document | |
 | `G` | Jump to bottom of document | |
 | `<count>g` | Jump to line number | e.g., `10g` jumps to line 10 |

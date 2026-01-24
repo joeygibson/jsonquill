@@ -736,6 +736,20 @@ impl EditorState {
         self.tree_view.rebuild(&self.tree);
     }
 
+    /// Fully expands the node at the cursor and all its descendants.
+    pub fn expand_all_at_cursor(&mut self) {
+        let current_path = self.cursor.path().to_vec();
+        self.tree_view.expand_node_and_descendants(&self.tree, &current_path);
+        self.tree_view.rebuild(&self.tree);
+    }
+
+    /// Fully collapses the node at the cursor and all its descendants.
+    pub fn collapse_all_at_cursor(&mut self) {
+        let current_path = self.cursor.path().to_vec();
+        self.tree_view.collapse_node_and_descendants(&self.tree, &current_path);
+        self.tree_view.rebuild(&self.tree);
+    }
+
     /// Returns the current scroll offset (top line of viewport).
     pub fn scroll_offset(&self) -> usize {
         self.scroll_offset

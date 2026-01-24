@@ -59,6 +59,10 @@ pub enum InputEvent {
     AddObject,
     /// Rename object key
     Rename,
+    /// Fully expand current subtree
+    ExpandAll,
+    /// Fully collapse current subtree
+    CollapseAll,
     /// Insert a character in insert mode
     InsertCharacter(char),
     /// Backspace in insert mode
@@ -131,6 +135,8 @@ pub fn map_key_event(event: Event, mode: &EditorMode) -> InputEvent {
             Key::Char('a') => InputEvent::AddArray,
             Key::Char('o') => InputEvent::AddObject,
             Key::Char('r') => InputEvent::Rename,
+            Key::Char('E') => InputEvent::ExpandAll,
+            Key::Char('C') => InputEvent::CollapseAll,
             Key::Down => InputEvent::MoveDown,
             Key::Up => InputEvent::MoveUp,
             Key::Left => InputEvent::MoveLeft,

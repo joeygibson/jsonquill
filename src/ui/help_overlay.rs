@@ -44,6 +44,14 @@ pub fn render_help_overlay(f: &mut Frame, colors: &ThemeColors, scroll: usize) {
             Span::raw("Collapse/expand node"),
         ]),
         Line::from(vec![
+            Span::styled("  E             ", Style::default().fg(colors.number)),
+            Span::raw("Fully expand current subtree"),
+        ]),
+        Line::from(vec![
+            Span::styled("  C             ", Style::default().fg(colors.number)),
+            Span::raw("Fully collapse current subtree"),
+        ]),
+        Line::from(vec![
             Span::styled("  gg            ", Style::default().fg(colors.number)),
             Span::raw("Jump to top of document"),
         ]),
