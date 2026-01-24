@@ -38,7 +38,30 @@ cargo test -- --nocapture
 
 # Build optimized release binary
 cargo build --release
+
+# Format code
+cargo fmt
+
+# Run linter
+cargo clippy
 ```
+
+## Pre-Commit Checklist
+
+**ALWAYS run these commands before committing:**
+
+```bash
+# 1. Format code to ensure consistent style
+cargo fmt
+
+# 2. Run clippy to catch common mistakes and enforce best practices
+cargo clippy
+
+# 3. Run all tests to ensure nothing broke
+cargo test
+```
+
+If `cargo clippy` reports warnings, fix them before committing. If `cargo test` fails, investigate and fix the issues.
 
 ## Architecture
 
