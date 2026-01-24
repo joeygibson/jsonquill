@@ -311,18 +311,10 @@ impl InputHandler {
                 }
             }
 
-            // Handle help toggle in all modes
-            if let Key::Char('?') = key {
-                if *state.mode() == EditorMode::Normal {
-                    state.toggle_help();
-                    return Ok(false);
-                }
-            }
-
             // If help is shown, handle scrolling and closing
             if state.show_help() {
                 match key {
-                    Key::Esc | Key::Char('?') => {
+                    Key::Esc | Key::F(1) => {
                         state.toggle_help();
                         return Ok(false);
                     }
@@ -449,6 +441,13 @@ impl InputHandler {
                 InputEvent::EnterSearchMode => {
                     state.clear_pending();
                     state.clear_search_buffer();
+                    state.set_search_forward(true);
+                    state.set_mode(EditorMode::Search);
+                }
+                InputEvent::EnterReverseSearchMode => {
+                    state.clear_pending();
+                    state.clear_search_buffer();
+                    state.set_search_forward(false);
                     state.set_mode(EditorMode::Search);
                 }
                 InputEvent::NextSearchResult => {
@@ -467,6 +466,10 @@ impl InputHandler {
                             MessageLevel::Warning,
                         );
                     }
+                }
+                InputEvent::Help => {
+                    state.clear_pending();
+                    state.toggle_help();
                 }
                 InputEvent::ExitMode => {
                     state.clear_pending();
@@ -849,6 +852,10 @@ impl InputHandler {
         }
 
         match command {
+            "help" => {
+                state.toggle_help();
+                return Ok(false);
+            }
             "q" => {
                 if state.is_dirty() {
                     state.set_message(

@@ -156,8 +156,9 @@ Ctrl-u      - Page up (half page)
 Arrow keys  - Also work for navigation
 
 # Search
-/           - Enter SEARCH mode
-n           - Jump to next search result
+/           - Start forward search (searches down through document)
+?           - Start backward search (searches up through document)
+n           - Jump to next match in search direction
 Esc         - Exit SEARCH mode
 
 # Modes
@@ -165,7 +166,7 @@ e           - Enter INSERT mode (edit current value)
 :           - Enter COMMAND mode
 /           - Enter SEARCH mode
 Esc         - Return to NORMAL mode
-?           - Toggle help overlay
+F1 / :help  - Toggle help overlay
 q           - Quit (warns if unsaved, use :q! to force)
 
 # INSERT mode
@@ -203,6 +204,7 @@ Esc         - Cancel editing and return to NORMAL mode
 :set save     - Save settings to config file
 :undo         - Undo last change
 :redo         - Redo last undone change
+:help         - Show help overlay
 
 # Editing (NORMAL mode)
 Commands can be prefixed with a count (e.g., `3dd` to delete 3 nodes, `5yy` to yank 5 nodes).

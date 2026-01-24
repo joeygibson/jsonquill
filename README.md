@@ -147,8 +147,9 @@ jsonquill data.jsonl
 
 | Key | Action | Description |
 |-----|--------|-------------|
-| `/` | Start search | Enter SEARCH mode to type search query |
-| `n` | Jump to next match | Find next occurrence of search term |
+| `/` | Start forward search | Enter SEARCH mode to search forward through document |
+| `?` | Start backward search | Enter SEARCH mode to search backward through document |
+| `n` | Jump to next match | Find next occurrence in search direction |
 | `Esc` | Exit search mode | Return to NORMAL mode |
 
 ### Commands (COMMAND mode)
@@ -164,6 +165,7 @@ Type `:` to enter command mode, then:
 | `:wq` | Save and quit | Also: `:x` or `ZZ` |
 | `:undo` | Undo last change | Same as `u` in NORMAL mode |
 | `:redo` | Redo last undone change | Same as `Ctrl-r` in NORMAL mode |
+| `:help` | Show help overlay | Same as `F1` in NORMAL mode |
 | `:theme` | List available themes | Shows all built-in themes |
 | `:theme <name>` | Switch theme | e.g., `:theme default-light` |
 | `:set` | Show current settings | Display all configuration values |
@@ -176,7 +178,7 @@ Type `:` to enter command mode, then:
 | Key | Action | Notes |
 |-----|--------|-------|
 | `q` | Quit | Only works in NORMAL mode (same as `:q`) |
-| `?` | Toggle help overlay | Shows all keybindings |
+| `F1` | Toggle help overlay | Shows all keybindings (also `:help`) |
 | `↑` / `↓` | Scroll help | When help overlay is open |
 | `j` / `k` | Scroll help | When help overlay is open |
 

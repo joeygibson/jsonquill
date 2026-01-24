@@ -158,6 +158,7 @@ pub struct EditorState {
     search_buffer: String,
     search_results: Vec<Vec<usize>>,
     search_index: usize,
+    search_forward: bool,
     show_line_numbers: bool,
     edit_buffer: Option<String>,
     edit_cursor: usize,
@@ -239,6 +240,7 @@ impl EditorState {
             search_buffer: String::new(),
             search_results: Vec::new(),
             search_index: 0,
+            search_forward: true,
             show_line_numbers: true,
             edit_buffer: None,
             edit_cursor: 0,
@@ -1265,6 +1267,11 @@ impl EditorState {
         self.search_buffer.clear();
     }
 
+    /// Sets the search direction.
+    pub fn set_search_forward(&mut self, forward: bool) {
+        self.search_forward = forward;
+    }
+
     /// Executes a search for the current search buffer text.
     pub fn execute_search(&mut self) {
         if self.search_buffer.is_empty() {
@@ -1298,19 +1305,34 @@ impl EditorState {
             }
         }
 
-        // Jump to first result
+        // Jump to first or last result based on search direction
         if !self.search_results.is_empty() {
-            self.cursor.set_path(self.search_results[0].clone());
+            if self.search_forward {
+                self.search_index = 0;
+                self.cursor.set_path(self.search_results[0].clone());
+            } else {
+                self.search_index = self.search_results.len() - 1;
+                self.cursor
+                    .set_path(self.search_results[self.search_index].clone());
+            }
         }
     }
 
-    /// Jumps to the next search result.
+    /// Jumps to the next search result (respects search direction).
     pub fn next_search_result(&mut self) -> bool {
         if self.search_results.is_empty() {
             return false;
         }
 
-        self.search_index = (self.search_index + 1) % self.search_results.len();
+        if self.search_forward {
+            self.search_index = (self.search_index + 1) % self.search_results.len();
+        } else {
+            self.search_index = if self.search_index == 0 {
+                self.search_results.len() - 1
+            } else {
+                self.search_index - 1
+            };
+        }
         self.cursor
             .set_path(self.search_results[self.search_index].clone());
         true

@@ -25,6 +25,8 @@ pub enum InputEvent {
     EnterCommandMode,
     /// Enter search mode (from normal mode)
     EnterSearchMode,
+    /// Enter reverse search mode (from normal mode)
+    EnterReverseSearchMode,
     /// Exit current mode back to normal mode
     ExitMode,
     /// Delete current node
@@ -39,6 +41,8 @@ pub enum InputEvent {
     SaveAndQuit,
     /// Jump to next search result
     NextSearchResult,
+    /// Toggle help overlay
+    Help,
     /// Jump to top of document (gg)
     JumpToTop,
     /// Jump to bottom of document (G)
@@ -121,6 +125,7 @@ pub fn map_key_event(event: Event, mode: &EditorMode) -> InputEvent {
             Key::Char('l') => InputEvent::MoveRight,
             Key::Char(':') => InputEvent::EnterCommandMode,
             Key::Char('/') => InputEvent::EnterSearchMode,
+            Key::Char('?') => InputEvent::EnterReverseSearchMode,
             Key::Char('n') => InputEvent::NextSearchResult,
             Key::Char('d') => InputEvent::Delete,
             Key::Char('y') => InputEvent::Yank,
@@ -141,6 +146,7 @@ pub fn map_key_event(event: Event, mode: &EditorMode) -> InputEvent {
             Key::Up => InputEvent::MoveUp,
             Key::Left => InputEvent::MoveLeft,
             Key::Right => InputEvent::MoveRight,
+            Key::F(1) => InputEvent::Help,
             _ => InputEvent::Unknown,
         },
         EditorMode::Insert => match key {
