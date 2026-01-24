@@ -4,8 +4,9 @@
 //! - Current mode (NORMAL, INSERT, COMMAND)
 //! - Filename (or "[No Name]" if unsaved)
 //! - Dirty indicator "[+]" for unsaved changes
+//! - Cursor position (row/total)
 //!
-//! Example status line: `NORMAL | data.json [+]`
+//! Example status line: `NORMAL | data.json [+]                    5/20`
 
 use crate::editor::state::EditorState;
 use crate::theme::colors::ThemeColors;
@@ -52,9 +53,9 @@ pub fn render_status_line(f: &mut Frame, area: Rect, state: &EditorState, colors
     let left = format!("{} | {}{}", mode_text, filename, dirty_indicator);
 
     // Get cursor position
-    let (row, col) = state.cursor_position();
+    let row = state.cursor_position().0;
     let total = state.total_lines();
-    let right = format!("{},{} {}/{}", row, col, row, total);
+    let right = format!("{}/{}", row, total);
 
     // Calculate padding to position right-aligned text
     let total_width = area.width as usize;
