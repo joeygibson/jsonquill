@@ -14,11 +14,11 @@ use jsonquill::input::InputHandler;
 use jsonquill::theme::get_builtin_theme;
 use jsonquill::ui::UI;
 
-/// JSON Quill - A terminal-based JSON editor with vim-style keybindings
+/// JSONQuill - A terminal-based JSON editor with vim-style keybindings
 #[derive(Parser)]
 #[command(name = "jsonquill")]
 #[command(version)]
-#[command(about = "JSON Quill - A terminal-based JSON editor with vim-style keybindings", long_about = None)]
+#[command(about = "JSONQuill - A terminal-based JSON editor with vim-style keybindings", long_about = None)]
 struct Cli {
     /// JSON file to edit (omit to read from stdin if piped, or create empty document if interactive)
     file: Option<String>,

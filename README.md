@@ -6,7 +6,7 @@
   </picture>
 </p>
 
-# JSON Quill
+# JSONQuill
 
 A terminal-based structural JSON editor with vim-style keybindings.
 
@@ -32,7 +32,7 @@ See [CLAUDE.md](CLAUDE.md) for detailed feature list and developer documentation
 
 ## Description
 
-JSON Quill is a Rust-based terminal application for viewing and editing JSON files in a structured, tree-like format. It provides an intuitive vim-style interface for navigating and manipulating complex JSON documents directly in the terminal.
+JSONQuill is a Rust-based terminal application for viewing and editing JSON files in a structured, tree-like format. It provides an intuitive vim-style interface for navigating and manipulating complex JSON documents directly in the terminal.
 
 ## Tech Stack
 
@@ -82,7 +82,7 @@ curl -s https://jsonplaceholder.typicode.com/users/1 | jsonquill
 
 ### JSONL Support
 
-JSON Quill supports JSONL (JSON Lines) files with the `.jsonl` or `.ndjson` extension:
+JSONQuill supports JSONL (JSON Lines) files with the `.jsonl` or `.ndjson` extension:
 
 ```bash
 # Open a JSONL file
@@ -198,7 +198,7 @@ Type `:` to enter command mode, then:
 
 ## Value Parsing
 
-When adding or editing values, JSON Quill automatically detects the type:
+When adding or editing values, JSONQuill automatically detects the type:
 
 - `true` / `false` → Boolean
 - `null` → Null
@@ -212,7 +212,7 @@ Examples:
 
 ## Configuration
 
-JSON Quill supports a configuration file at `~/.config/jsonquill/config.toml`.
+JSONQuill supports a configuration file at `~/.config/jsonquill/config.toml`.
 
 ### Config File Format
 
