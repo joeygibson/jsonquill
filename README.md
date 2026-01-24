@@ -1,3 +1,11 @@
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/jsonquill-dark.png" />
+    <source media="(prefers-color-scheme: light)" srcset="assets/jsonquill-light.png" />
+    <img alt="jsonquill logo" src="assets/jsonquill-readme-light.png" width="600" />
+  </picture>
+</p>
+
 # JSON Quill
 
 A terminal-based structural JSON editor with vim-style keybindings.
