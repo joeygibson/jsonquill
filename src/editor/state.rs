@@ -889,6 +889,122 @@ impl EditorState {
         self.cursor.set_path(lines[new_cursor_idx].path.clone());
     }
 
+    /// Moves the cursor to the next sibling node.
+    ///
+    /// Siblings are nodes that share the same parent (same path except for last index).
+    /// This increments the last index in the current path and moves there if valid.
+    /// If at the last sibling or at root, does nothing.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use jsonquill::editor::state::EditorState;
+    /// use jsonquill::document::node::{JsonNode, JsonValue};
+    /// use jsonquill::document::tree::JsonTree;
+    ///
+    /// let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
+    ///     ("a".to_string(), JsonNode::new(JsonValue::Number(1.0))),
+    ///     ("b".to_string(), JsonNode::new(JsonValue::Number(2.0))),
+    ///     ("c".to_string(), JsonNode::new(JsonValue::Number(3.0))),
+    /// ])));
+    /// let mut state = EditorState::new(tree);
+    ///
+    /// // Initially at first sibling [0]
+    /// assert_eq!(state.cursor().path(), &[0]);
+    ///
+    /// // Move to next sibling [1]
+    /// state.move_to_next_sibling();
+    /// assert_eq!(state.cursor().path(), &[1]);
+    ///
+    /// // Move to next sibling [2]
+    /// state.move_to_next_sibling();
+    /// assert_eq!(state.cursor().path(), &[2]);
+    ///
+    /// // At last sibling, stays at [2]
+    /// state.move_to_next_sibling();
+    /// assert_eq!(state.cursor().path(), &[2]);
+    /// ```
+    pub fn move_to_next_sibling(&mut self) {
+        let current_path = self.cursor.path();
+
+        // Root has no siblings
+        if current_path.is_empty() {
+            return;
+        }
+
+        // Try to increment the last index
+        let mut next_path = current_path.to_vec();
+        let last_idx = next_path.len() - 1;
+        next_path[last_idx] += 1;
+
+        // Check if this path exists in the tree
+        if self.tree.get_node(&next_path).is_some() {
+            self.cursor.set_path(next_path);
+        }
+        // If it doesn't exist, we're at the last sibling - do nothing
+    }
+
+    /// Moves the cursor to the previous sibling node.
+    ///
+    /// Siblings are nodes that share the same parent (same path except for last index).
+    /// This decrements the last index in the current path and moves there if valid.
+    /// If at the first sibling or at root, does nothing.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use jsonquill::editor::state::EditorState;
+    /// use jsonquill::document::node::{JsonNode, JsonValue};
+    /// use jsonquill::document::tree::JsonTree;
+    ///
+    /// let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
+    ///     ("a".to_string(), JsonNode::new(JsonValue::Number(1.0))),
+    ///     ("b".to_string(), JsonNode::new(JsonValue::Number(2.0))),
+    ///     ("c".to_string(), JsonNode::new(JsonValue::Number(3.0))),
+    /// ])));
+    /// let mut state = EditorState::new(tree);
+    ///
+    /// // Move to last sibling first
+    /// state.cursor_mut().set_path(vec![2]);
+    ///
+    /// // Move to previous sibling [1]
+    /// state.move_to_previous_sibling();
+    /// assert_eq!(state.cursor().path(), &[1]);
+    ///
+    /// // Move to previous sibling [0]
+    /// state.move_to_previous_sibling();
+    /// assert_eq!(state.cursor().path(), &[0]);
+    ///
+    /// // At first sibling, stays at [0]
+    /// state.move_to_previous_sibling();
+    /// assert_eq!(state.cursor().path(), &[0]);
+    /// ```
+    pub fn move_to_previous_sibling(&mut self) {
+        let current_path = self.cursor.path();
+
+        // Root has no siblings
+        if current_path.is_empty() {
+            return;
+        }
+
+        // Try to decrement the last index
+        let last_idx = current_path.len() - 1;
+        let current_index = current_path[last_idx];
+
+        // If already at index 0, we're at the first sibling
+        if current_index == 0 {
+            return;
+        }
+
+        let mut prev_path = current_path.to_vec();
+        prev_path[last_idx] = current_index - 1;
+
+        // Check if this path exists in the tree (should always exist if index > 0)
+        if self.tree.get_node(&prev_path).is_some() {
+            self.cursor.set_path(prev_path);
+        }
+    }
+
     /// Returns the current message, if any.
     pub fn message(&self) -> Option<&Message> {
         self.message.as_ref()

@@ -118,6 +118,8 @@ jsonquill data.jsonl
 | `<count>g` | Jump to line number | e.g., `10g` jumps to line 10 |
 | `Ctrl-d` | Page down | Scroll half page down |
 | `Ctrl-u` | Page up | Scroll half page up |
+| `}` | Jump to next sibling | Move to the next node at the same level |
+| `{` | Jump to previous sibling | Move to the previous node at the same level |
 
 ### Modes
 

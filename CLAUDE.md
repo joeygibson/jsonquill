@@ -116,8 +116,7 @@ Implemented modules:
 **Known Issues / TODO:**
 
 **Navigation Enhancements:**
-- ❌ **No sibling navigation** - `{/}` to jump to previous/next sibling not implemented
-- ❌ **No previous search** - `N` for previous search match not implemented
+- ❌ **No previous search** - `N` for previous search match not implemented (note: `/` and `?` already provide forward/backward search with `n`)
 
 **Advanced Features:**
 - ❌ **No named registers** - `"ayy`, `"ap` for named register operations
@@ -153,6 +152,8 @@ G           - Jump to bottom of document
 <count>g    - Jump to specific line number (e.g., `10g` goes to line 10)
 Ctrl-d      - Page down (half page)
 Ctrl-u      - Page up (half page)
+}           - Jump to next sibling (same parent, next index)
+{           - Jump to previous sibling (same parent, previous index)
 Arrow keys  - Also work for navigation
 
 # Search

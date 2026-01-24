@@ -720,6 +720,14 @@ impl InputHandler {
                     state.clear_pending();
                     state.start_rename_operation();
                 }
+                InputEvent::NextSibling => {
+                    state.clear_pending();
+                    state.move_to_next_sibling();
+                }
+                InputEvent::PreviousSibling => {
+                    state.clear_pending();
+                    state.move_to_previous_sibling();
+                }
                 InputEvent::InsertCharacter(_)
                 | InputEvent::InsertBackspace
                 | InputEvent::InsertEnter => {
