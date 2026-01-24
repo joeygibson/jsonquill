@@ -104,9 +104,10 @@ fn test_previous_sibling_in_array() {
 
 #[test]
 fn test_sibling_navigation_at_root() {
-    let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
-        ("key".to_string(), JsonNode::new(JsonValue::String("value".to_string()))),
-    ])));
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![(
+        "key".to_string(),
+        JsonNode::new(JsonValue::String("value".to_string())),
+    )])));
     let mut state = EditorState::new(tree);
 
     // Move to root
