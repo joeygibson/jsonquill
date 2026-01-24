@@ -1468,6 +1468,70 @@ fn test_start_add_in_root_object() {
 }
 
 #[test]
+fn test_add_array_to_empty_object_should_add_inside() {
+    use jsonquill::document::node::{JsonNode, JsonValue};
+    use jsonquill::document::tree::JsonTree;
+    use jsonquill::editor::state::{AddModeStage, EditorState};
+
+    // BUG: When cursor is on an empty object, pressing 'a' (AddArray)
+    // should add INSIDE the object, not as a sibling.
+    // Start with {"president": {}}
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![(
+        "president".to_string(),
+        JsonNode::new(JsonValue::Object(vec![])),
+    )])));
+    let mut state = EditorState::new(tree);
+
+    // Cursor at "president" object (path [0])
+    state.cursor_mut().set_path(vec![0]);
+
+    // Press 'a' to add an array inside the empty "president" object
+    state.start_add_container_operation(false); // false = array
+
+    // Should be in AwaitingKey stage (for the key name)
+    assert!(matches!(state.add_mode_stage(), &AddModeStage::AwaitingKey));
+
+    // Type "name" for the key
+    for ch in "name".chars() {
+        state.push_to_add_key_buffer(ch);
+    }
+
+    // Press Enter to commit
+    let result = state.commit_container_add();
+    assert!(result.is_ok());
+
+    // Check the result - the array should be INSIDE "president", not a sibling
+    let root = state.tree().root();
+    if let JsonValue::Object(entries) = root.value() {
+        println!("Root object has {} entries", entries.len());
+        for (i, (key, value_node)) in entries.iter().enumerate() {
+            println!("  Entry {}: key='{}', value={:?}", i, key, value_node.value());
+        }
+        // BUG: Currently this fails because the array is added as a sibling at root level
+        // Expected: {"president": {"name": []}}
+        // Actual: {"president": {}, "name": []}
+        assert_eq!(entries.len(), 1, "BUG: Array was added as sibling to 'president' instead of inside it");
+
+        let (key, value_node) = &entries[0];
+        assert_eq!(key, "president");
+        if let JsonValue::Object(president_entries) = value_node.value() {
+            println!("President object has {} entries", president_entries.len());
+            for (i, (key, value_node)) in president_entries.iter().enumerate() {
+                println!("  Entry {}: key='{}', value={:?}", i, key, value_node.value());
+            }
+            assert_eq!(president_entries.len(), 1);
+            let (field_key, field_value_node) = &president_entries[0];
+            assert_eq!(field_key, "name");
+            assert!(matches!(field_value_node.value(), JsonValue::Array(_)));
+        } else {
+            panic!("Expected president to be an object");
+        }
+    } else {
+        panic!("Expected root to be an object");
+    }
+}
+
+#[test]
 fn test_start_add_at_root_scalar_fails() {
     use jsonquill::document::node::{JsonNode, JsonValue};
     use jsonquill::document::tree::JsonTree;

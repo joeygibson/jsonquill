@@ -2141,8 +2141,8 @@ impl EditorState {
             JsonNode::new(JsonValue::Array(vec![]))
         };
 
-        // Determine insertion point and parent type
-        let (insertion_path, parent_is_object) = if current_path.is_empty() {
+        // Special case: if cursor is at root (empty path)
+        if current_path.is_empty() {
             // At root - check if root is a container
             match self.tree.root().value() {
                 JsonValue::Object(_) => {
@@ -2153,7 +2153,30 @@ impl EditorState {
                     self.clipboard = Some(container_node);
                     return;
                 }
-                JsonValue::Array(_) => (vec![0], false),
+                JsonValue::Array(_) => {
+                    // Insert directly into array at position 0
+                    let insertion_path = vec![0];
+                    match self.tree.insert_node_in_array(&insertion_path, container_node) {
+                        Ok(_) => {
+                            self.tree_view_mut().update_paths_after_insertion(&insertion_path);
+                            self.rebuild_tree_view();
+                            self.cursor.set_path(insertion_path.clone());
+                            self.mark_dirty();
+                            self.checkpoint();
+
+                            let msg = if is_object {
+                                "Added empty object"
+                            } else {
+                                "Added empty array"
+                            };
+                            self.set_message(msg.to_string(), MessageLevel::Info);
+                        }
+                        Err(e) => {
+                            self.set_message(format!("Add failed: {}", e), MessageLevel::Error);
+                        }
+                    }
+                    return;
+                }
                 _ => {
                     self.set_message(
                         "Cannot add sibling to root node".to_string(),
@@ -2162,69 +2185,120 @@ impl EditorState {
                     return;
                 }
             }
-        } else {
-            let parent_path = &current_path[..current_path.len() - 1];
-            let current_index = current_path[current_path.len() - 1];
+        }
 
-            let parent = if parent_path.is_empty() {
-                self.tree.root()
-            } else {
-                match self.tree.get_node(parent_path) {
-                    Some(node) => node,
-                    None => {
-                        self.set_message(
-                            "Invalid cursor position".to_string(),
-                            MessageLevel::Error,
-                        );
-                        return;
+        // Check if the current node (not parent) is an EMPTY container
+        // If it's empty, add inside it (consistent with start_add_operation behavior)
+        if let Some(current_node) = self.tree.get_node(&current_path) {
+            match current_node.value() {
+                JsonValue::Array(elements) if elements.is_empty() => {
+                    // Empty array: add inside it
+                    // Ensure the container is expanded so the new child will be visible
+                    if !self.tree_view().is_expanded(&current_path) {
+                        self.tree_view_mut().toggle_expand(&current_path);
                     }
+
+                    let mut insertion_path = current_path.clone();
+                    insertion_path.push(0); // Insert at position 0 (first child)
+
+                    match self.tree.insert_node_in_array(&insertion_path, container_node) {
+                        Ok(_) => {
+                            self.tree_view_mut().update_paths_after_insertion(&insertion_path);
+                            self.rebuild_tree_view();
+                            self.cursor.set_path(insertion_path.clone());
+                            self.mark_dirty();
+                            self.checkpoint();
+
+                            let msg = if is_object {
+                                "Added empty object"
+                            } else {
+                                "Added empty array"
+                            };
+                            self.set_message(msg.to_string(), MessageLevel::Info);
+                        }
+                        Err(e) => {
+                            self.set_message(format!("Add failed: {}", e), MessageLevel::Error);
+                        }
+                    }
+                    return;
                 }
-            };
+                JsonValue::Object(entries) if entries.is_empty() => {
+                    // Empty object: add inside it
+                    // Ensure the container is expanded so the new child will be visible
+                    if !self.tree_view().is_expanded(&current_path) {
+                        self.tree_view_mut().toggle_expand(&current_path);
+                    }
 
-            let mut path = parent_path.to_vec();
-            path.push(current_index + 1);
-
-            match parent.value() {
-                JsonValue::Object(_) => {
                     self.add_mode_stage = AddModeStage::AwaitingKey;
-                    self.add_insertion_point = Some(path);
+                    let mut insertion_path = current_path.clone();
+                    insertion_path.push(0); // Insert at position 0 (first child)
+                    self.add_insertion_point = Some(insertion_path);
                     // For containers in objects, we need a key
                     // Store the container temporarily and wait for key
                     self.clipboard = Some(container_node);
                     return;
                 }
-                JsonValue::Array(_) => (path, false),
                 _ => {
-                    self.set_message("Parent is not a container".to_string(), MessageLevel::Error);
+                    // Non-empty container or scalar: fall through to add sibling
+                }
+            }
+        }
+
+        // Current node is either a scalar or non-empty container
+        // Add sibling after it in parent container
+        let parent_path = &current_path[..current_path.len() - 1];
+        let current_index = current_path[current_path.len() - 1];
+
+        let parent = if parent_path.is_empty() {
+            self.tree.root()
+        } else {
+            match self.tree.get_node(parent_path) {
+                Some(node) => node,
+                None => {
+                    self.set_message(
+                        "Invalid cursor position".to_string(),
+                        MessageLevel::Error,
+                    );
                     return;
                 }
             }
         };
 
-        // Insert directly into array (no key needed)
-        if !parent_is_object {
-            match self
-                .tree
-                .insert_node_in_array(&insertion_path, container_node)
-            {
-                Ok(_) => {
-                    self.tree_view_mut()
-                        .update_paths_after_insertion(&insertion_path);
-                    self.rebuild_tree_view();
-                    self.cursor.set_path(insertion_path.clone());
-                    self.mark_dirty();
-                    self.checkpoint();
+        let mut path = parent_path.to_vec();
+        path.push(current_index + 1);
 
-                    let msg = if is_object {
-                        "Added empty object"
-                    } else {
-                        "Added empty array"
-                    };
-                    self.set_message(msg.to_string(), MessageLevel::Info);
+        match parent.value() {
+            JsonValue::Object(_) => {
+                self.add_mode_stage = AddModeStage::AwaitingKey;
+                self.add_insertion_point = Some(path);
+                // For containers in objects, we need a key
+                // Store the container temporarily and wait for key
+                self.clipboard = Some(container_node);
+            }
+            JsonValue::Array(_) => {
+                // Insert directly into array (no key needed)
+                match self.tree.insert_node_in_array(&path, container_node) {
+                    Ok(_) => {
+                        self.tree_view_mut().update_paths_after_insertion(&path);
+                        self.rebuild_tree_view();
+                        self.cursor.set_path(path.clone());
+                        self.mark_dirty();
+                        self.checkpoint();
+
+                        let msg = if is_object {
+                            "Added empty object"
+                        } else {
+                            "Added empty array"
+                        };
+                        self.set_message(msg.to_string(), MessageLevel::Info);
+                    }
+                    Err(e) => {
+                        self.set_message(format!("Add failed: {}", e), MessageLevel::Error);
+                    }
                 }
-                Err(e) => {
-                    self.set_message(format!("Add failed: {}", e), MessageLevel::Error);
-                }
+            }
+            _ => {
+                self.set_message("Parent is not a container".to_string(), MessageLevel::Error);
             }
         }
     }
