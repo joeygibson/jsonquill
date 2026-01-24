@@ -518,25 +518,32 @@ pub fn render_tree_view(
             spans.push(Span::styled(format!("{}: ", key), key_style));
         }
 
-        // Value
-        let value_color = if line.expandable {
-            // All containers use preview color (they show collapsed preview format)
-            colors.preview
+        // Value - highlight collapsed previews when cursor is on this line
+        let value_style = if is_cursor && line.expandable {
+            // Collapsed containers on cursor line get same highlight as keys
+            // This makes JSONL cursor navigation very visible
+            Style::default()
+                .fg(Color::White)
+                .bg(colors.cursor)
+                .add_modifier(Modifier::BOLD)
         } else {
-            // Scalars use their type-specific colors
-            match line.value_type {
-                ValueType::String => colors.string,
-                ValueType::Number => colors.number,
-                ValueType::Boolean => colors.boolean,
-                ValueType::Null => colors.null,
-                ValueType::Object | ValueType::Array => colors.foreground,
-            }
+            let value_color = if line.expandable {
+                // All containers use preview color (they show collapsed preview format)
+                colors.preview
+            } else {
+                // Scalars use their type-specific colors
+                match line.value_type {
+                    ValueType::String => colors.string,
+                    ValueType::Number => colors.number,
+                    ValueType::Boolean => colors.boolean,
+                    ValueType::Null => colors.null,
+                    ValueType::Object | ValueType::Array => colors.foreground,
+                }
+            };
+            Style::default().fg(value_color)
         };
 
-        spans.push(Span::styled(
-            &line.value_preview,
-            Style::default().fg(value_color),
-        ));
+        spans.push(Span::styled(&line.value_preview, value_style));
 
         lines_to_render.push(Line::from(spans));
     }
