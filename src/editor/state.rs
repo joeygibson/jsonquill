@@ -1751,33 +1751,40 @@ impl EditorState {
         }
 
         // Check if the current node (not parent) is a container
-        // If so, add INSIDE it rather than after it
+        // If it's an EMPTY container, add inside it
+        // If it's a NON-EMPTY container, add as sibling after it (to preserve expansion state)
         if let Some(current_node) = self.tree.get_node(&current_path) {
             match current_node.value() {
-                JsonValue::Array(_) => {
-                    // Current node is an array - add first child inside it
-                    self.add_mode_stage = AddModeStage::AwaitingValue;
-                    let mut insertion_path = current_path.clone();
-                    insertion_path.push(0); // Insert at position 0 (first child)
-                    self.add_insertion_point = Some(insertion_path);
+                JsonValue::Array(elements) => {
+                    // Only add inside if array is empty
+                    if elements.is_empty() {
+                        self.add_mode_stage = AddModeStage::AwaitingValue;
+                        let mut insertion_path = current_path.clone();
+                        insertion_path.push(0); // Insert at position 0 (first child)
+                        self.add_insertion_point = Some(insertion_path);
 
-                    // Enter Insert mode with empty edit buffer
-                    self.edit_buffer = Some(String::new());
-                    self.edit_cursor = 0;
-                    self.set_mode(EditorMode::Insert);
-                    self.reset_cursor_blink();
-                    // Set mode indicator message
-                    self.set_message("-- INSERT --".to_string(), MessageLevel::Info);
-                    return;
+                        // Enter Insert mode with empty edit buffer
+                        self.edit_buffer = Some(String::new());
+                        self.edit_cursor = 0;
+                        self.set_mode(EditorMode::Insert);
+                        self.reset_cursor_blink();
+                        // Set mode indicator message
+                        self.set_message("-- INSERT --".to_string(), MessageLevel::Info);
+                        return;
+                    }
+                    // Non-empty array: fall through to add sibling after
                 }
-                JsonValue::Object(_) => {
-                    // Current node is an object - add first child inside it
-                    self.add_mode_stage = AddModeStage::AwaitingKey;
-                    let mut insertion_path = current_path.clone();
-                    insertion_path.push(0); // Insert at position 0 (first child)
-                    self.add_insertion_point = Some(insertion_path);
-                    // Stay in Normal mode, wait for key input
-                    return;
+                JsonValue::Object(entries) => {
+                    // Only add inside if object is empty
+                    if entries.is_empty() {
+                        self.add_mode_stage = AddModeStage::AwaitingKey;
+                        let mut insertion_path = current_path.clone();
+                        insertion_path.push(0); // Insert at position 0 (first child)
+                        self.add_insertion_point = Some(insertion_path);
+                        // Stay in Normal mode, wait for key input
+                        return;
+                    }
+                    // Non-empty object: fall through to add sibling after
                 }
                 _ => {
                     // Current node is a scalar, fall through to add sibling
