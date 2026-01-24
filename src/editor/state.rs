@@ -1758,6 +1758,11 @@ impl EditorState {
                 JsonValue::Array(elements) => {
                     // Only add inside if array is empty
                     if elements.is_empty() {
+                        // Ensure the container is expanded so the new child will be visible
+                        if !self.tree_view().is_expanded(&current_path) {
+                            self.tree_view_mut().toggle_expand(&current_path);
+                        }
+
                         self.add_mode_stage = AddModeStage::AwaitingValue;
                         let mut insertion_path = current_path.clone();
                         insertion_path.push(0); // Insert at position 0 (first child)
@@ -1777,6 +1782,11 @@ impl EditorState {
                 JsonValue::Object(entries) => {
                     // Only add inside if object is empty
                     if entries.is_empty() {
+                        // Ensure the container is expanded so the new child will be visible
+                        if !self.tree_view().is_expanded(&current_path) {
+                            self.tree_view_mut().toggle_expand(&current_path);
+                        }
+
                         self.add_mode_stage = AddModeStage::AwaitingKey;
                         let mut insertion_path = current_path.clone();
                         insertion_path.push(0); // Insert at position 0 (first child)
