@@ -2156,9 +2156,13 @@ impl EditorState {
                 JsonValue::Array(_) => {
                     // Insert directly into array at position 0
                     let insertion_path = vec![0];
-                    match self.tree.insert_node_in_array(&insertion_path, container_node) {
+                    match self
+                        .tree
+                        .insert_node_in_array(&insertion_path, container_node)
+                    {
                         Ok(_) => {
-                            self.tree_view_mut().update_paths_after_insertion(&insertion_path);
+                            self.tree_view_mut()
+                                .update_paths_after_insertion(&insertion_path);
                             self.rebuild_tree_view();
                             self.cursor.set_path(insertion_path.clone());
                             self.mark_dirty();
@@ -2201,9 +2205,13 @@ impl EditorState {
                     let mut insertion_path = current_path.clone();
                     insertion_path.push(0); // Insert at position 0 (first child)
 
-                    match self.tree.insert_node_in_array(&insertion_path, container_node) {
+                    match self
+                        .tree
+                        .insert_node_in_array(&insertion_path, container_node)
+                    {
                         Ok(_) => {
-                            self.tree_view_mut().update_paths_after_insertion(&insertion_path);
+                            self.tree_view_mut()
+                                .update_paths_after_insertion(&insertion_path);
                             self.rebuild_tree_view();
                             self.cursor.set_path(insertion_path.clone());
                             self.mark_dirty();
@@ -2255,10 +2263,7 @@ impl EditorState {
             match self.tree.get_node(parent_path) {
                 Some(node) => node,
                 None => {
-                    self.set_message(
-                        "Invalid cursor position".to_string(),
-                        MessageLevel::Error,
-                    );
+                    self.set_message("Invalid cursor position".to_string(), MessageLevel::Error);
                     return;
                 }
             }

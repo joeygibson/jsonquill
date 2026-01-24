@@ -1505,19 +1505,33 @@ fn test_add_array_to_empty_object_should_add_inside() {
     if let JsonValue::Object(entries) = root.value() {
         println!("Root object has {} entries", entries.len());
         for (i, (key, value_node)) in entries.iter().enumerate() {
-            println!("  Entry {}: key='{}', value={:?}", i, key, value_node.value());
+            println!(
+                "  Entry {}: key='{}', value={:?}",
+                i,
+                key,
+                value_node.value()
+            );
         }
         // BUG: Currently this fails because the array is added as a sibling at root level
         // Expected: {"president": {"name": []}}
         // Actual: {"president": {}, "name": []}
-        assert_eq!(entries.len(), 1, "BUG: Array was added as sibling to 'president' instead of inside it");
+        assert_eq!(
+            entries.len(),
+            1,
+            "BUG: Array was added as sibling to 'president' instead of inside it"
+        );
 
         let (key, value_node) = &entries[0];
         assert_eq!(key, "president");
         if let JsonValue::Object(president_entries) = value_node.value() {
             println!("President object has {} entries", president_entries.len());
             for (i, (key, value_node)) in president_entries.iter().enumerate() {
-                println!("  Entry {}: key='{}', value={:?}", i, key, value_node.value());
+                println!(
+                    "  Entry {}: key='{}', value={:?}",
+                    i,
+                    key,
+                    value_node.value()
+                );
             }
             assert_eq!(president_entries.len(), 1);
             let (field_key, field_value_node) = &president_entries[0];
