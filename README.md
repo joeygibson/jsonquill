@@ -181,6 +181,7 @@ JSONPath queries allow you to search by structure rather than text:
 |---------|--------|---------|
 | `:path <query>` | JSONPath structural search | `:path $.store.book[*].author` |
 | `:jp <query>` | Short alias for `:path` | `:jp $..price` |
+| `:find <query>` | Execute text search | `:find price` searches for "price" |
 | `:find` | Enter text search mode | Same as pressing `/` |
 
 **Supported JSONPath Syntax:**
@@ -230,6 +231,7 @@ Type `:` to enter command mode, then:
 | `:set save` | Save settings to config | Write current settings to `~/.config/jsonquill/config.toml` |
 | `:path <query>` | JSONPath structural search | e.g., `:path $.store.book[*].author` |
 | `:jp <query>` | Short alias for `:path` | e.g., `:jp $..price` |
+| `:find <query>` | Execute text search | `:find price` searches for "price" |
 | `:find` | Enter text search mode | Same as pressing `/` |
 
 ### Other

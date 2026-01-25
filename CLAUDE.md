@@ -279,6 +279,7 @@ Esc         - Cancel editing and return to NORMAL mode
 :help         - Show help overlay
 :path <query> - Search using JSONPath query (e.g., :path $.store.book[*].author)
 :jp <query>   - Short alias for :path
+:find <query> - Execute text search (e.g., :find price)
 :find         - Enter text search mode (same as /)
 
 # Editing (NORMAL mode)
