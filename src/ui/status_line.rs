@@ -50,7 +50,22 @@ pub fn render_status_line(f: &mut Frame, area: Rect, state: &EditorState, colors
     let filename = state.filename().unwrap_or("[No Name]");
     let dirty_indicator = if state.is_dirty() { " [+]" } else { "" };
 
-    let left = format!("{} | {}{}", mode_text, filename, dirty_indicator);
+    let mut left = format!("{} | {}{}", mode_text, filename, dirty_indicator);
+
+    // Add search results info if available
+    if let Some((current, total)) = state.search_results_info() {
+        use crate::editor::state::SearchType;
+        let search_info = match state.search_type() {
+            Some(SearchType::Text) => {
+                format!(" [Search: \"{}\"] Match {}/{}", state.search_buffer(), current, total)
+            }
+            Some(SearchType::JsonPath(query)) => {
+                format!(" [JSONPath: {}] Match {}/{}", query, current, total)
+            }
+            None => format!(" Match {}/{}", current, total),
+        };
+        left.push_str(&search_info);
+    }
 
     // Get cursor position
     let row = state.cursor_position().0;
@@ -226,5 +241,52 @@ mod tests {
             .map(|c| c.symbol())
             .collect();
         assert!(text.contains("NORMAL"), "Should show NORMAL mode: {}", text);
+    }
+
+    #[test]
+    fn test_status_line_jsonpath_search_results() {
+        let backend = TestBackend::new(120, 3);
+        let mut terminal = Terminal::new(backend).unwrap();
+
+        // Create tree: {"users": [{"name": "Alice"}]}
+        let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![(
+            "users".to_string(),
+            JsonNode::new(JsonValue::Array(vec![JsonNode::new(JsonValue::Object(
+                vec![(
+                    "name".to_string(),
+                    JsonNode::new(JsonValue::String("Alice".to_string())),
+                )],
+            ))])),
+        )])));
+
+        let mut state = EditorState::new(tree);
+        state.set_filename("test.json".to_string());
+
+        // Execute JSONPath search
+        state.execute_jsonpath_search("$.users[0].name");
+
+        let theme = theme::get_builtin_theme("default-dark").unwrap();
+
+        terminal
+            .draw(|f| {
+                let area = f.area();
+                render_status_line(f, area, &state, &theme.colors);
+            })
+            .unwrap();
+
+        let buffer = terminal.backend().buffer();
+        let content = buffer.content();
+
+        let text: String = content.iter().take(120).map(|c| c.symbol()).collect();
+        assert!(
+            text.contains("JSONPath"),
+            "Status line should show JSONPath search type: {}",
+            text
+        );
+        assert!(
+            text.contains("Match 1/1"),
+            "Status line should show match count: {}",
+            text
+        );
     }
 }
