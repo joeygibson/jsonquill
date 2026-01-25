@@ -1172,6 +1172,124 @@ impl EditorState {
         }
     }
 
+    /// Computes the path to the current cursor position.
+    /// Returns None if at root (empty path).
+    ///
+    /// # Arguments
+    /// * `format` - "dot" for `.foo[3].bar`, "bracket" for `["foo"][3]["bar"]`, "jq" for jq-style
+    fn compute_path_string(&self, format: &str) -> Option<String> {
+        let path = self.cursor.path();
+        if path.is_empty() {
+            // At root - different formats handle this differently
+            return match format {
+                "dot" | "jq" => Some(".".to_string()),
+                "bracket" => Some("$".to_string()),
+                _ => None,
+            };
+        }
+
+        let mut result = String::new();
+        let mut current = self.tree.root();
+
+        // Start with root prefix based on format
+        match format {
+            "bracket" => result.push('$'),
+            "dot" | "jq" => {}
+            _ => {}
+        }
+
+        for &index in path.iter() {
+            use crate::document::node::JsonValue;
+            match current.value() {
+                JsonValue::Object(entries) => {
+                    if let Some((key, node)) = entries.get(index) {
+                        match format {
+                            "dot" | "jq" => {
+                                result.push('.');
+                                result.push_str(key);
+                            }
+                            "bracket" => {
+                                result.push('[');
+                                result.push('"');
+                                // Escape quotes in key
+                                for ch in key.chars() {
+                                    if ch == '"' || ch == '\\' {
+                                        result.push('\\');
+                                    }
+                                    result.push(ch);
+                                }
+                                result.push('"');
+                                result.push(']');
+                            }
+                            _ => {}
+                        }
+                        current = node;
+                    } else {
+                        return None;
+                    }
+                }
+                JsonValue::Array(elements) | JsonValue::JsonlRoot(elements) => {
+                    if let Some(node) = elements.get(index) {
+                        result.push('[');
+                        result.push_str(&index.to_string());
+                        result.push(']');
+                        current = node;
+                    } else {
+                        return None;
+                    }
+                }
+                _ => return None,
+            }
+        }
+
+        Some(result)
+    }
+
+    /// Yanks (copies) the path to the current cursor position in dot notation (`.foo[3].bar`).
+    /// Returns true if successful.
+    pub fn yank_path_dot(&mut self) -> bool {
+        if let Some(path_str) = self.compute_path_string("dot") {
+            // Try to copy to system clipboard
+            use arboard::Clipboard;
+            if let Ok(mut clipboard) = Clipboard::new() {
+                if clipboard.set_text(path_str.clone()).is_ok() {
+                    return true;
+                }
+            }
+        }
+        false
+    }
+
+    /// Yanks (copies) the path to the current cursor position in bracket notation (`["foo"][3]["bar"]`).
+    /// Returns true if successful.
+    pub fn yank_path_bracket(&mut self) -> bool {
+        if let Some(path_str) = self.compute_path_string("bracket") {
+            // Try to copy to system clipboard
+            use arboard::Clipboard;
+            if let Ok(mut clipboard) = Clipboard::new() {
+                if clipboard.set_text(path_str.clone()).is_ok() {
+                    return true;
+                }
+            }
+        }
+        false
+    }
+
+    /// Yanks (copies) the path to the current cursor position in jq-style notation.
+    /// Returns true if successful.
+    pub fn yank_path_jq(&mut self) -> bool {
+        if let Some(path_str) = self.compute_path_string("jq") {
+            // Try to copy to system clipboard
+            use arboard::Clipboard;
+            if let Ok(mut clipboard) = Clipboard::new() {
+                if clipboard.set_text(path_str.clone()).is_ok() {
+                    return true;
+                }
+            }
+        }
+        false
+    }
+
     /// Returns whether there's something in the clipboard.
     pub fn has_clipboard(&self) -> bool {
         self.clipboard.is_some()

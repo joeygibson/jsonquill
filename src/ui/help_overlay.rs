@@ -127,6 +127,18 @@ pub fn render_help_overlay(f: &mut Frame, colors: &ThemeColors, scroll: usize) {
             Span::raw("Yank (copy) current node (prefix with count)"),
         ]),
         Line::from(vec![
+            Span::styled("  yp            ", Style::default().fg(colors.number)),
+            Span::raw("Yank path in dot notation (.foo[3].bar)"),
+        ]),
+        Line::from(vec![
+            Span::styled("  yb            ", Style::default().fg(colors.number)),
+            Span::raw("Yank path in bracket notation ([\"foo\"][3][\"bar\"])"),
+        ]),
+        Line::from(vec![
+            Span::styled("  yq            ", Style::default().fg(colors.number)),
+            Span::raw("Yank path in jq style"),
+        ]),
+        Line::from(vec![
             Span::styled("  p/P           ", Style::default().fg(colors.number)),
             Span::raw("Paste after/before cursor"),
         ]),

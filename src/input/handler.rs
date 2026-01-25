@@ -398,6 +398,61 @@ impl InputHandler {
                             return Ok(false);
                         }
                     }
+
+                    // Handle yank path commands (yp, yb, yq)
+                    if state.pending_command() == Some('y') {
+                        use crate::editor::state::MessageLevel;
+                        match c {
+                            'p' => {
+                                state.clear_pending();
+                                if state.yank_path_dot() {
+                                    state.set_message(
+                                        "Path yanked (dot notation)".to_string(),
+                                        MessageLevel::Info,
+                                    );
+                                } else {
+                                    state.set_message(
+                                        "Failed to yank path".to_string(),
+                                        MessageLevel::Error,
+                                    );
+                                }
+                                return Ok(false);
+                            }
+                            'b' => {
+                                state.clear_pending();
+                                if state.yank_path_bracket() {
+                                    state.set_message(
+                                        "Path yanked (bracket notation)".to_string(),
+                                        MessageLevel::Info,
+                                    );
+                                } else {
+                                    state.set_message(
+                                        "Failed to yank path".to_string(),
+                                        MessageLevel::Error,
+                                    );
+                                }
+                                return Ok(false);
+                            }
+                            'q' => {
+                                state.clear_pending();
+                                if state.yank_path_jq() {
+                                    state.set_message(
+                                        "Path yanked (jq style)".to_string(),
+                                        MessageLevel::Info,
+                                    );
+                                } else {
+                                    state.set_message(
+                                        "Failed to yank path".to_string(),
+                                        MessageLevel::Error,
+                                    );
+                                }
+                                return Ok(false);
+                            }
+                            _ => {
+                                // Not a path yank command, continue with normal processing
+                            }
+                        }
+                    }
                 }
 
                 // Handle key input during AwaitingKey stage (before Insert mode)

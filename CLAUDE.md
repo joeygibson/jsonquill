@@ -284,6 +284,9 @@ r           - Rename object key (only works on object keys, not array elements)
             - Pre-populates with current key name
             - Enter to commit, Esc to cancel
 yy          - Yank (copy) current node to clipboard
+yp          - Yank path in dot notation (.foo[3].bar)
+yb          - Yank path in bracket notation (["foo"][3]["bar"])
+yq          - Yank path in jq style
 dd          - Delete current node (removes from tree)
 p           - Paste clipboard content after current node
 P           - Paste clipboard content before current node
