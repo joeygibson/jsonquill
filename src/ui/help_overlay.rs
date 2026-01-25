@@ -72,6 +72,18 @@ pub fn render_help_overlay(f: &mut Frame, colors: &ThemeColors, scroll: usize) {
             Span::raw("Page up"),
         ]),
         Line::from(vec![
+            Span::styled("  zz            ", Style::default().fg(colors.number)),
+            Span::raw("Center cursor on screen"),
+        ]),
+        Line::from(vec![
+            Span::styled("  zt            ", Style::default().fg(colors.number)),
+            Span::raw("Move cursor to top of screen"),
+        ]),
+        Line::from(vec![
+            Span::styled("  zb            ", Style::default().fg(colors.number)),
+            Span::raw("Move cursor to bottom of screen"),
+        ]),
+        Line::from(vec![
             Span::styled("  }             ", Style::default().fg(colors.number)),
             Span::raw("Jump to next sibling"),
         ]),

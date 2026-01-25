@@ -902,6 +902,76 @@ impl EditorState {
         self.cursor.set_path(lines[new_cursor_idx].path.clone());
     }
 
+    /// Centers the current cursor line on the screen (zz command).
+    ///
+    /// Adjusts the scroll offset so the cursor is in the middle of the viewport.
+    /// Does not move the cursor position, only adjusts the viewport.
+    pub fn center_cursor_on_screen(&mut self) {
+        if self.viewport_height == 0 {
+            return;
+        }
+
+        let lines = self.tree_view.lines();
+        if lines.is_empty() {
+            return;
+        }
+
+        let cursor_idx = lines
+            .iter()
+            .position(|l| l.path == self.cursor.path())
+            .unwrap_or(0);
+
+        // Calculate scroll offset to center cursor
+        let half_height = self.viewport_height / 2;
+        self.scroll_offset = cursor_idx.saturating_sub(half_height);
+
+        // Ensure we don't scroll past the end
+        let max_scroll = lines.len().saturating_sub(self.viewport_height);
+        self.scroll_offset = self.scroll_offset.min(max_scroll);
+    }
+
+    /// Positions the current cursor line at the top of the screen (zt command).
+    ///
+    /// Adjusts the scroll offset so the cursor is at the top of the viewport.
+    /// Does not move the cursor position, only adjusts the viewport.
+    pub fn cursor_to_top_of_screen(&mut self) {
+        let lines = self.tree_view.lines();
+        if lines.is_empty() {
+            return;
+        }
+
+        let cursor_idx = lines
+            .iter()
+            .position(|l| l.path == self.cursor.path())
+            .unwrap_or(0);
+
+        // Set scroll offset so cursor is at top
+        self.scroll_offset = cursor_idx;
+    }
+
+    /// Positions the current cursor line at the bottom of the screen (zb command).
+    ///
+    /// Adjusts the scroll offset so the cursor is at the bottom of the viewport.
+    /// Does not move the cursor position, only adjusts the viewport.
+    pub fn cursor_to_bottom_of_screen(&mut self) {
+        if self.viewport_height == 0 {
+            return;
+        }
+
+        let lines = self.tree_view.lines();
+        if lines.is_empty() {
+            return;
+        }
+
+        let cursor_idx = lines
+            .iter()
+            .position(|l| l.path == self.cursor.path())
+            .unwrap_or(0);
+
+        // Set scroll offset so cursor is at bottom
+        self.scroll_offset = cursor_idx.saturating_sub(self.viewport_height - 1);
+    }
+
     /// Moves the cursor to the next sibling node.
     ///
     /// Siblings are nodes that share the same parent (same path except for last index).

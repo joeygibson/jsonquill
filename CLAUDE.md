@@ -192,6 +192,9 @@ G           - Jump to bottom of document
 <count>g    - Jump to specific line number (e.g., `10g` goes to line 10)
 Ctrl-d      - Page down (half page)
 Ctrl-u      - Page up (half page)
+zz          - Center cursor on screen
+zt          - Move cursor to top of screen
+zb          - Move cursor to bottom of screen
 }           - Jump to next sibling (same parent, next index)
 {           - Jump to previous sibling (same parent, previous index)
 Arrow keys  - Also work for navigation

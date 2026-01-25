@@ -453,6 +453,30 @@ impl InputHandler {
                             }
                         }
                     }
+
+                    // Handle screen positioning commands (zz, zt, zb)
+                    if state.pending_command() == Some('z') {
+                        match c {
+                            'z' => {
+                                state.clear_pending();
+                                state.center_cursor_on_screen();
+                                return Ok(false);
+                            }
+                            't' => {
+                                state.clear_pending();
+                                state.cursor_to_top_of_screen();
+                                return Ok(false);
+                            }
+                            'b' => {
+                                state.clear_pending();
+                                state.cursor_to_bottom_of_screen();
+                                return Ok(false);
+                            }
+                            _ => {
+                                // Not a screen positioning command, continue with normal processing
+                            }
+                        }
+                    }
                 }
 
                 // Handle key input during AwaitingKey stage (before Insert mode)
@@ -835,6 +859,11 @@ impl InputHandler {
                 InputEvent::PreviousSibling => {
                     state.clear_pending();
                     state.move_to_previous_sibling();
+                }
+                InputEvent::ScreenPosition => {
+                    // First 'z' press - set pending
+                    state.clear_message();
+                    state.set_pending_command('z');
                 }
                 InputEvent::InsertCharacter(_)
                 | InputEvent::InsertBackspace
