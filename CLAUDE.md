@@ -46,15 +46,30 @@ Use the `scripts/ver` script to manage version updates and create releases:
 The script will:
 1. Validate version format (X.Y.Z)
 2. Update Cargo.toml
-3. Run cargo build to update Cargo.lock
-4. Commit changes with message: `chore: bump version to X.Y.Z`
-5. Create git tag: `vX.Y.Z`
-6. Print push command (does not auto-push for safety)
+3. Generate release notes from git commits (conventional commit format)
+4. Update CHANGELOG.md with new version entry and auto-generated notes
+5. Prompt to review/edit CHANGELOG.md (optional)
+6. Run cargo build to update Cargo.lock
+7. Commit changes with message: `chore: bump version to X.Y.Z`
+8. Create git tag: `vX.Y.Z`
+9. Print push command (does not auto-push for safety)
+
+**Release Notes Generation:**
+The script automatically parses git commits since the last version using conventional commit format:
+- `feat:` → Added section
+- `fix:` → Fixed section
+- `docs:`, `refactor:`, `perf:` → Changed section
+- `chore:` commits are excluded (version bumps, formatting)
+- Other commits → Other section
 
 **Example output:**
 ```
 Updating version: 0.2.1 → 0.3.0
 Updated Cargo.toml: 0.2.1 → 0.3.0
+Updated CHANGELOG.md with v0.3.0 entry
+Generated release notes from git commits
+
+Review/edit the generated CHANGELOG.md? [y/N]
 Running cargo build...
 Committing version bump...
 Creating git tag: v0.3.0

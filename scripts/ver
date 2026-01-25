@@ -35,6 +35,157 @@ update_version() {
     echo -e "${GREEN}Updated Cargo.toml: $current_version → $new_version${NC}"
 }
 
+# Function to generate release notes from git commits
+generate_release_notes() {
+    local current_version=$1
+    local prev_tag="v$current_version"
+
+    # Try to find the previous tag
+    if ! git rev-parse "$prev_tag" >/dev/null 2>&1; then
+        echo -e "${YELLOW}No previous tag found, using all commits${NC}" >&2
+        prev_tag=""
+    fi
+
+    # Get commits since last version
+    local commits
+    if [ -n "$prev_tag" ]; then
+        commits=$(git log --pretty=format:"%h %s" "$prev_tag..HEAD" 2>/dev/null)
+    else
+        commits=$(git log --pretty=format:"%h %s" 2>/dev/null)
+    fi
+
+    # Parse commits into categories
+    local added=()
+    local changed=()
+    local fixed=()
+    local other=()
+
+    while IFS= read -r commit; do
+        [ -z "$commit" ] && continue
+
+        local hash=$(echo "$commit" | awk '{print $1}')
+        local msg=$(echo "$commit" | cut -d' ' -f2-)
+
+        # Parse conventional commit format
+        if [[ $msg =~ ^feat(\(.*\))?: ]]; then
+            local description=$(echo "$msg" | sed 's/^feat(\(.*\)): //' | sed 's/^feat: //')
+            added+=("$description")
+        elif [[ $msg =~ ^fix(\(.*\))?: ]]; then
+            local description=$(echo "$msg" | sed 's/^fix(\(.*\)): //' | sed 's/^fix: //')
+            fixed+=("$description")
+        elif [[ $msg =~ ^docs(\(.*\))?: ]]; then
+            local description=$(echo "$msg" | sed 's/^docs(\(.*\)): //' | sed 's/^docs: //')
+            changed+=("Documentation: $description")
+        elif [[ $msg =~ ^refactor(\(.*\))?: ]]; then
+            local description=$(echo "$msg" | sed 's/^refactor(\(.*\)): //' | sed 's/^refactor: //')
+            changed+=("$description")
+        elif [[ $msg =~ ^perf(\(.*\))?: ]]; then
+            local description=$(echo "$msg" | sed 's/^perf(\(.*\)): //' | sed 's/^perf: //')
+            changed+=("Performance: $description")
+        elif [[ $msg =~ ^test(\(.*\))?: ]]; then
+            local description=$(echo "$msg" | sed 's/^test(\(.*\)): //' | sed 's/^test: //')
+            other+=("Testing: $description")
+        elif [[ $msg =~ ^chore(\(.*\))?: ]]; then
+            # Skip chore commits (version bumps, formatting, etc.)
+            continue
+        else
+            # Non-conventional commits
+            other+=("$msg")
+        fi
+    done <<< "$commits"
+
+    # Build the changelog entry
+    local entry=""
+
+    if [ ${#added[@]} -gt 0 ]; then
+        entry+="### Added\n\n"
+        for item in "${added[@]}"; do
+            entry+="- $item\n"
+        done
+        entry+="\n"
+    fi
+
+    if [ ${#changed[@]} -gt 0 ]; then
+        entry+="### Changed\n\n"
+        for item in "${changed[@]}"; do
+            entry+="- $item\n"
+        done
+        entry+="\n"
+    fi
+
+    if [ ${#fixed[@]} -gt 0 ]; then
+        entry+="### Fixed\n\n"
+        for item in "${fixed[@]}"; do
+            entry+="- $item\n"
+        done
+        entry+="\n"
+    fi
+
+    if [ ${#other[@]} -gt 0 ]; then
+        entry+="### Other\n\n"
+        for item in "${other[@]}"; do
+            entry+="- $item\n"
+        done
+        entry+="\n"
+    fi
+
+    # If no categorized changes, add a placeholder
+    if [ -z "$entry" ]; then
+        entry="### Changed\n\n- Minor updates and improvements\n\n"
+    fi
+
+    echo -e "$entry"
+}
+
+# Function to update CHANGELOG.md
+update_changelog() {
+    local new_version=$1
+    local current_version=$2
+    local date=$(date +%Y-%m-%d)
+
+    if [ ! -f CHANGELOG.md ]; then
+        echo -e "${YELLOW}Warning: CHANGELOG.md not found, skipping changelog update${NC}"
+        return
+    fi
+
+    # Generate release notes from git commits
+    local release_notes=$(generate_release_notes "$current_version")
+
+    # Create the new version entry
+    local new_entry="## [$new_version] - $date
+
+$release_notes"
+
+    # Find the first ## header (should be the previous version)
+    # Insert the new entry before it
+    awk -v new="$new_entry" '
+        !inserted && /^## \[/ {
+            print new
+            inserted = 1
+        }
+        { print }
+    ' CHANGELOG.md > CHANGELOG.md.tmp
+
+    mv CHANGELOG.md.tmp CHANGELOG.md
+
+    # Update the version comparison links at the bottom
+    # Add new link and update the previous version link
+    if grep -q "^\[$current_version\]:" CHANGELOG.md; then
+        # Find what version comes before current_version to update the link
+        local prev_version=$(grep "^\[$current_version\]:" CHANGELOG.md | sed 's/.*v\([0-9.]*\)\.\.\.v.*/\1/')
+
+        # Update the current version link to have the new version as its end point
+        sed -i.bak "s|^\[$current_version\]:.*|\[$current_version\]: https://github.com/yourusername/jsonquill/compare/v${prev_version}...v$current_version|" CHANGELOG.md
+        rm CHANGELOG.md.bak
+
+        # Add the new version link at the end (before the last line if it exists)
+        echo "[$new_version]: https://github.com/yourusername/jsonquill/compare/v$current_version...v$new_version" >> CHANGELOG.md
+    fi
+
+    echo -e "${GREEN}Updated CHANGELOG.md with v$new_version entry${NC}"
+    echo -e "${YELLOW}Generated release notes from git commits${NC}"
+}
+
 # Main script logic
 if [ $# -eq 0 ]; then
     # No arguments: print current version
@@ -60,13 +211,26 @@ elif [ $# -eq 1 ]; then
     # Update Cargo.toml
     update_version "$new_version"
 
+    # Update CHANGELOG.md
+    update_changelog "$new_version" "$current_version"
+
+    # Ask if user wants to review/edit CHANGELOG.md
+    if [ -f CHANGELOG.md ]; then
+        echo ""
+        echo -e "${YELLOW}Review/edit the generated CHANGELOG.md? [y/N]${NC}"
+        read -r response
+        if [[ "$response" =~ ^[Yy]$ ]]; then
+            ${EDITOR:-vi} CHANGELOG.md
+        fi
+    fi
+
     # Run cargo build to update Cargo.lock
     echo -e "${GREEN}Running cargo build...${NC}"
     cargo build
 
     # Commit the changes
     echo -e "${GREEN}Committing version bump...${NC}"
-    git add Cargo.toml Cargo.lock
+    git add Cargo.toml Cargo.lock CHANGELOG.md
     git commit -m "chore: bump version to $new_version"
 
     # Create git tag
