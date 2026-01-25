@@ -6,12 +6,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **ALWAYS read and follow the global instructions at `~/.claude/instructions.md` first.**
 
-Key requirements from global instructions:
-- **Testing:** Include unit tests for new functions, aim for >80% code coverage on business logic
-- **Git Workflow:** NEVER offer to commit changes until user explicitly requests it (e.g., "commit", "commit this")
-- **Documentation:** ALWAYS update README.md, CLAUDE.md, etc. before committing
-- **Security:** Never commit secrets, API keys, or credentials
-- **Code Quality:** Descriptive variable names, error handling, input validation
+The global instructions include:
+- **Rust-Specific Guidelines:** Standard cargo commands, pre-commit checklist (fmt/clippy/test), project structure
+- **Testing Requirements:** Unit tests for new functions, >80% coverage on business logic
+- **Git Workflow:** Wait for explicit commit request, update docs before committing
+- **Security & Code Quality:** No secrets in commits, error handling, descriptive names
 
 These global standards apply to ALL projects and override defaults when they conflict.
 
@@ -21,54 +20,16 @@ These global standards apply to ALL projects and override defaults when they con
 
 ## Development Commands
 
-Standard Rust/Cargo commands:
-
-```bash
-# Build the project
-cargo build
-
-# Run the binary
-cargo run
-
-# Run tests
-cargo test
-
-# Run tests with output
-cargo test -- --nocapture
-
-# Build optimized release binary
-cargo build --release
-
-# Format code
-cargo fmt
-
-# Run linter
-cargo clippy
-```
+See `~/.claude/instructions.md` for standard Rust/Cargo commands (build, run, test, fmt, clippy).
 
 ## Pre-Commit Checklist
 
-**ALWAYS complete these steps before committing:**
+**Project-specific requirement:**
+- **Update help screen** (`src/ui/help_overlay.rs`) when adding user-facing features
+  - New commands, keybindings, or major features visible to users
+  - Help screen should match README.md and CLAUDE.md documentation
 
-**0. Update help screen if adding user-facing features:**
-- If adding new commands, keybindings, or major features visible to users
-- Update `src/ui/help_overlay.rs` to document the new functionality
-- Help screen should match README.md and CLAUDE.md documentation
-
-**1-3. Run quality checks:**
-
-```bash
-# 1. Format code to ensure consistent style
-cargo fmt
-
-# 2. Run clippy to catch common mistakes and enforce best practices
-cargo clippy
-
-# 3. Run all tests to ensure nothing broke
-cargo test
-```
-
-If `cargo clippy` reports warnings, fix them before committing. If `cargo test` fails, investigate and fix the issues.
+**Standard Rust checks:** See `~/.claude/instructions.md` for the pre-commit checklist (cargo fmt, cargo clippy, cargo test).
 
 ## Version Management
 
