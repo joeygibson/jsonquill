@@ -25,10 +25,10 @@
 
 pub mod ast;
 pub mod error;
-pub mod evaluator;
+// pub mod evaluator; // TODO: Task 3
 pub mod parser;
 
 pub use ast::{JsonPath, PathSegment};
 pub use error::JsonPathError;
-pub use evaluator::Evaluator;
+// pub use evaluator::Evaluator; // TODO: Task 3
 pub use parser::Parser;
