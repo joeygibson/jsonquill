@@ -177,7 +177,7 @@ Implemented modules:
 
 **Advanced Features:**
 - ❌ **No named registers** - `"ayy`, `"ap` for named register operations
-- ❌ **No structural search** - `:find`, `:path` for JSONPath-style queries
+- ✅ **Structural search** - `:path`, `:jp` for JSONPath-style queries
 - ❌ **No format preservation** - Original formatting not preserved on save
 - ❌ **No lazy loading** - Large files (≥100MB) not optimized
 - ❌ **No advanced undo** - `g-`/`g+`, `:earlier`/`:later`, `:undolist` not implemented
@@ -223,6 +223,13 @@ Scroll wheel/trackpad - Scroll viewport (3 lines per tick)
 ?           - Start backward search (searches up through document)
 n           - Jump to next match in search direction
 Esc         - Exit SEARCH mode
+
+# JSONPath Search (structural search)
+:path $.store.book[*].author  - Find all book authors
+:jp $..price                  - Find all price fields anywhere
+:path $.items[0:3]            - First 3 items
+:path $.user['name','email']  - Multiple properties
+n                             - Navigate to next match
 
 # Modes
 e           - Enter INSERT mode (edit current value)
@@ -270,6 +277,9 @@ Esc         - Cancel editing and return to NORMAL mode
 :undo         - Undo last change
 :redo         - Redo last undone change
 :help         - Show help overlay
+:path <query> - Search using JSONPath query (e.g., :path $.store.book[*].author)
+:jp <query>   - Short alias for :path
+:find         - Enter text search mode (same as /)
 
 # Editing (NORMAL mode)
 Commands can be prefixed with a count (e.g., `3dd` to delete 3 nodes, `5yy` to yank 5 nodes).

@@ -173,6 +173,39 @@ jsonquill data.jsonl
 | `n` | Jump to next match | Find next occurrence in search direction |
 | `Esc` | Exit search mode | Return to NORMAL mode |
 
+### JSONPath Search (Structural Search)
+
+JSONPath queries allow you to search by structure rather than text:
+
+| Command | Action | Example |
+|---------|--------|---------|
+| `:path <query>` | JSONPath structural search | `:path $.store.book[*].author` |
+| `:jp <query>` | Short alias for `:path` | `:jp $..price` |
+| `:find` | Enter text search mode | Same as pressing `/` |
+
+**Supported JSONPath Syntax:**
+
+- `$` - Root node
+- `.property` - Named property
+- `['property']` - Bracket notation
+- `[index]` - Array index (supports negative: `[-1]` = last)
+- `[*]` - All children
+- `..property` - Recursive descent (find anywhere)
+- `[start:end]` - Array slicing
+- `['prop1','prop2']` - Multiple properties
+
+**Examples:**
+
+```bash
+:path $.store.book[*].author    # All book authors
+:jp $..price                    # All price fields anywhere
+:path $.items[0:3]              # First 3 array items
+:path $.user['name','email']    # Multiple properties
+:jp $.data[*].id                # All IDs in data array
+```
+
+After executing a JSONPath search, use `n` to navigate through matches just like text search.
+
 ### Commands (COMMAND mode)
 
 Type `:` to enter command mode, then:
@@ -195,6 +228,9 @@ Type `:` to enter command mode, then:
 | `:set mouse` | Enable mouse scrolling | Enable mouse/trackpad scrolling |
 | `:set nomouse` | Disable mouse scrolling | Disable mouse/trackpad scrolling |
 | `:set save` | Save settings to config | Write current settings to `~/.config/jsonquill/config.toml` |
+| `:path <query>` | JSONPath structural search | e.g., `:path $.store.book[*].author` |
+| `:jp <query>` | Short alias for `:path` | e.g., `:jp $..price` |
+| `:find` | Enter text search mode | Same as pressing `/` |
 
 ### Other
 
