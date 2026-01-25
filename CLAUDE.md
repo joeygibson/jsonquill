@@ -210,6 +210,8 @@ Scroll wheel/trackpad - Scroll viewport (3 lines per tick)
 /           - Start forward search (searches down through document)
 ?           - Start backward search (searches up through document)
 n           - Jump to next match in search direction
+*           - Search forward for current object key
+#           - Search backward for current object key
 Esc         - Exit SEARCH mode
 
 # JSONPath Search (structural search)

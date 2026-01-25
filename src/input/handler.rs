@@ -868,6 +868,30 @@ impl InputHandler {
                     state.clear_pending();
                     state.move_to_last_sibling();
                 }
+                InputEvent::SearchKeyForward => {
+                    state.clear_pending();
+                    use crate::editor::state::MessageLevel;
+                    if state.execute_key_search(true) {
+                        if let Some((current, total)) = state.search_results_info() {
+                            state.set_message(
+                                format!("Key search: match {}/{}", current, total),
+                                MessageLevel::Info,
+                            );
+                        }
+                    }
+                }
+                InputEvent::SearchKeyBackward => {
+                    state.clear_pending();
+                    use crate::editor::state::MessageLevel;
+                    if state.execute_key_search(false) {
+                        if let Some((current, total)) = state.search_results_info() {
+                            state.set_message(
+                                format!("Key search: match {}/{}", current, total),
+                                MessageLevel::Info,
+                            );
+                        }
+                    }
+                }
                 InputEvent::ScreenPosition => {
                     // First 'z' press - set pending
                     state.clear_message();

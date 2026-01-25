@@ -204,6 +204,14 @@ pub fn render_help_overlay(f: &mut Frame, colors: &ThemeColors, scroll: usize) {
             Span::raw("Jump to next match (search direction)"),
         ]),
         Line::from(vec![
+            Span::styled("  *             ", Style::default().fg(colors.number)),
+            Span::raw("Search forward for current object key"),
+        ]),
+        Line::from(vec![
+            Span::styled("  #             ", Style::default().fg(colors.number)),
+            Span::raw("Search backward for current object key"),
+        ]),
+        Line::from(vec![
             Span::styled("  :find         ", Style::default().fg(colors.number)),
             Span::raw("Enter text search mode (same as /)"),
         ]),

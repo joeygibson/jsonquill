@@ -1705,6 +1705,45 @@ impl EditorState {
         self.search_forward = forward;
     }
 
+    /// Gets the key name at the current cursor position, if it's an object property.
+    /// Returns None if the cursor is not on an object key.
+    fn get_current_key_name(&self) -> Option<String> {
+        let current_path = self.cursor.path();
+        let lines = self.tree_view.lines();
+
+        // Find the line at the current cursor position
+        let line = lines.iter().find(|l| l.path == current_path)?;
+
+        // Return the key if it exists
+        line.key.clone()
+    }
+
+    /// Executes a search for the current object key name.
+    /// If the cursor is on an object property, searches for all occurrences of that key name.
+    ///
+    /// # Arguments
+    /// * `forward` - If true, search forward; if false, search backward
+    ///
+    /// # Returns
+    /// Returns true if a search was initiated, false if no key was found
+    pub fn execute_key_search(&mut self, forward: bool) -> bool {
+        // Get the current key name
+        let key_name = match self.get_current_key_name() {
+            Some(key) => key,
+            None => {
+                self.set_message("Not on an object key".to_string(), MessageLevel::Warning);
+                return false;
+            }
+        };
+
+        // Set up the search
+        self.search_buffer = key_name.clone();
+        self.search_forward = forward;
+        self.execute_search();
+
+        true
+    }
+
     /// Executes a search for the current search buffer text.
     pub fn execute_search(&mut self) {
         if self.search_buffer.is_empty() {
