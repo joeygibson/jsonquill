@@ -134,6 +134,7 @@ Implemented modules:
 - ✅ Rename object keys (`r` to rename key)
 - ✅ JSONL (.jsonl, .ndjson) file support
 - ✅ Collapsed object/array previews (jless-style)
+- ✅ Mouse/trackpad scrolling (3 lines per tick, toggle with `:set mouse`/`:set nomouse`)
 - ✅ All tests passing
 
 **Known Issues / TODO:**
@@ -178,6 +179,11 @@ Ctrl-u      - Page up (half page)
 }           - Jump to next sibling (same parent, next index)
 {           - Jump to previous sibling (same parent, previous index)
 Arrow keys  - Also work for navigation
+
+# Mouse
+Scroll wheel/trackpad - Scroll viewport (3 lines per tick)
+                      - Also scrolls help overlay when help is open
+                      - Toggle with :set mouse / :set nomouse
 
 # Search
 /           - Start forward search (searches down through document)
@@ -225,6 +231,8 @@ Esc         - Cancel editing and return to NORMAL mode
 :set          - Show current settings
 :set number   - Enable line numbers
 :set nonumber - Disable line numbers
+:set mouse    - Enable mouse scrolling
+:set nomouse  - Disable mouse scrolling
 :set save     - Save settings to config file
 :undo         - Undo last change
 :redo         - Redo last undone change
@@ -265,8 +273,8 @@ Count Prefix:
 <count>yy   - Yank <count> nodes (e.g., 5yy yanks 5 nodes)
 
 # Help
-j/k or ↑/↓  - Scroll help when open
-? or Esc    - Close help
+j/k or ↑/↓ or mouse wheel - Scroll help when open
+? or Esc                  - Close help
 ```
 
 ## Configuration
@@ -300,6 +308,9 @@ undo_limit = 50
 # Sync unnamed register with system clipboard (default: true)
 sync_unnamed_register = true
 
+# Enable mouse/trackpad scrolling support (default: true)
+enable_mouse = true
+
 # File size in bytes to trigger lazy loading (default: 104857600 = 100MB)
 lazy_load_threshold = 104857600
 ```
@@ -309,6 +320,7 @@ lazy_load_threshold = 104857600
 Use `:set save` to persist your current settings to the config file. This will save:
 - Current theme
 - Line number setting
+- Mouse setting
 - Other default values
 
 The config file is created automatically when you run `:set save` for the first time.

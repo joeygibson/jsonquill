@@ -8,7 +8,7 @@ use anyhow::{Context, Result};
 use std::fs::File;
 use std::io::{self};
 use std::time::Duration;
-use termion::event::{Event, Key};
+use termion::event::{Event, Key, MouseButton, MouseEvent};
 use termion::input::TermRead;
 
 /// Handles terminal input events and updates editor state.
@@ -124,6 +124,59 @@ impl InputHandler {
     /// assert!(should_quit);
     /// ```
     pub fn handle_event(&self, event: Event, state: &mut EditorState) -> Result<bool> {
+        // Handle mouse events if mouse is enabled
+        if let Event::Mouse(mouse_event) = event {
+            if state.enable_mouse() {
+                // Check if help is shown - mouse scrolls help overlay
+                if state.show_help() {
+                    match mouse_event {
+                        MouseEvent::Press(MouseButton::WheelUp, _, _) => {
+                            // Scroll help up 3 lines
+                            for _ in 0..3 {
+                                state.scroll_help_up();
+                            }
+                            return Ok(false);
+                        }
+                        MouseEvent::Press(MouseButton::WheelDown, _, _) => {
+                            // Scroll help down 3 lines
+                            for _ in 0..3 {
+                                state.scroll_help_down();
+                            }
+                            return Ok(false);
+                        }
+                        _ => {
+                            // Ignore other mouse events
+                            return Ok(false);
+                        }
+                    }
+                } else {
+                    // Help not shown - scroll main viewport
+                    match mouse_event {
+                        MouseEvent::Press(MouseButton::WheelUp, _, _) => {
+                            // Scroll up 3 lines
+                            for _ in 0..3 {
+                                state.move_cursor_up();
+                            }
+                            return Ok(false);
+                        }
+                        MouseEvent::Press(MouseButton::WheelDown, _, _) => {
+                            // Scroll down 3 lines
+                            for _ in 0..3 {
+                                state.move_cursor_down();
+                            }
+                            return Ok(false);
+                        }
+                        _ => {
+                            // Ignore other mouse events (clicks, etc.)
+                            return Ok(false);
+                        }
+                    }
+                }
+            }
+            // Mouse disabled, ignore event
+            return Ok(false);
+        }
+
         if let Event::Key(key) = event {
             // Handle insert mode separately for character input
             if *state.mode() == EditorMode::Insert {
@@ -789,6 +842,11 @@ impl InputHandler {
             } else {
                 settings.push("nonumber");
             }
+            if state.enable_mouse() {
+                settings.push("mouse");
+            } else {
+                settings.push("nomouse");
+            }
             state.set_message(
                 format!("Settings: {}", settings.join(", ")),
                 MessageLevel::Info,
@@ -831,6 +889,10 @@ impl InputHandler {
                         };
                         state.set_message(format!("number is {}", value), MessageLevel::Info);
                     }
+                    "mouse" => {
+                        let value = if state.enable_mouse() { "on" } else { "off" };
+                        state.set_message(format!("mouse is {}", value), MessageLevel::Info);
+                    }
                     _ => {
                         state.set_message(
                             format!("Unknown setting: {}", setting_name),
@@ -850,6 +912,14 @@ impl InputHandler {
                 "nonumber" | "nonu" => {
                     state.set_show_line_numbers(false);
                     state.set_message("Line numbers disabled".to_string(), MessageLevel::Info);
+                }
+                "mouse" => {
+                    state.set_enable_mouse(true);
+                    state.set_message("Mouse support enabled".to_string(), MessageLevel::Info);
+                }
+                "nomouse" => {
+                    state.set_enable_mouse(false);
+                    state.set_message("Mouse support disabled".to_string(), MessageLevel::Info);
                 }
                 _ => {
                     state.set_message(format!("Unknown setting: {}", setting), MessageLevel::Error);

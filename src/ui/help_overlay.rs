@@ -85,6 +85,19 @@ pub fn render_help_overlay(f: &mut Frame, colors: &ThemeColors, scroll: usize) {
         ]),
         Line::from(""),
         Line::from(vec![Span::styled(
+            "Mouse",
+            Style::default().fg(colors.key).add_modifier(Modifier::BOLD),
+        )]),
+        Line::from(vec![
+            Span::styled("  Scroll wheel  ", Style::default().fg(colors.number)),
+            Span::raw("Scroll viewport (3 lines per tick)"),
+        ]),
+        Line::from(vec![
+            Span::styled("  Trackpad      ", Style::default().fg(colors.number)),
+            Span::raw("Scroll viewport smoothly"),
+        ]),
+        Line::from(""),
+        Line::from(vec![Span::styled(
             "Modes",
             Style::default().fg(colors.key).add_modifier(Modifier::BOLD),
         )]),
@@ -196,6 +209,14 @@ pub fn render_help_overlay(f: &mut Frame, colors: &ThemeColors, scroll: usize) {
             Span::raw("Disable line numbers"),
         ]),
         Line::from(vec![
+            Span::styled("  :set mouse    ", Style::default().fg(colors.number)),
+            Span::raw("Enable mouse scrolling"),
+        ]),
+        Line::from(vec![
+            Span::styled("  :set nomouse  ", Style::default().fg(colors.number)),
+            Span::raw("Disable mouse scrolling"),
+        ]),
+        Line::from(vec![
             Span::styled("  :set save     ", Style::default().fg(colors.number)),
             Span::raw("Save settings to config file"),
         ]),
@@ -222,7 +243,7 @@ pub fn render_help_overlay(f: &mut Frame, colors: &ThemeColors, scroll: usize) {
         ]),
         Line::from(""),
         Line::from(vec![Span::styled(
-            "↑/↓ or j/k to scroll • F1 or Esc to close",
+            "↑/↓ or j/k or mouse wheel to scroll • F1 or Esc to close",
             Style::default()
                 .fg(colors.info)
                 .add_modifier(Modifier::ITALIC),

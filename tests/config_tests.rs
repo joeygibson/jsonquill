@@ -31,6 +31,9 @@ fn test_all_default_values() {
     // Performance settings
     assert_eq!(config.undo_limit, 50);
     assert_eq!(config.lazy_load_threshold, 104_857_600); // 100MB
+
+    // Input settings
+    assert!(config.enable_mouse);
 }
 
 #[test]
@@ -45,6 +48,7 @@ fn test_custom_config() {
         undo_limit: 500,
         sync_unnamed_register: false,
         lazy_load_threshold: 52_428_800, // 50MB
+        enable_mouse: false,
     };
 
     assert_eq!(config.theme, "gruvbox");
@@ -56,6 +60,7 @@ fn test_custom_config() {
     assert_eq!(config.undo_limit, 500);
     assert!(!config.sync_unnamed_register);
     assert_eq!(config.lazy_load_threshold, 52_428_800);
+    assert!(!config.enable_mouse);
 }
 
 #[test]
@@ -72,6 +77,7 @@ fn test_serialize_default_config() {
     assert!(toml_str.contains("undo_limit = 50"));
     assert!(toml_str.contains("sync_unnamed_register = true"));
     assert!(toml_str.contains("lazy_load_threshold = 104857600"));
+    assert!(toml_str.contains("enable_mouse = true"));
 }
 
 #[test]
@@ -86,6 +92,7 @@ fn test_deserialize_full_config() {
         undo_limit = 500
         sync_unnamed_register = false
         lazy_load_threshold = 52428800
+        enable_mouse = false
     "#;
 
     let config: Config = toml::from_str(toml_str).expect("Failed to deserialize config");
@@ -99,6 +106,7 @@ fn test_deserialize_full_config() {
     assert_eq!(config.undo_limit, 500);
     assert!(!config.sync_unnamed_register);
     assert_eq!(config.lazy_load_threshold, 52_428_800);
+    assert!(!config.enable_mouse);
 }
 
 #[test]
@@ -123,6 +131,7 @@ fn test_deserialize_partial_config() {
     assert_eq!(config.undo_limit, 50);
     assert!(config.sync_unnamed_register);
     assert_eq!(config.lazy_load_threshold, 104_857_600);
+    assert!(config.enable_mouse);
 }
 
 #[test]
@@ -141,6 +150,7 @@ fn test_deserialize_empty_config() {
     assert_eq!(config.undo_limit, 50);
     assert!(config.sync_unnamed_register);
     assert_eq!(config.lazy_load_threshold, 104_857_600);
+    assert!(config.enable_mouse);
 }
 
 #[test]
@@ -155,6 +165,7 @@ fn test_roundtrip_serialization() {
         undo_limit: 2000,
         sync_unnamed_register: false,
         lazy_load_threshold: 1_048_576, // 1MB
+        enable_mouse: false,
     };
 
     // Serialize to TOML
@@ -179,6 +190,7 @@ fn test_roundtrip_serialization() {
         original.lazy_load_threshold,
         deserialized.lazy_load_threshold
     );
+    assert_eq!(original.enable_mouse, deserialized.enable_mouse);
 }
 
 #[test]
@@ -195,6 +207,7 @@ fn test_config_clone() {
     assert_eq!(config1.undo_limit, config2.undo_limit);
     assert_eq!(config1.sync_unnamed_register, config2.sync_unnamed_register);
     assert_eq!(config1.lazy_load_threshold, config2.lazy_load_threshold);
+    assert_eq!(config1.enable_mouse, config2.enable_mouse);
 }
 
 #[test]

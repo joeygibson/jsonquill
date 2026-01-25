@@ -160,6 +160,7 @@ pub struct EditorState {
     search_index: usize,
     search_forward: bool,
     show_line_numbers: bool,
+    enable_mouse: bool,
     edit_buffer: Option<String>,
     edit_cursor: usize,
     cursor_visible: bool,
@@ -242,6 +243,7 @@ impl EditorState {
             search_index: 0,
             search_forward: true,
             show_line_numbers: true,
+            enable_mouse: true,
             edit_buffer: None,
             edit_cursor: 0,
             cursor_visible: true,
@@ -1476,6 +1478,16 @@ impl EditorState {
         self.show_line_numbers = show;
     }
 
+    /// Returns whether mouse support is enabled.
+    pub fn enable_mouse(&self) -> bool {
+        self.enable_mouse
+    }
+
+    /// Sets whether mouse support is enabled.
+    pub fn set_enable_mouse(&mut self, enable: bool) {
+        self.enable_mouse = enable;
+    }
+
     /// Saves current settings to the config file.
     pub fn save_config(&self) -> anyhow::Result<()> {
         use crate::config::Config;
@@ -1483,6 +1495,7 @@ impl EditorState {
         let config = Config {
             theme: self.current_theme.clone(),
             show_line_numbers: self.show_line_numbers,
+            enable_mouse: self.enable_mouse,
             ..Config::default()
         };
 

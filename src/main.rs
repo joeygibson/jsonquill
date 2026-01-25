@@ -3,6 +3,7 @@ use clap::Parser;
 use ratatui::{backend::TermionBackend, Terminal};
 use std::io::{self, IsTerminal, Write};
 use std::time::Duration;
+use termion::input::MouseTerminal;
 use termion::raw::IntoRawMode;
 use termion::screen::IntoAlternateScreen;
 
@@ -77,7 +78,9 @@ fn main() -> Result<()> {
     // Termion can use /dev/tty directly when stdin is piped, no redirection needed
     let stdout = io::stdout()
         .into_raw_mode()
-        .context("Failed to enable raw mode")?
+        .context("Failed to enable raw mode")?;
+    let stdout = MouseTerminal::from(stdout);
+    let stdout = stdout
         .into_alternate_screen()
         .context("Failed to enter alternate screen")?;
 
@@ -120,6 +123,7 @@ fn main() -> Result<()> {
     // Apply config settings
     state.set_current_theme(theme_name.to_string());
     state.set_show_line_numbers(config.show_line_numbers);
+    state.set_enable_mouse(config.enable_mouse);
 
     // Main event loop
     let result = run_event_loop(&mut terminal, &mut ui, &mut input_handler, &mut state);

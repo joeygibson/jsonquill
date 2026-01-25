@@ -41,6 +41,7 @@ use serde::{Deserialize, Serialize};
 /// * `undo_limit` - Maximum number of undo operations to keep (default: 50)
 /// * `sync_unnamed_register` - Sync unnamed register with system clipboard (default: true)
 /// * `lazy_load_threshold` - File size in bytes to trigger lazy loading (default: 100MB)
+/// * `enable_mouse` - Enable mouse/trackpad scrolling support (default: true)
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Config {
     /// Color scheme name
@@ -78,6 +79,10 @@ pub struct Config {
     /// File size in bytes to trigger lazy loading
     #[serde(default = "default_lazy_load_threshold")]
     pub lazy_load_threshold: usize,
+
+    /// Enable mouse/trackpad scrolling
+    #[serde(default = "default_enable_mouse")]
+    pub enable_mouse: bool,
 }
 
 /// Returns the default theme name.
@@ -115,6 +120,11 @@ fn default_lazy_load_threshold() -> usize {
     104_857_600 // 100MB
 }
 
+/// Returns the default for enabling mouse support.
+fn default_enable_mouse() -> bool {
+    true
+}
+
 impl Default for Config {
     /// Creates a new configuration with default values.
     ///
@@ -129,6 +139,7 @@ impl Default for Config {
     /// * `undo_limit`: 50
     /// * `sync_unnamed_register`: true
     /// * `lazy_load_threshold`: 104,857,600 (100MB)
+    /// * `enable_mouse`: true
     ///
     /// # Example
     ///
@@ -151,6 +162,7 @@ impl Default for Config {
             undo_limit: default_undo_limit(),
             sync_unnamed_register: true,
             lazy_load_threshold: default_lazy_load_threshold(),
+            enable_mouse: default_enable_mouse(),
         }
     }
 }

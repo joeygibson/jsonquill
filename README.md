@@ -24,6 +24,7 @@ A terminal-based structural JSON editor with vim-style keybindings.
 - Customizable themes and settings
 - Search functionality
 - Configuration file support
+- Mouse/trackpad scrolling support
 
 See [CLAUDE.md](CLAUDE.md) for detailed feature list and developer documentation.
 
@@ -123,6 +124,7 @@ jsonquill data.jsonl
 | `Ctrl-u` | Page up | Scroll half page up |
 | `}` | Jump to next sibling | Move to the next node at the same level |
 | `{` | Jump to previous sibling | Move to the previous node at the same level |
+| Scroll wheel / Trackpad | Scroll viewport | Scroll up/down 3 lines per tick (toggle with `:set mouse`/`:set nomouse`) |
 
 ### Modes
 
@@ -190,6 +192,8 @@ Type `:` to enter command mode, then:
 | `:set` | Show current settings | Display all configuration values |
 | `:set number` | Enable line numbers | Show line numbers in tree view |
 | `:set nonumber` | Disable line numbers | Hide line numbers |
+| `:set mouse` | Enable mouse scrolling | Enable mouse/trackpad scrolling |
+| `:set nomouse` | Disable mouse scrolling | Disable mouse/trackpad scrolling |
 | `:set save` | Save settings to config | Write current settings to `~/.config/jsonquill/config.toml` |
 
 ### Other
@@ -200,6 +204,7 @@ Type `:` to enter command mode, then:
 | `F1` | Toggle help overlay | Shows all keybindings (also `:help`) |
 | `↑` / `↓` | Scroll help | When help overlay is open |
 | `j` / `k` | Scroll help | When help overlay is open |
+| Scroll wheel / Trackpad | Scroll help | When help overlay is open |
 
 ## Value Parsing
 
@@ -245,6 +250,9 @@ undo_limit = 50
 
 # Sync unnamed register with system clipboard (default: true)
 sync_unnamed_register = true
+
+# Enable mouse/trackpad scrolling support (default: true)
+enable_mouse = true
 
 # File size in bytes to trigger lazy loading (default: 104857600 = 100MB)
 lazy_load_threshold = 104857600
