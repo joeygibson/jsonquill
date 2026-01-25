@@ -949,7 +949,25 @@ impl InputHandler {
             return Ok(false);
         }
 
-        // Handle :find command (alias for /)
+        // Handle :find command with query
+        if let Some(query) = command.strip_prefix("find ") {
+            let query = query.trim();
+            if query.is_empty() {
+                state.set_mode(EditorMode::Search);
+                state.set_search_forward(true);
+                state.clear_search_buffer();
+            } else {
+                // Execute text search immediately
+                state.clear_search_buffer();
+                for ch in query.chars() {
+                    state.push_to_search_buffer(ch);
+                }
+                state.execute_search();
+            }
+            return Ok(false);
+        }
+
+        // Handle :find with no arguments (enter search mode)
         if command == "find" {
             state.set_mode(EditorMode::Search);
             state.set_search_forward(true);
