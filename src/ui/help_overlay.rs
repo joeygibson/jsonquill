@@ -171,6 +171,10 @@ pub fn render_help_overlay(f: &mut Frame, colors: &ThemeColors, scroll: usize) {
             Span::styled("  n             ", Style::default().fg(colors.number)),
             Span::raw("Jump to next match (search direction)"),
         ]),
+        Line::from(vec![
+            Span::styled("  :find         ", Style::default().fg(colors.number)),
+            Span::raw("Enter text search mode (same as /)"),
+        ]),
         Line::from(""),
         Line::from(vec![Span::styled(
             "JSONPath Search (Structural)",
@@ -184,17 +188,9 @@ pub fn render_help_overlay(f: &mut Frame, colors: &ThemeColors, scroll: usize) {
             Span::styled("  :jp <query>   ", Style::default().fg(colors.number)),
             Span::raw("Short alias for :path"),
         ]),
-        Line::from(vec![
-            Span::styled("  :find <query> ", Style::default().fg(colors.number)),
-            Span::raw("Execute text search (e.g., :find price)"),
-        ]),
-        Line::from(vec![
-            Span::styled("  :find         ", Style::default().fg(colors.number)),
-            Span::raw("Enter text search mode (same as /)"),
-        ]),
-        Line::from(vec![
-            Span::raw("  Supported: $, .prop, [index], [*], .., [start:end]"),
-        ]),
+        Line::from(vec![Span::raw(
+            "  Supported: $, .prop, [index], [*], .., [start:end]",
+        )]),
         Line::from(""),
         Line::from(vec![Span::styled(
             "Commands",
