@@ -928,6 +928,35 @@ impl InputHandler {
             return Ok(false);
         }
 
+        // Handle :path and :jp commands
+        if let Some(query) = command.strip_prefix("path ") {
+            let query = query.trim();
+            if query.is_empty() {
+                state.set_message("Usage: :path <jsonpath>".to_string(), MessageLevel::Error);
+            } else {
+                state.execute_jsonpath_search(query);
+            }
+            return Ok(false);
+        }
+
+        if let Some(query) = command.strip_prefix("jp ") {
+            let query = query.trim();
+            if query.is_empty() {
+                state.set_message("Usage: :jp <jsonpath>".to_string(), MessageLevel::Error);
+            } else {
+                state.execute_jsonpath_search(query);
+            }
+            return Ok(false);
+        }
+
+        // Handle :find command (alias for /)
+        if command == "find" {
+            state.set_mode(EditorMode::Search);
+            state.set_search_forward(true);
+            state.clear_search_buffer();
+            return Ok(false);
+        }
+
         match command {
             "help" => {
                 state.toggle_help();
