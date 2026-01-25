@@ -10,6 +10,234 @@ impl<'a> Evaluator<'a> {
         Evaluator { root }
     }
 
+    /// Evaluates a JSONPath query and returns matching node paths.
+    /// Each path is a Vec<usize> representing indices in the tree.
+    pub fn evaluate_paths(&self, segments: &[PathSegment]) -> Vec<Vec<usize>> {
+        if segments.is_empty() {
+            return vec![];
+        }
+
+        // Start with root path
+        let mut current: Vec<(Vec<usize>, &JsonNode)> = vec![(vec![], self.root)];
+
+        // Process each segment
+        for segment in segments {
+            let mut next = Vec::new();
+            for (path, node) in &current {
+                next.extend(self.evaluate_segment_with_path(node, segment, path));
+            }
+            current = next;
+        }
+
+        // Return just the paths
+        current.into_iter().map(|(path, _)| path).collect()
+    }
+
+    /// Evaluates a single segment and returns (path, node) pairs.
+    fn evaluate_segment_with_path(
+        &self,
+        node: &'a JsonNode,
+        segment: &PathSegment,
+        current_path: &[usize],
+    ) -> Vec<(Vec<usize>, &'a JsonNode)> {
+        match segment {
+            PathSegment::Root => vec![(vec![], self.root)],
+            PathSegment::Current => vec![(current_path.to_vec(), node)],
+            PathSegment::Child(name) => self.find_child_with_path(node, name, current_path),
+            PathSegment::Index(idx) => self.get_array_element_with_path(node, *idx, current_path),
+            PathSegment::Wildcard => self.get_all_children_with_path(node, current_path),
+            PathSegment::RecursiveDescent(prop) => {
+                self.recursive_descent_with_path(node, prop.as_deref(), current_path)
+            }
+            PathSegment::Slice(start, end) => {
+                self.get_slice_with_path(node, *start, *end, current_path)
+            }
+            PathSegment::MultiProperty(props) => {
+                let mut results = Vec::new();
+                for prop in props {
+                    results.extend(self.find_child_with_path(node, prop, current_path));
+                }
+                results
+            }
+        }
+    }
+
+    fn find_child_with_path(
+        &self,
+        node: &'a JsonNode,
+        name: &str,
+        current_path: &[usize],
+    ) -> Vec<(Vec<usize>, &'a JsonNode)> {
+        if let JsonValue::Object(props) = node.value() {
+            for (idx, (key, child)) in props.iter().enumerate() {
+                if key == name {
+                    let mut new_path = current_path.to_vec();
+                    new_path.push(idx);
+                    return vec![(new_path, child)];
+                }
+            }
+        }
+        vec![]
+    }
+
+    fn get_array_element_with_path(
+        &self,
+        node: &'a JsonNode,
+        idx: isize,
+        current_path: &[usize],
+    ) -> Vec<(Vec<usize>, &'a JsonNode)> {
+        if let JsonValue::Array(items) = node.value() {
+            let len = items.len() as isize;
+            let normalized_idx = if idx < 0 { len + idx } else { idx };
+
+            if normalized_idx >= 0 && (normalized_idx as usize) < items.len() {
+                let mut new_path = current_path.to_vec();
+                new_path.push(normalized_idx as usize);
+                return vec![(new_path, &items[normalized_idx as usize])];
+            }
+        }
+        vec![]
+    }
+
+    fn get_all_children_with_path(
+        &self,
+        node: &'a JsonNode,
+        current_path: &[usize],
+    ) -> Vec<(Vec<usize>, &'a JsonNode)> {
+        match node.value() {
+            JsonValue::Object(props) => props
+                .iter()
+                .enumerate()
+                .map(|(idx, (_, child))| {
+                    let mut new_path = current_path.to_vec();
+                    new_path.push(idx);
+                    (new_path, child)
+                })
+                .collect(),
+            JsonValue::Array(items) => items
+                .iter()
+                .enumerate()
+                .map(|(idx, child)| {
+                    let mut new_path = current_path.to_vec();
+                    new_path.push(idx);
+                    (new_path, child)
+                })
+                .collect(),
+            JsonValue::JsonlRoot(lines) => lines
+                .iter()
+                .enumerate()
+                .map(|(idx, child)| {
+                    let mut new_path = current_path.to_vec();
+                    new_path.push(idx);
+                    (new_path, child)
+                })
+                .collect(),
+            _ => vec![],
+        }
+    }
+
+    fn get_slice_with_path(
+        &self,
+        node: &'a JsonNode,
+        start: Option<isize>,
+        end: Option<isize>,
+        current_path: &[usize],
+    ) -> Vec<(Vec<usize>, &'a JsonNode)> {
+        if let JsonValue::Array(items) = node.value() {
+            let len = items.len() as isize;
+
+            // Normalize start
+            let start_idx = match start {
+                Some(s) if s < 0 => (len + s).max(0) as usize,
+                Some(s) => s.min(len) as usize,
+                None => 0,
+            };
+
+            // Normalize end
+            let end_idx = match end {
+                Some(e) if e < 0 => (len + e).max(0) as usize,
+                Some(e) => e.min(len) as usize,
+                None => len as usize,
+            };
+
+            if start_idx <= end_idx {
+                return items[start_idx..end_idx]
+                    .iter()
+                    .enumerate()
+                    .map(|(offset, child)| {
+                        let mut new_path = current_path.to_vec();
+                        new_path.push(start_idx + offset);
+                        (new_path, child)
+                    })
+                    .collect();
+            }
+        }
+        vec![]
+    }
+
+    fn recursive_descent_with_path(
+        &self,
+        node: &'a JsonNode,
+        prop: Option<&str>,
+        current_path: &[usize],
+    ) -> Vec<(Vec<usize>, &'a JsonNode)> {
+        let mut results = Vec::new();
+
+        // Helper to recursively walk the tree
+        fn walk<'a>(
+            node: &'a JsonNode,
+            prop: Option<&str>,
+            current_path: &[usize],
+            results: &mut Vec<(Vec<usize>, &'a JsonNode)>,
+        ) {
+            // If property name specified, only match that property
+            if let Some(name) = prop {
+                if let JsonValue::Object(props) = node.value() {
+                    for (idx, (key, child)) in props.iter().enumerate() {
+                        if key == name {
+                            let mut new_path = current_path.to_vec();
+                            new_path.push(idx);
+                            results.push((new_path.clone(), child));
+                        }
+                        let mut child_path = current_path.to_vec();
+                        child_path.push(idx);
+                        walk(child, prop, &child_path, results);
+                    }
+                } else if let JsonValue::Array(items) = node.value() {
+                    for (idx, item) in items.iter().enumerate() {
+                        let mut child_path = current_path.to_vec();
+                        child_path.push(idx);
+                        walk(item, prop, &child_path, results);
+                    }
+                }
+            } else {
+                // No property name - match all nodes
+                match node.value() {
+                    JsonValue::Object(props) => {
+                        for (idx, (_, child)) in props.iter().enumerate() {
+                            let mut new_path = current_path.to_vec();
+                            new_path.push(idx);
+                            results.push((new_path.clone(), child));
+                            walk(child, prop, &new_path, results);
+                        }
+                    }
+                    JsonValue::Array(items) => {
+                        for (idx, item) in items.iter().enumerate() {
+                            let mut new_path = current_path.to_vec();
+                            new_path.push(idx);
+                            results.push((new_path.clone(), item));
+                            walk(item, prop, &new_path, results);
+                        }
+                    }
+                    _ => {}
+                }
+            }
+        }
+
+        walk(node, prop, current_path, &mut results);
+        results
+    }
+
     pub fn evaluate(&self, segments: &[PathSegment]) -> Vec<&'a JsonNode> {
         if segments.is_empty() {
             return vec![];

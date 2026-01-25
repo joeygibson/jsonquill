@@ -1397,6 +1397,7 @@ impl EditorState {
     /// Clears the search buffer.
     pub fn clear_search_buffer(&mut self) {
         self.search_buffer.clear();
+        self.search_type = None;
     }
 
     /// Sets the search direction.
@@ -1448,6 +1449,41 @@ impl EditorState {
                 self.cursor
                     .set_path(self.search_results[self.search_index].clone());
             }
+        }
+    }
+
+    /// Executes a JSONPath query and populates search results.
+    pub fn execute_jsonpath_search(&mut self, query: &str) {
+        use crate::jsonpath::{Evaluator, Parser};
+
+        self.search_results.clear();
+        self.search_index = 0;
+
+        // Parse the JSONPath query
+        let path = match Parser::parse(query) {
+            Ok(p) => p,
+            Err(e) => {
+                self.set_message(format!("Invalid JSONPath: {}", e), MessageLevel::Error);
+                return;
+            }
+        };
+
+        // Evaluate against the tree root
+        let evaluator = Evaluator::new(self.tree.root());
+        self.search_results = evaluator.evaluate_paths(&path.segments);
+
+        // Set search type
+        self.search_type = Some(SearchType::JsonPath(query.to_string()));
+
+        // Jump to first result or show message
+        if !self.search_results.is_empty() {
+            self.cursor.set_path(self.search_results[0].clone());
+            self.set_message(
+                format!("Found {} matches for {}", self.search_results.len(), query),
+                MessageLevel::Info,
+            );
+        } else {
+            self.set_message(format!("No matches for {}", query), MessageLevel::Info);
         }
     }
 
