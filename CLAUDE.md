@@ -63,6 +63,39 @@ cargo test
 
 If `cargo clippy` reports warnings, fix them before committing. If `cargo test` fails, investigate and fix the issues.
 
+## Version Management
+
+Use the `scripts/ver` script to manage version updates and create releases:
+
+```bash
+# Print current version
+./scripts/ver
+
+# Update to new version (validates format, updates files, commits, tags)
+./scripts/ver 0.3.0
+```
+
+The script will:
+1. Validate version format (X.Y.Z)
+2. Update Cargo.toml
+3. Run cargo build to update Cargo.lock
+4. Commit changes with message: `chore: bump version to X.Y.Z`
+5. Create git tag: `vX.Y.Z`
+6. Print push command (does not auto-push for safety)
+
+**Example output:**
+```
+Updating version: 0.2.1 → 0.3.0
+Updated Cargo.toml: 0.2.1 → 0.3.0
+Running cargo build...
+Committing version bump...
+Creating git tag: v0.3.0
+
+Version updated successfully!
+To push changes and tag, run:
+git push && git push origin v0.3.0
+```
+
 ## Architecture
 
 The project follows a standard Rust binary + library structure:

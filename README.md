@@ -302,6 +302,40 @@ cargo test test_add_field_to_object
 cargo test -- --nocapture
 ```
 
+### Version Management
+
+The `scripts/ver` script helps manage version updates and releases:
+
+```bash
+# Print current version
+./scripts/ver
+# Output: 0.2.1
+
+# Update to new version
+./scripts/ver 0.3.0
+```
+
+**What it does:**
+1. Validates version format (must be X.Y.Z)
+2. Updates `Cargo.toml` with the new version
+3. Runs `cargo build` to update `Cargo.lock`
+4. Commits both files: `chore: bump version to X.Y.Z`
+5. Creates git tag: `vX.Y.Z`
+6. Prints push command for you to run manually
+
+**Example workflow:**
+```bash
+# Update version
+./scripts/ver 0.3.0
+
+# Review the changes
+git log -1
+git show v0.3.0
+
+# Push to remote
+git push && git push origin v0.3.0
+```
+
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details.
