@@ -46,6 +46,15 @@ use crate::document::node::{JsonNode, JsonValue};
 use crate::document::tree::JsonTree;
 use crate::ui::tree_view::TreeViewState;
 
+/// Type of active search.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum SearchType {
+    /// Text-based search (/ or ?)
+    Text,
+    /// JSONPath structural search (:path or :jp)
+    JsonPath(String), // Store the query string for display
+}
+
 /// Parses a string into a JsonValue, detecting type automatically.
 ///
 /// - "true"/"false" → Boolean
@@ -159,6 +168,7 @@ pub struct EditorState {
     search_results: Vec<Vec<usize>>,
     search_index: usize,
     search_forward: bool,
+    search_type: Option<SearchType>,
     show_line_numbers: bool,
     enable_mouse: bool,
     edit_buffer: Option<String>,
@@ -242,6 +252,7 @@ impl EditorState {
             search_results: Vec::new(),
             search_index: 0,
             search_forward: true,
+            search_type: None,
             show_line_numbers: true,
             enable_mouse: true,
             edit_buffer: None,
@@ -1402,6 +1413,7 @@ impl EditorState {
         let query = self.search_buffer.to_lowercase();
         self.search_results.clear();
         self.search_index = 0;
+        self.search_type = Some(SearchType::Text);
 
         // Search through all visible lines
         for line in self.tree_view.lines() {
@@ -1466,6 +1478,11 @@ impl EditorState {
         } else {
             Some((self.search_index + 1, self.search_results.len()))
         }
+    }
+
+    /// Returns the current search type, if any.
+    pub fn search_type(&self) -> Option<&SearchType> {
+        self.search_type.as_ref()
     }
 
     /// Returns whether line numbers should be shown.
