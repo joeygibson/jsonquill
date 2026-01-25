@@ -48,7 +48,14 @@ cargo clippy
 
 ## Pre-Commit Checklist
 
-**ALWAYS run these commands before committing:**
+**ALWAYS complete these steps before committing:**
+
+**0. Update help screen if adding user-facing features:**
+- If adding new commands, keybindings, or major features visible to users
+- Update `src/ui/help_overlay.rs` to document the new functionality
+- Help screen should match README.md and CLAUDE.md documentation
+
+**1-3. Run quality checks:**
 
 ```bash
 # 1. Format code to ensure consistent style
