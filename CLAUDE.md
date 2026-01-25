@@ -197,6 +197,8 @@ zt          - Move cursor to top of screen
 zb          - Move cursor to bottom of screen
 }           - Jump to next sibling (same parent, next index)
 {           - Jump to previous sibling (same parent, previous index)
+0 or ^      - Jump to first sibling (same parent, index 0)
+$           - Jump to last sibling (same parent, last index)
 Arrow keys  - Also work for navigation
 
 # Mouse

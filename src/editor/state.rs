@@ -1027,6 +1027,118 @@ impl EditorState {
         // If it doesn't exist, we're at the last sibling - do nothing
     }
 
+    /// Moves the cursor to the first sibling node.
+    ///
+    /// Siblings are nodes that share the same parent (same path except for last index).
+    /// This sets the last index to 0 (first sibling).
+    /// If at root, does nothing.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use jsonquill::editor::state::EditorState;
+    /// use jsonquill::document::node::{JsonNode, JsonValue};
+    /// use jsonquill::document::tree::JsonTree;
+    ///
+    /// let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
+    ///     ("a".to_string(), JsonNode::new(JsonValue::Number(1.0))),
+    ///     ("b".to_string(), JsonNode::new(JsonValue::Number(2.0))),
+    ///     ("c".to_string(), JsonNode::new(JsonValue::Number(3.0))),
+    /// ])));
+    /// let mut state = EditorState::new(tree);
+    ///
+    /// // Move to middle sibling
+    /// state.cursor_mut().set_path(vec![1]);
+    ///
+    /// // Jump to first sibling [0]
+    /// state.move_to_first_sibling();
+    /// assert_eq!(state.cursor().path(), &[0]);
+    /// ```
+    pub fn move_to_first_sibling(&mut self) {
+        let current_path = self.cursor.path();
+
+        // Root has no siblings
+        if current_path.is_empty() {
+            return;
+        }
+
+        // Set last index to 0
+        let mut first_path = current_path.to_vec();
+        let last_idx = first_path.len() - 1;
+        first_path[last_idx] = 0;
+
+        // Check if this path exists in the tree
+        if self.tree.get_node(&first_path).is_some() {
+            self.cursor.set_path(first_path);
+        }
+    }
+
+    /// Moves the cursor to the last sibling node.
+    ///
+    /// Siblings are nodes that share the same parent (same path except for last index).
+    /// This finds and moves to the last valid sibling index.
+    /// If at root, does nothing.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use jsonquill::editor::state::EditorState;
+    /// use jsonquill::document::node::{JsonNode, JsonValue};
+    /// use jsonquill::document::tree::JsonTree;
+    ///
+    /// let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
+    ///     ("a".to_string(), JsonNode::new(JsonValue::Number(1.0))),
+    ///     ("b".to_string(), JsonNode::new(JsonValue::Number(2.0))),
+    ///     ("c".to_string(), JsonNode::new(JsonValue::Number(3.0))),
+    /// ])));
+    /// let mut state = EditorState::new(tree);
+    ///
+    /// // Initially at first sibling [0]
+    /// assert_eq!(state.cursor().path(), &[0]);
+    ///
+    /// // Jump to last sibling [2]
+    /// state.move_to_last_sibling();
+    /// assert_eq!(state.cursor().path(), &[2]);
+    /// ```
+    pub fn move_to_last_sibling(&mut self) {
+        let current_path = self.cursor.path();
+
+        // Root has no siblings
+        if current_path.is_empty() {
+            return;
+        }
+
+        // Get parent path to determine number of siblings
+        let parent_path = &current_path[..current_path.len() - 1];
+
+        let parent = if parent_path.is_empty() {
+            self.tree.root()
+        } else {
+            match self.tree.get_node(parent_path) {
+                Some(node) => node,
+                None => return,
+            }
+        };
+
+        use crate::document::node::JsonValue;
+        let sibling_count = match parent.value() {
+            JsonValue::Object(entries) => entries.len(),
+            JsonValue::Array(elements) | JsonValue::JsonlRoot(elements) => elements.len(),
+            _ => return, // Parent is not a container
+        };
+
+        if sibling_count == 0 {
+            return;
+        }
+
+        // Set last index to the last sibling (count - 1)
+        let mut last_path = current_path.to_vec();
+        let last_idx = last_path.len() - 1;
+        last_path[last_idx] = sibling_count - 1;
+
+        self.cursor.set_path(last_path);
+    }
+
     /// Moves the cursor to the previous sibling node.
     ///
     /// Siblings are nodes that share the same parent (same path except for last index).

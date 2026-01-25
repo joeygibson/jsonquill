@@ -71,6 +71,10 @@ pub enum InputEvent {
     NextSibling,
     /// Jump to previous sibling
     PreviousSibling,
+    /// Jump to first sibling
+    FirstSibling,
+    /// Jump to last sibling
+    LastSibling,
     /// Screen positioning command (z prefix)
     ScreenPosition,
     /// Insert a character in insert mode
@@ -151,6 +155,9 @@ pub fn map_key_event(event: Event, mode: &EditorMode) -> InputEvent {
             Key::Char('z') => InputEvent::ScreenPosition,
             Key::Char('}') => InputEvent::NextSibling,
             Key::Char('{') => InputEvent::PreviousSibling,
+            Key::Char('0') => InputEvent::FirstSibling,
+            Key::Char('^') => InputEvent::FirstSibling,
+            Key::Char('$') => InputEvent::LastSibling,
             Key::Down => InputEvent::MoveDown,
             Key::Up => InputEvent::MoveUp,
             Key::Left => InputEvent::MoveLeft,
