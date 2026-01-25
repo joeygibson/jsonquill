@@ -1745,12 +1745,20 @@ impl EditorState {
     }
 
     /// Executes a search for the current search buffer text.
+    /// Uses smart case: case-insensitive search unless the pattern contains uppercase letters.
     pub fn execute_search(&mut self) {
         if self.search_buffer.is_empty() {
             return;
         }
 
-        let query = self.search_buffer.to_lowercase();
+        // Smart case: case-insensitive unless pattern has uppercase
+        let case_sensitive = self.search_buffer.chars().any(|c| c.is_uppercase());
+        let query = if case_sensitive {
+            self.search_buffer.clone()
+        } else {
+            self.search_buffer.to_lowercase()
+        };
+
         self.search_results.clear();
         self.search_index = 0;
         self.search_type = Some(SearchType::Text);
@@ -1761,14 +1769,24 @@ impl EditorState {
 
             // Check key name
             if let Some(key) = &line.key {
-                if key.to_lowercase().contains(&query) {
+                let key_text = if case_sensitive {
+                    key.clone()
+                } else {
+                    key.to_lowercase()
+                };
+                if key_text.contains(&query) {
                     matches = true;
                 }
             }
 
             // Check string values
             if let crate::ui::tree_view::ValueType::String = line.value_type {
-                if line.value_preview.to_lowercase().contains(&query) {
+                let value_text = if case_sensitive {
+                    line.value_preview.clone()
+                } else {
+                    line.value_preview.to_lowercase()
+                };
+                if value_text.contains(&query) {
                     matches = true;
                 }
             }
@@ -1827,14 +1845,19 @@ impl EditorState {
     }
 
     /// Jumps to the next search result (respects search direction).
-    pub fn next_search_result(&mut self) -> bool {
+    /// Returns (success, wrapped) where wrapped indicates if the search wrapped around.
+    pub fn next_search_result(&mut self) -> (bool, bool) {
         if self.search_results.is_empty() {
-            return false;
+            return (false, false);
         }
 
+        let wrapped;
         if self.search_forward {
+            let old_index = self.search_index;
             self.search_index = (self.search_index + 1) % self.search_results.len();
+            wrapped = self.search_index < old_index; // Wrapped if new index is less than old
         } else {
+            wrapped = self.search_index == 0; // Wrapped if we're going back from 0
             self.search_index = if self.search_index == 0 {
                 self.search_results.len() - 1
             } else {
@@ -1843,7 +1866,7 @@ impl EditorState {
         }
         self.cursor
             .set_path(self.search_results[self.search_index].clone());
-        true
+        (true, wrapped)
     }
 
     /// Returns the current search results info.

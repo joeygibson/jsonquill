@@ -165,17 +165,17 @@ fn test_jsonpath_navigation_through_results() {
     assert_eq!(state.cursor().path(), &[0, 0, 0, 3]); // First book price
 
     // Navigate to second match
-    assert!(state.next_search_result());
+    assert!(state.next_search_result().0);
     assert_eq!(state.search_results_info(), Some((2, 3)));
     assert_eq!(state.cursor().path(), &[0, 0, 1, 3]); // Second book price
 
     // Navigate to third match
-    assert!(state.next_search_result());
+    assert!(state.next_search_result().0);
     assert_eq!(state.search_results_info(), Some((3, 3)));
     assert_eq!(state.cursor().path(), &[0, 1, 1]); // Bicycle price
 
     // Wrap around to first match
-    assert!(state.next_search_result());
+    assert!(state.next_search_result().0);
     assert_eq!(state.search_results_info(), Some((1, 3)));
     assert_eq!(state.cursor().path(), &[0, 0, 0, 3]);
 }
@@ -254,7 +254,7 @@ fn test_jsonpath_no_matches() {
     assert_eq!(state.search_results_info(), None);
 
     // Trying to navigate should return false
-    assert!(!state.next_search_result());
+    assert!(!state.next_search_result().0);
 }
 
 #[test]

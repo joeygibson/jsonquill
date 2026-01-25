@@ -584,10 +584,12 @@ impl InputHandler {
                 InputEvent::NextSearchResult => {
                     state.clear_pending();
                     use crate::editor::state::MessageLevel;
-                    if state.next_search_result() {
+                    let (success, wrapped) = state.next_search_result();
+                    if success {
                         if let Some((current, total)) = state.search_results_info() {
+                            let wrap_indicator = if wrapped { "W " } else { "" };
                             state.set_message(
-                                format!("Match {}/{}", current, total),
+                                format!("{}Match {}/{}", wrap_indicator, current, total),
                                 MessageLevel::Info,
                             );
                         }

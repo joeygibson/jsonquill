@@ -87,7 +87,7 @@ fn test_jsonpath_search_multiple_matches() {
     assert_eq!(path[2], 0); // price is at index 0 in [0] object
 
     // Navigate to next result
-    assert!(state.next_search_result());
+    assert!(state.next_search_result().0);
     assert_eq!(state.search_results_info(), Some((2, 3)));
 
     // Check cursor moved to second match
@@ -96,7 +96,7 @@ fn test_jsonpath_search_multiple_matches() {
     assert_eq!(path[2], 0); // price is at index 0 in [1] object
 
     // Navigate to third result
-    assert!(state.next_search_result());
+    assert!(state.next_search_result().0);
     assert_eq!(state.search_results_info(), Some((3, 3)));
 
     // Check cursor moved to third match

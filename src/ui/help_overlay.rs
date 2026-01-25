@@ -193,7 +193,7 @@ pub fn render_help_overlay(f: &mut Frame, colors: &ThemeColors, scroll: usize) {
         )]),
         Line::from(vec![
             Span::styled("  /             ", Style::default().fg(colors.number)),
-            Span::raw("Search forward in keys and values"),
+            Span::raw("Search forward (smart case, shows W when wrapping)"),
         ]),
         Line::from(vec![
             Span::styled("  ?             ", Style::default().fg(colors.number)),
@@ -201,7 +201,7 @@ pub fn render_help_overlay(f: &mut Frame, colors: &ThemeColors, scroll: usize) {
         ]),
         Line::from(vec![
             Span::styled("  n             ", Style::default().fg(colors.number)),
-            Span::raw("Jump to next match (search direction)"),
+            Span::raw("Jump to next match (shows current/total)"),
         ]),
         Line::from(vec![
             Span::styled("  *             ", Style::default().fg(colors.number)),

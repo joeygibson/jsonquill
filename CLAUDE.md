@@ -208,6 +208,9 @@ Scroll wheel/trackpad - Scroll viewport (3 lines per tick)
 
 # Search
 /           - Start forward search (searches down through document)
+            - Uses smart case: case-insensitive unless pattern has uppercase letters
+            - Shows match counter (e.g., "Match 2/5")
+            - Shows "W" prefix when wrapping around (e.g., "W Match 1/5")
 ?           - Start backward search (searches up through document)
 n           - Jump to next match in search direction
 *           - Search forward for current object key
