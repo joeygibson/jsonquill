@@ -28,10 +28,7 @@ fn test_jsonpath_search_single_match() {
     state.execute_jsonpath_search("$.users[0].name");
 
     // Check search type is set to JSONPath
-    assert!(matches!(
-        state.search_type(),
-        Some(SearchType::JsonPath(_))
-    ));
+    assert!(matches!(state.search_type(), Some(SearchType::JsonPath(_))));
 
     // Check we have exactly 1 result
     assert_eq!(state.search_results_info(), Some((1, 1)));
@@ -123,10 +120,7 @@ fn test_jsonpath_search_no_matches() {
     state.execute_jsonpath_search("$.baz");
 
     // Check search type is still set to JSONPath
-    assert!(matches!(
-        state.search_type(),
-        Some(SearchType::JsonPath(_))
-    ));
+    assert!(matches!(state.search_type(), Some(SearchType::JsonPath(_))));
 
     // Check we have no results
     assert_eq!(state.search_results_info(), None);

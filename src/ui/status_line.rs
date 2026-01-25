@@ -57,7 +57,12 @@ pub fn render_status_line(f: &mut Frame, area: Rect, state: &EditorState, colors
         use crate::editor::state::SearchType;
         let search_info = match state.search_type() {
             Some(SearchType::Text) => {
-                format!(" [Search: \"{}\"] Match {}/{}", state.search_buffer(), current, total)
+                format!(
+                    " [Search: \"{}\"] Match {}/{}",
+                    state.search_buffer(),
+                    current,
+                    total
+                )
             }
             Some(SearchType::JsonPath(query)) => {
                 format!(" [JSONPath: {}] Match {}/{}", query, current, total)

@@ -219,21 +219,19 @@ impl Parser {
             loop {
                 match self.next() {
                     Some(ch) if ch == quote => break,
-                    Some('\\') => {
-                        match self.next() {
-                            Some('n') => value.push('\n'),
-                            Some('t') => value.push('\t'),
-                            Some('r') => value.push('\r'),
-                            Some('\\') => value.push('\\'),
-                            Some('\'') => value.push('\''),
-                            Some('"') => value.push('"'),
-                            Some(_) | None => {
-                                return Err(JsonPathError::InvalidSyntax {
-                                    message: "Invalid escape sequence".to_string(),
-                                })
-                            }
+                    Some('\\') => match self.next() {
+                        Some('n') => value.push('\n'),
+                        Some('t') => value.push('\t'),
+                        Some('r') => value.push('\r'),
+                        Some('\\') => value.push('\\'),
+                        Some('\'') => value.push('\''),
+                        Some('"') => value.push('"'),
+                        Some(_) | None => {
+                            return Err(JsonPathError::InvalidSyntax {
+                                message: "Invalid escape sequence".to_string(),
+                            })
                         }
-                    }
+                    },
                     Some(ch) => value.push(ch),
                     None => {
                         return Err(JsonPathError::UnexpectedEnd {
