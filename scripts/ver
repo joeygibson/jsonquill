@@ -137,6 +137,140 @@ generate_release_notes() {
     echo -e "$entry"
 }
 
+# Function to generate GitHub release notes
+generate_github_release_notes() {
+    local new_version=$1
+    local current_version=$2
+    local date=$(date +"%B %d, %Y")
+
+    # Try to find the previous tag
+    local prev_tag="v$current_version"
+    if ! git rev-parse "$prev_tag" >/dev/null 2>&1; then
+        prev_tag=""
+    fi
+
+    # Get commits since last version
+    local commits
+    if [ -n "$prev_tag" ]; then
+        commits=$(git log --pretty=format:"%h %s" "$prev_tag..HEAD" 2>/dev/null)
+    else
+        commits=$(git log --pretty=format:"%h %s" 2>/dev/null)
+    fi
+
+    # Parse commits into categories
+    local feat_commits=()
+    local fix_commits=()
+    local docs_commits=()
+    local refactor_commits=()
+    local perf_commits=()
+    local test_commits=()
+    local other_commits=()
+
+    while IFS= read -r commit; do
+        [ -z "$commit" ] && continue
+
+        local hash=$(echo "$commit" | awk '{print $1}')
+        local msg=$(echo "$commit" | cut -d' ' -f2-)
+
+        # Skip chore commits
+        [[ $msg =~ ^chore(\(.*\))?: ]] && continue
+
+        # Categorize by type
+        if [[ $msg =~ ^feat(\(.*\))?: ]]; then
+            feat_commits+=("$msg")
+        elif [[ $msg =~ ^fix(\(.*\))?: ]]; then
+            fix_commits+=("$msg")
+        elif [[ $msg =~ ^docs(\(.*\))?: ]]; then
+            docs_commits+=("$msg")
+        elif [[ $msg =~ ^refactor(\(.*\))?: ]]; then
+            refactor_commits+=("$msg")
+        elif [[ $msg =~ ^perf(\(.*\))?: ]]; then
+            perf_commits+=("$msg")
+        elif [[ $msg =~ ^test(\(.*\))?: ]]; then
+            test_commits+=("$msg")
+        else
+            other_commits+=("$msg")
+        fi
+    done <<< "$commits"
+
+    # Start building the release notes
+    local notes=""
+    notes+="# jsonquill v$new_version\n\n"
+    notes+="**Release Date:** $date\n\n"
+
+    # New Features section
+    if [ ${#feat_commits[@]} -gt 0 ]; then
+        notes+="## 🎉 New Features\n\n"
+        for commit in "${feat_commits[@]}"; do
+            # Extract description (remove feat prefix and scope)
+            local desc=$(echo "$commit" | sed 's/^feat(\(.*\)): //' | sed 's/^feat: //')
+            # Capitalize first letter
+            desc="$(echo ${desc:0:1} | tr '[:lower:]' '[:upper:]')${desc:1}"
+            notes+="### $desc\n\n"
+            notes+="[Add detailed description here]\n\n"
+        done
+    fi
+
+    # Documentation section
+    if [ ${#docs_commits[@]} -gt 0 ]; then
+        notes+="## 📚 Documentation\n\n"
+        for commit in "${docs_commits[@]}"; do
+            local desc=$(echo "$commit" | sed 's/^docs(\(.*\)): //' | sed 's/^docs: //')
+            notes+="- $desc\n"
+        done
+        notes+="\n"
+    fi
+
+    # Testing section
+    if [ ${#test_commits[@]} -gt 0 ]; then
+        notes+="## 🧪 Testing\n\n"
+        for commit in "${test_commits[@]}"; do
+            local desc=$(echo "$commit" | sed 's/^test(\(.*\)): //' | sed 's/^test: //')
+            notes+="- $desc\n"
+        done
+        notes+="\n"
+    fi
+
+    # Technical Details section
+    if [ ${#refactor_commits[@]} -gt 0 ] || [ ${#perf_commits[@]} -gt 0 ]; then
+        notes+="## 🔧 Technical Details\n\n"
+        for commit in "${refactor_commits[@]}"; do
+            local desc=$(echo "$commit" | sed 's/^refactor(\(.*\)): //' | sed 's/^refactor: //')
+            notes+="- $desc\n"
+        done
+        for commit in "${perf_commits[@]}"; do
+            local desc=$(echo "$commit" | sed 's/^perf(\(.*\)): //' | sed 's/^perf: //')
+            notes+="- $desc\n"
+        done
+        notes+="\n"
+    fi
+
+    # Fixes section
+    if [ ${#fix_commits[@]} -gt 0 ]; then
+        notes+="## 🛠️ Fixes\n\n"
+        for commit in "${fix_commits[@]}"; do
+            local desc=$(echo "$commit" | sed 's/^fix(\(.*\)): //' | sed 's/^fix: //')
+            notes+="- $desc\n"
+        done
+        notes+="\n"
+    fi
+
+    # Other changes section
+    if [ ${#other_commits[@]} -gt 0 ]; then
+        notes+="## 📝 Other Changes\n\n"
+        for commit in "${other_commits[@]}"; do
+            notes+="- $commit\n"
+        done
+        notes+="\n"
+    fi
+
+    # Full changelog link
+    notes+="---\n\n"
+    notes+="**Full Changelog**: https://github.com/joeygibson/jsonquill/compare/v$current_version...v$new_version\n"
+
+    echo -e "$notes"
+}
+
 # Function to update CHANGELOG.md
 update_changelog() {
     local new_version=$1
@@ -216,6 +350,11 @@ elif [ $# -eq 1 ]; then
     # Update CHANGELOG.md
     update_changelog "$new_version" "$current_version"
 
+    # Generate GitHub release notes
+    release_notes_file="release-notes-v$new_version.md"
+    generate_github_release_notes "$new_version" "$current_version" > "$release_notes_file"
+    echo -e "${GREEN}Generated GitHub release notes: $release_notes_file${NC}"
+
     # Ask if user wants to review/edit CHANGELOG.md
     if [ -f CHANGELOG.md ]; then
         echo ""
@@ -245,6 +384,9 @@ elif [ $# -eq 1 ]; then
     echo -e "${YELLOW}Version updated successfully!${NC}"
     echo -e "${YELLOW}To push changes and tag, run:${NC}"
     echo -e "${GREEN}git push && git push origin $tag_name${NC}"
+    echo ""
+    echo -e "${YELLOW}GitHub release notes saved to: ${GREEN}$release_notes_file${NC}"
+    echo -e "${YELLOW}Edit the file to add detailed descriptions, then paste into GitHub release.${NC}"
 else
     echo -e "${RED}Error: Too many arguments${NC}" >&2
     echo "Usage:"
