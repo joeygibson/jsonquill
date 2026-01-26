@@ -157,4 +157,159 @@ impl ThemeColors {
             preview: Color::DarkGray, // ANSI 8 for collapsed previews
         }
     }
+
+    /// Returns the Gruvbox Dark color scheme.
+    ///
+    /// A retro groove color scheme with warm, earthy tones.
+    /// Based on the popular Gruvbox theme by morhetz.
+    pub fn gruvbox_dark() -> Self {
+        Self {
+            key: Color::Rgb(251, 184, 108),    // orange
+            string: Color::Rgb(184, 187, 38),  // green
+            number: Color::Rgb(211, 134, 155), // purple
+            boolean: Color::Rgb(254, 128, 25), // bright orange
+            null: Color::Rgb(146, 131, 116),   // gray
+
+            background: Color::Rgb(40, 40, 40),        // dark bg
+            foreground: Color::Rgb(235, 219, 178),     // light fg
+            cursor: Color::Rgb(251, 184, 108),         // orange
+            status_line_bg: Color::Rgb(60, 56, 54),    // darker bg
+            status_line_fg: Color::Rgb(235, 219, 178), // light fg
+
+            error: Color::Rgb(251, 73, 52),             // red
+            warning: Color::Rgb(250, 189, 47),          // yellow
+            info: Color::Rgb(131, 165, 152),            // aqua
+            search_highlight: Color::Rgb(215, 153, 33), // yellow highlight
+            preview: Color::Rgb(146, 131, 116),         // gray
+        }
+    }
+
+    /// Returns the Nord color scheme.
+    ///
+    /// An arctic, north-bluish color palette.
+    /// Based on the Nord theme by Arctic Ice Studio.
+    pub fn nord() -> Self {
+        Self {
+            key: Color::Rgb(136, 192, 208),     // frost cyan
+            string: Color::Rgb(163, 190, 140),  // aurora green
+            number: Color::Rgb(180, 142, 173),  // aurora purple
+            boolean: Color::Rgb(235, 203, 139), // aurora yellow
+            null: Color::Rgb(76, 86, 106),      // polar night gray
+
+            background: Color::Rgb(46, 52, 64), // polar night darkest
+            foreground: Color::Rgb(216, 222, 233), // snow storm lightest
+            cursor: Color::Rgb(136, 192, 208),  // frost cyan
+            status_line_bg: Color::Rgb(59, 66, 82), // polar night
+            status_line_fg: Color::Rgb(216, 222, 233), // snow storm
+
+            error: Color::Rgb(191, 97, 106),             // aurora red
+            warning: Color::Rgb(235, 203, 139),          // aurora yellow
+            info: Color::Rgb(136, 192, 208),             // frost cyan
+            search_highlight: Color::Rgb(235, 203, 139), // aurora yellow
+            preview: Color::Rgb(76, 86, 106),            // polar night gray
+        }
+    }
+
+    /// Returns the Dracula color scheme.
+    ///
+    /// A dark theme with vibrant purples and pinks.
+    /// Based on the Dracula theme by Zeno Rocha.
+    pub fn dracula() -> Self {
+        Self {
+            key: Color::Rgb(139, 233, 253),     // cyan
+            string: Color::Rgb(241, 250, 140),  // yellow
+            number: Color::Rgb(189, 147, 249),  // purple
+            boolean: Color::Rgb(255, 121, 198), // pink
+            null: Color::Rgb(98, 114, 164),     // comment
+
+            background: Color::Rgb(40, 42, 54),     // background
+            foreground: Color::Rgb(248, 248, 242),  // foreground
+            cursor: Color::Rgb(189, 147, 249),      // purple
+            status_line_bg: Color::Rgb(68, 71, 90), // current line
+            status_line_fg: Color::Rgb(248, 248, 242), // foreground
+
+            error: Color::Rgb(255, 85, 85),              // red
+            warning: Color::Rgb(255, 184, 108),          // orange
+            info: Color::Rgb(139, 233, 253),             // cyan
+            search_highlight: Color::Rgb(255, 121, 198), // pink
+            preview: Color::Rgb(98, 114, 164),           // comment
+        }
+    }
+
+    /// Returns the Solarized Dark color scheme.
+    ///
+    /// A precision color scheme for machines and people.
+    /// Based on the Solarized theme by Ethan Schoonover.
+    pub fn solarized_dark() -> Self {
+        Self {
+            key: Color::Rgb(38, 139, 210),    // blue
+            string: Color::Rgb(133, 153, 0),  // green
+            number: Color::Rgb(211, 54, 130), // magenta
+            boolean: Color::Rgb(181, 137, 0), // yellow
+            null: Color::Rgb(88, 110, 117),   // base01
+
+            background: Color::Rgb(0, 43, 54),         // base03
+            foreground: Color::Rgb(131, 148, 150),     // base0
+            cursor: Color::Rgb(38, 139, 210),          // blue
+            status_line_bg: Color::Rgb(7, 54, 66),     // base02
+            status_line_fg: Color::Rgb(147, 161, 161), // base1
+
+            error: Color::Rgb(220, 50, 47),            // red
+            warning: Color::Rgb(203, 75, 22),          // orange
+            info: Color::Rgb(42, 161, 152),            // cyan
+            search_highlight: Color::Rgb(181, 137, 0), // yellow
+            preview: Color::Rgb(88, 110, 117),         // base01
+        }
+    }
+
+    /// Returns the Monokai color scheme.
+    ///
+    /// A popular color scheme inspired by the Monokai Pro theme.
+    pub fn monokai() -> Self {
+        Self {
+            key: Color::Rgb(102, 217, 239),    // cyan
+            string: Color::Rgb(230, 219, 116), // yellow
+            number: Color::Rgb(174, 129, 255), // purple
+            boolean: Color::Rgb(255, 97, 136), // pink
+            null: Color::Rgb(117, 113, 94),    // comment
+
+            background: Color::Rgb(39, 40, 34),     // background
+            foreground: Color::Rgb(248, 248, 240),  // foreground
+            cursor: Color::Rgb(102, 217, 239),      // cyan
+            status_line_bg: Color::Rgb(73, 72, 62), // line highlight
+            status_line_fg: Color::Rgb(248, 248, 240), // foreground
+
+            error: Color::Rgb(249, 38, 114),             // pink/red
+            warning: Color::Rgb(253, 151, 31),           // orange
+            info: Color::Rgb(102, 217, 239),             // cyan
+            search_highlight: Color::Rgb(230, 219, 116), // yellow
+            preview: Color::Rgb(117, 113, 94),           // comment
+        }
+    }
+
+    /// Returns the One Dark color scheme.
+    ///
+    /// The default dark theme from Atom editor.
+    /// Based on the One Dark theme by Atom.
+    pub fn one_dark() -> Self {
+        Self {
+            key: Color::Rgb(224, 108, 117),     // red
+            string: Color::Rgb(152, 195, 121),  // green
+            number: Color::Rgb(209, 154, 102),  // orange
+            boolean: Color::Rgb(198, 120, 221), // purple
+            null: Color::Rgb(92, 99, 112),      // comment
+
+            background: Color::Rgb(40, 44, 52),     // background
+            foreground: Color::Rgb(171, 178, 191),  // foreground
+            cursor: Color::Rgb(97, 175, 239),       // blue
+            status_line_bg: Color::Rgb(33, 37, 43), // gutter bg
+            status_line_fg: Color::Rgb(171, 178, 191), // foreground
+
+            error: Color::Rgb(224, 108, 117),            // red
+            warning: Color::Rgb(229, 192, 123),          // yellow
+            info: Color::Rgb(97, 175, 239),              // blue
+            search_highlight: Color::Rgb(229, 192, 123), // yellow
+            preview: Color::Rgb(92, 99, 112),            // comment
+        }
+    }
 }

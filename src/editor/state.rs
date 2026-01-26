@@ -1227,9 +1227,7 @@ impl EditorState {
 
         // Find the current line to get its depth
         let lines = self.tree_view.lines();
-        let current_line_idx = lines
-            .iter()
-            .position(|line| line.path == *current_path);
+        let current_line_idx = lines.iter().position(|line| line.path == *current_path);
 
         if let Some(idx) = current_line_idx {
             let current_depth = lines[idx].depth;
@@ -1299,9 +1297,7 @@ impl EditorState {
 
         // Find the current line to get its depth
         let lines = self.tree_view.lines();
-        let current_line_idx = lines
-            .iter()
-            .position(|line| line.path == *current_path);
+        let current_line_idx = lines.iter().position(|line| line.path == *current_path);
 
         if let Some(idx) = current_line_idx {
             let current_depth = lines[idx].depth;

@@ -272,6 +272,34 @@ Examples:
 - Type `42` → Stored as number `42`
 - Type `true` → Stored as boolean `true`
 
+## Themes
+
+JSONQuill includes multiple built-in color themes. Use `:theme` to list all available themes, or `:theme <name>` to switch.
+
+**Available themes:**
+- `default-dark` - Dark theme optimized for low-light environments (default)
+- `default-light` - Light theme for well-lit environments
+- `gruvbox-dark` - Retro groove color scheme with warm, earthy tones
+- `nord` - Arctic, north-bluish color palette
+- `dracula` - Dark theme with vibrant purples and pinks
+- `solarized-dark` - Precision color scheme for machines and people
+- `monokai` - Popular color scheme inspired by Monokai Pro
+- `one-dark` - The default dark theme from Atom editor
+
+**Examples:**
+```bash
+# List all available themes
+:theme
+
+# Switch to Nord theme
+:theme nord
+
+# Switch to Dracula theme
+:theme dracula
+```
+
+Themes can also be set in your configuration file (see Configuration section below).
+
 ## Configuration
 
 JSONQuill supports a configuration file at `~/.config/jsonquill/config.toml`.

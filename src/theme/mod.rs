@@ -7,9 +7,15 @@
 //!
 //! # Built-in Themes
 //!
-//! jsonquill includes two built-in themes:
+//! jsonquill includes multiple built-in themes:
 //! - `"default-dark"`: A dark theme optimized for low-light environments
 //! - `"default-light"`: A light theme for well-lit environments
+//! - `"gruvbox-dark"`: Retro groove color scheme with warm, earthy tones
+//! - `"nord"`: Arctic, north-bluish color palette
+//! - `"dracula"`: Dark theme with vibrant purples and pinks
+//! - `"solarized-dark"`: Precision color scheme for machines and people
+//! - `"monokai"`: Popular color scheme inspired by Monokai Pro
+//! - `"one-dark"`: The default dark theme from Atom editor
 //!
 //! # Examples
 //!
@@ -56,6 +62,12 @@ pub struct Theme {
 /// * `name` - The name of the theme to retrieve. Valid values are:
 ///   - `"default-dark"`: Dark theme for low-light environments
 ///   - `"default-light"`: Light theme for well-lit environments
+///   - `"gruvbox-dark"`: Retro groove color scheme
+///   - `"nord"`: Arctic, north-bluish palette
+///   - `"dracula"`: Vibrant purples and pinks
+///   - `"solarized-dark"`: Precision color scheme
+///   - `"monokai"`: Monokai Pro inspired
+///   - `"one-dark"`: Atom's default dark theme
 ///
 /// # Returns
 ///
@@ -85,6 +97,30 @@ pub fn get_builtin_theme(name: &str) -> Option<Theme> {
             name: name.to_string(),
             colors: ThemeColors::default_light(),
         }),
+        "gruvbox-dark" => Some(Theme {
+            name: name.to_string(),
+            colors: ThemeColors::gruvbox_dark(),
+        }),
+        "nord" => Some(Theme {
+            name: name.to_string(),
+            colors: ThemeColors::nord(),
+        }),
+        "dracula" => Some(Theme {
+            name: name.to_string(),
+            colors: ThemeColors::dracula(),
+        }),
+        "solarized-dark" => Some(Theme {
+            name: name.to_string(),
+            colors: ThemeColors::solarized_dark(),
+        }),
+        "monokai" => Some(Theme {
+            name: name.to_string(),
+            colors: ThemeColors::monokai(),
+        }),
+        "one-dark" => Some(Theme {
+            name: name.to_string(),
+            colors: ThemeColors::one_dark(),
+        }),
         _ => None,
     }
 }
@@ -105,5 +141,14 @@ pub fn get_builtin_theme(name: &str) -> Option<Theme> {
 /// assert!(themes.contains(&"default-light".to_string()));
 /// ```
 pub fn list_builtin_themes() -> Vec<String> {
-    vec!["default-dark".to_string(), "default-light".to_string()]
+    vec![
+        "default-dark".to_string(),
+        "default-light".to_string(),
+        "gruvbox-dark".to_string(),
+        "nord".to_string(),
+        "dracula".to_string(),
+        "solarized-dark".to_string(),
+        "monokai".to_string(),
+        "one-dark".to_string(),
+    ]
 }
