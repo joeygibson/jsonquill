@@ -28,12 +28,13 @@ generate_github_release_notes() {
     fi
 
     # Get commits since last version with full message
-    # Format: hash|||subject|||body
+    # Format: hash|||FIELD|||subject|||FIELD|||body|||FIELD|||END
+    # Using |||FIELD||| as delimiter to avoid conflicts with ||| in commit messages
     local commits
     if [ -n "$prev_tag" ]; then
-        commits=$(git log --pretty=format:"%h|||%s|||%b|||END" "$prev_tag..HEAD" 2>/dev/null)
+        commits=$(git log --pretty=format:"%h|||FIELD|||%s|||FIELD|||%b|||FIELD|||END" "$prev_tag..HEAD" 2>/dev/null)
     else
-        commits=$(git log --pretty=format:"%h|||%s|||%b|||END" 2>/dev/null)
+        commits=$(git log --pretty=format:"%h|||FIELD|||%s|||FIELD|||%b|||FIELD|||END" 2>/dev/null)
     fi
 
     # Parse commits into categories with full messages
@@ -47,15 +48,15 @@ generate_github_release_notes() {
 
     local commit_buffer=""
     while IFS= read -r line; do
-        if [[ $line == *"|||END" ]]; then
+        if [[ $line == *"|||FIELD|||END" ]]; then
             # Process accumulated commit
             if [ -n "$commit_buffer" ]; then
-                # Split on ||| delimiter - extract hash first
-                local hash="${commit_buffer%%|||*}"
-                local rest="${commit_buffer#*|||}"
+                # Split on |||FIELD||| delimiter - extract hash first
+                local hash="${commit_buffer%%|||FIELD|||*}"
+                local rest="${commit_buffer#*|||FIELD|||}"
                 # Now split rest to get subject and body
-                local subject="${rest%%|||*}"
-                local body="${rest#*|||}"
+                local subject="${rest%%|||FIELD|||*}"
+                local body="${rest#*|||FIELD|||}"
 
                 # Filter out Co-Authored-By lines
                 body=$(echo "$body" | grep -v "^Co-Authored-By: Claude Sonnet")
@@ -63,7 +64,7 @@ generate_github_release_notes() {
                 # Skip chore commits
                 if [[ ! $subject =~ ^chore(\(.*\))?: ]]; then
                     # Store subject and body together
-                    local full_msg="$subject|||$body"
+                    local full_msg="$subject|||FIELD|||$body"
 
                     # Categorize by type
                     if [[ $subject =~ ^feat(\(.*\))?: ]]; then
@@ -100,8 +101,8 @@ generate_github_release_notes() {
         for hash in "${!feat_commits[@]}"; do
             local full_msg="${feat_commits[$hash]}"
             # Split on ||| delimiter using bash
-            local subject="${full_msg%%|||*}"
-            local body="${full_msg#*|||}"
+            local subject="${full_msg%%|||FIELD|||*}"
+            local body="${full_msg#*|||FIELD|||}"
 
             # Extract title (remove feat prefix and scope)
             local title=$(echo "$subject" | sed 's/^feat(\(.*\)): //' | sed 's/^feat: //')
