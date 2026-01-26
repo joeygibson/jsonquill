@@ -244,6 +244,10 @@ n           - Jump to next match in search direction
 #           - Search backward for current object key
 Esc         - Exit SEARCH mode
 
+Note: Search results info disappears from the status bar when you press any key
+other than `n` (next match). This keeps the status bar clean once you're done
+navigating search results.
+
 # JSONPath Search (structural search)
 :path $.store.book[*].author  - Find all book authors
 :jp $..price                  - Find all price fields anywhere
