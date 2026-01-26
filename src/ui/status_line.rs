@@ -453,4 +453,74 @@ mod tests {
             text
         );
     }
+
+    #[test]
+    fn test_status_line_path_uses_key_color() {
+        let backend = TestBackend::new(100, 3);
+        let mut terminal = Terminal::new(backend).unwrap();
+
+        // Create tree: {"users": [{"name": "Alice"}]}
+        let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![(
+            "users".to_string(),
+            JsonNode::new(JsonValue::Array(vec![JsonNode::new(JsonValue::Object(
+                vec![(
+                    "name".to_string(),
+                    JsonNode::new(JsonValue::String("Alice".to_string())),
+                )],
+            ))])),
+        )])));
+
+        let mut state = EditorState::new(tree);
+        state.set_filename("test.json".to_string());
+
+        // Navigate to users[0].name (has a path)
+        state.move_cursor_down(); // users key
+        state.move_cursor_down(); // users[0]
+        state.move_cursor_down(); // name key
+
+        let theme = theme::get_builtin_theme("default-dark").unwrap();
+
+        terminal
+            .draw(|f| {
+                let area = f.area();
+                render_status_line(f, area, &state, &theme.colors);
+            })
+            .unwrap();
+
+        let buffer = terminal.backend().buffer();
+        let content = buffer.content();
+
+        // Find the path segment in the buffer
+        let mut found_path_with_key_color = false;
+        let text: String = content.iter().take(100).map(|c| c.symbol()).collect();
+
+        // Verify the path appears in the output
+        assert!(
+            text.contains("users[0].name"),
+            "Status line should contain path: {}",
+            text
+        );
+
+        // Check that the cells containing the path have the key color
+        // The path "users[0].name" should be rendered with colors.key foreground
+        for (i, cell) in content.iter().enumerate().take(100) {
+            // Check if this cell is part of the path
+            if text[..i.min(text.len())].ends_with("test.json") {
+                // We're past the filename, check next segment for path
+                let remaining = &text[i..];
+                if remaining.starts_with(" users") || remaining.starts_with("users") {
+                    // This should be the path segment with key color
+                    if cell.fg == theme.colors.key {
+                        found_path_with_key_color = true;
+                        break;
+                    }
+                }
+            }
+        }
+
+        assert!(
+            found_path_with_key_color,
+            "Path segment should use theme's key color"
+        );
+    }
 }
