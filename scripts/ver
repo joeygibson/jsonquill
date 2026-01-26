@@ -151,21 +151,23 @@ update_changelog() {
     # Generate release notes from git commits
     local release_notes=$(generate_release_notes "$current_version")
 
-    # Create the new version entry
-    local new_entry="## [$new_version] - $date
-
-$release_notes"
+    # Create the new version entry in a temp file
+    local temp_entry=$(mktemp)
+    echo "## [$new_version] - $date" > "$temp_entry"
+    echo "" >> "$temp_entry"
+    echo -e "$release_notes" >> "$temp_entry"
 
     # Find the first ## header (should be the previous version)
     # Insert the new entry before it
-    awk -v new="$new_entry" '
+    awk '
         !inserted && /^## \[/ {
-            print new
+            system("cat '"$temp_entry"'")
             inserted = 1
         }
         { print }
     ' CHANGELOG.md > CHANGELOG.md.tmp
 
+    rm "$temp_entry"
     mv CHANGELOG.md.tmp CHANGELOG.md
 
     # Update the version comparison links at the bottom
