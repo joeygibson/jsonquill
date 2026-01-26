@@ -1,0 +1,221 @@
+#!/usr/bin/env bash
+# Generate GitHub release notes from git commits
+# Usage: release-notes <new_version> [<current_version>]
+
+set -e
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
+
+# Function to get current version from Cargo.toml
+get_version() {
+    grep '^version = ' Cargo.toml | head -n 1 | sed 's/version = "\(.*\)"/\1/'
+}
+
+# Function to generate GitHub release notes
+generate_github_release_notes() {
+    local new_version=$1
+    local current_version=$2
+    local date=$(date +"%B %d, %Y")
+
+    # Try to find the previous tag
+    local prev_tag="v$current_version"
+    if ! git rev-parse "$prev_tag" >/dev/null 2>&1; then
+        prev_tag=""
+    fi
+
+    # Get commits since last version with full message
+    # Format: hash|||subject|||body
+    local commits
+    if [ -n "$prev_tag" ]; then
+        commits=$(git log --pretty=format:"%h|||%s|||%b|||END" "$prev_tag..HEAD" 2>/dev/null)
+    else
+        commits=$(git log --pretty=format:"%h|||%s|||%b|||END" 2>/dev/null)
+    fi
+
+    # Parse commits into categories with full messages
+    declare -A feat_commits
+    declare -A fix_commits
+    declare -A docs_commits
+    declare -A refactor_commits
+    declare -A perf_commits
+    declare -A test_commits
+    declare -A other_commits
+
+    local commit_buffer=""
+    while IFS= read -r line; do
+        if [[ $line == *"|||END" ]]; then
+            # Process accumulated commit
+            if [ -n "$commit_buffer" ]; then
+                # Split on ||| delimiter - extract hash first
+                local hash="${commit_buffer%%|||*}"
+                local rest="${commit_buffer#*|||}"
+                # Now split rest to get subject and body
+                local subject="${rest%%|||*}"
+                local body="${rest#*|||}"
+
+                # Skip chore commits
+                if [[ ! $subject =~ ^chore(\(.*\))?: ]]; then
+                    # Store subject and body together
+                    local full_msg="$subject|||$body"
+
+                    # Categorize by type
+                    if [[ $subject =~ ^feat(\(.*\))?: ]]; then
+                        feat_commits[$hash]="$full_msg"
+                    elif [[ $subject =~ ^fix(\(.*\))?: ]]; then
+                        fix_commits[$hash]="$full_msg"
+                    elif [[ $subject =~ ^docs(\(.*\))?: ]]; then
+                        docs_commits[$hash]="$full_msg"
+                    elif [[ $subject =~ ^refactor(\(.*\))?: ]]; then
+                        refactor_commits[$hash]="$full_msg"
+                    elif [[ $subject =~ ^perf(\(.*\))?: ]]; then
+                        perf_commits[$hash]="$full_msg"
+                    elif [[ $subject =~ ^test(\(.*\))?: ]]; then
+                        test_commits[$hash]="$full_msg"
+                    else
+                        other_commits[$hash]="$full_msg"
+                    fi
+                fi
+            fi
+            commit_buffer=""
+        else
+            commit_buffer+="$line"$'\n'
+        fi
+    done <<< "$commits"
+
+    # Start building the release notes
+    local notes=""
+    notes+="# jsonquill v$new_version\n\n"
+    notes+="**Release Date:** $date\n\n"
+
+    # New Features section
+    if [ ${#feat_commits[@]} -gt 0 ]; then
+        notes+="## 🎉 New Features\n\n"
+        for hash in "${!feat_commits[@]}"; do
+            local full_msg="${feat_commits[$hash]}"
+            # Split on ||| delimiter using bash
+            local subject="${full_msg%%|||*}"
+            local body="${full_msg#*|||}"
+
+            # Extract title (remove feat prefix and scope)
+            local title=$(echo "$subject" | sed 's/^feat(\(.*\)): //' | sed 's/^feat: //')
+            # Capitalize first letter
+            title="$(echo ${title:0:1} | tr '[:lower:]' '[:upper:]')${title:1}"
+            notes+="### $title\n\n"
+
+            # Add body if it exists, otherwise add a placeholder
+            if [ -n "$body" ]; then
+                notes+="$body\n\n"
+            else
+                notes+="_No additional details provided._\n\n"
+            fi
+        done
+    fi
+
+    # Documentation section
+    if [ ${#docs_commits[@]} -gt 0 ]; then
+        notes+="## 📚 Documentation\n\n"
+        for hash in "${!docs_commits[@]}"; do
+            local full_msg="${docs_commits[$hash]}"
+            local subject="${full_msg%%|||*}"
+            local desc=$(echo "$subject" | sed 's/^docs(\(.*\)): //' | sed 's/^docs: //')
+            notes+="- $desc\n"
+        done
+        notes+="\n"
+    fi
+
+    # Testing section
+    if [ ${#test_commits[@]} -gt 0 ]; then
+        notes+="## 🧪 Testing\n\n"
+        for hash in "${!test_commits[@]}"; do
+            local full_msg="${test_commits[$hash]}"
+            local subject="${full_msg%%|||*}"
+            local desc=$(echo "$subject" | sed 's/^test(\(.*\)): //' | sed 's/^test: //')
+            notes+="- $desc\n"
+        done
+        notes+="\n"
+    fi
+
+    # Technical Details section
+    if [ ${#refactor_commits[@]} -gt 0 ] || [ ${#perf_commits[@]} -gt 0 ]; then
+        notes+="## 🔧 Technical Details\n\n"
+        for hash in "${!refactor_commits[@]}"; do
+            local full_msg="${refactor_commits[$hash]}"
+            local subject="${full_msg%%|||*}"
+            local desc=$(echo "$subject" | sed 's/^refactor(\(.*\)): //' | sed 's/^refactor: //')
+            notes+="- $desc\n"
+        done
+        for hash in "${!perf_commits[@]}"; do
+            local full_msg="${perf_commits[$hash]}"
+            local subject="${full_msg%%|||*}"
+            local desc=$(echo "$subject" | sed 's/^perf(\(.*\)): //' | sed 's/^perf: //')
+            notes+="- $desc\n"
+        done
+        notes+="\n"
+    fi
+
+    # Fixes section
+    if [ ${#fix_commits[@]} -gt 0 ]; then
+        notes+="## 🛠️ Fixes\n\n"
+        for hash in "${!fix_commits[@]}"; do
+            local full_msg="${fix_commits[$hash]}"
+            local subject="${full_msg%%|||*}"
+            local desc=$(echo "$subject" | sed 's/^fix(\(.*\)): //' | sed 's/^fix: //')
+            notes+="- $desc\n"
+        done
+        notes+="\n"
+    fi
+
+    # Other changes section
+    if [ ${#other_commits[@]} -gt 0 ]; then
+        notes+="## 📝 Other Changes\n\n"
+        for hash in "${!other_commits[@]}"; do
+            local full_msg="${other_commits[$hash]}"
+            local subject="${full_msg%%|||*}"
+            notes+="- $subject\n"
+        done
+        notes+="\n"
+    fi
+
+    # Full changelog link
+    notes+="---\n\n"
+    notes+="**Full Changelog**: https://github.com/joeygibson/jsonquill/compare/v$current_version...v$new_version\n"
+
+    echo -e "$notes"
+}
+
+# Main script logic
+if [ $# -eq 0 ]; then
+    echo -e "${RED}Error: Missing version argument${NC}" >&2
+    echo "Usage:"
+    echo "  release-notes <new_version>              # Uses current version from Cargo.toml"
+    echo "  release-notes <new_version> <from_version>  # Specify both versions"
+    echo ""
+    echo "Examples:"
+    echo "  release-notes 0.7.0                      # Generate notes from current version to 0.7.0"
+    echo "  release-notes 0.7.0 0.6.0                # Generate notes from 0.6.0 to 0.7.0"
+    exit 1
+elif [ $# -eq 1 ]; then
+    # One argument: use current version from Cargo.toml as base
+    new_version=$1
+    current_version=$(get_version)
+
+    echo -e "${GREEN}Generating release notes: v$current_version → v$new_version${NC}" >&2
+    generate_github_release_notes "$new_version" "$current_version"
+elif [ $# -eq 2 ]; then
+    # Two arguments: explicit version range
+    new_version=$1
+    current_version=$2
+
+    echo -e "${GREEN}Generating release notes: v$current_version → v$new_version${NC}" >&2
+    generate_github_release_notes "$new_version" "$current_version"
+else
+    echo -e "${RED}Error: Too many arguments${NC}" >&2
+    echo "Usage:"
+    echo "  release-notes <new_version>              # Uses current version from Cargo.toml"
+    echo "  release-notes <new_version> <from_version>  # Specify both versions"
+    exit 1
+fi
