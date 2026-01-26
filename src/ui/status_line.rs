@@ -59,7 +59,10 @@ pub fn render_status_line(f: &mut Frame, area: Rect, state: &EditorState, colors
         String::new()
     };
 
-    let mut left = format!("{} | {}{}{}", mode_text, filename, path_display, dirty_indicator);
+    let mut left = format!(
+        "{} | {}{}{}",
+        mode_text, filename, path_display, dirty_indicator
+    );
 
     // Add search results info if available
     if let Some((current, total)) = state.search_results_info() {
