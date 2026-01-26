@@ -197,10 +197,7 @@ fn test_clear_search_results() {
             "name".to_string(),
             JsonNode::new(JsonValue::String("Alice".to_string())),
         ),
-        (
-            "age".to_string(),
-            JsonNode::new(JsonValue::Number(30.0)),
-        ),
+        ("age".to_string(), JsonNode::new(JsonValue::Number(30.0))),
     ])));
 
     let mut state = EditorState::new(tree);
