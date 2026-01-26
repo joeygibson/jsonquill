@@ -1548,7 +1548,7 @@ impl EditorState {
     ///
     /// # Arguments
     /// * `format` - "dot" for `.foo[3].bar`, "bracket" for `["foo"][3]["bar"]`, "jq" for jq-style
-    fn compute_path_string(&self, format: &str) -> Option<String> {
+    pub fn compute_path_string(&self, format: &str) -> Option<String> {
         let path = self.cursor.path();
         if path.is_empty() {
             // At root - different formats handle this differently
@@ -1614,6 +1614,40 @@ impl EditorState {
         }
 
         Some(result)
+    }
+
+    /// Returns the current cursor path in dot notation (e.g., "users[0].name").
+    /// Returns empty string for root node.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use jsonquill::document::node::{JsonNode, JsonValue};
+    /// # use jsonquill::document::tree::JsonTree;
+    /// # use jsonquill::editor::state::EditorState;
+    /// let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![(
+    ///     "key".to_string(),
+    ///     JsonNode::new(JsonValue::String("value".to_string())),
+    /// )])));
+    /// let mut state = EditorState::new(tree);
+    /// // Cursor starts at first visible line ("key")
+    /// assert_eq!(state.get_current_path(), "key");
+    ///
+    /// // Explicitly position at root to get empty path
+    /// state.cursor_mut().set_path(vec![]);
+    /// assert_eq!(state.get_current_path(), "");
+    /// ```
+    pub fn get_current_path(&self) -> String {
+        if self.cursor.path().is_empty() {
+            return String::new();
+        }
+
+        let path = self.compute_path_string("dot").unwrap_or_default();
+        if let Some(stripped) = path.strip_prefix('.') {
+            stripped.to_string()
+        } else {
+            path
+        }
     }
 
     /// Yanks (copies) the path to the current cursor position in dot notation (`.foo[3].bar`).
@@ -3133,5 +3167,81 @@ impl EditorState {
         self.cancel_add_operation();
 
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::document::node::{JsonNode, JsonValue};
+    use crate::document::tree::JsonTree;
+
+    #[test]
+    fn test_get_current_path_dot_notation() {
+        // Create tree: {"users": [{"name": "Alice"}]}
+        let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![(
+            "users".to_string(),
+            JsonNode::new(JsonValue::Array(vec![JsonNode::new(JsonValue::Object(
+                vec![(
+                    "name".to_string(),
+                    JsonNode::new(JsonValue::String("Alice".to_string())),
+                )],
+            ))])),
+        )])));
+
+        let mut state = EditorState::new(tree);
+
+        // Cursor starts at first visible line (the "users" key)
+        assert_eq!(state.get_current_path(), "users");
+
+        // Navigate to array element [0]
+        state.move_cursor_down();
+        assert_eq!(state.get_current_path(), "users[0]");
+
+        // Navigate to "name" key
+        state.move_cursor_down();
+        assert_eq!(state.get_current_path(), "users[0].name");
+
+        // Test with explicit root positioning
+        state.cursor_mut().set_path(vec![]);
+        assert_eq!(state.get_current_path(), "");
+    }
+
+    #[test]
+    fn test_get_current_path_jsonl() {
+        // Create JSONL tree with lines: [{"id": 1}, {"id": 2}]
+        let tree = JsonTree::new(JsonNode::new(JsonValue::JsonlRoot(vec![
+            JsonNode::new(JsonValue::Object(vec![(
+                "id".to_string(),
+                JsonNode::new(JsonValue::Number(1.0)),
+            )])),
+            JsonNode::new(JsonValue::Object(vec![(
+                "id".to_string(),
+                JsonNode::new(JsonValue::Number(2.0)),
+            )])),
+        ])));
+
+        let mut state = EditorState::new(tree);
+
+        // JSONL starts collapsed, cursor at first line
+        assert_eq!(state.get_current_path(), "[0]");
+
+        // Expand first line to see its contents
+        state.toggle_expand_at_cursor();
+
+        // Navigate to "id" field in first line
+        state.move_cursor_down();
+        assert_eq!(state.get_current_path(), "[0].id");
+
+        // Move cursor down to second line (collapsed)
+        state.move_cursor_down();
+        assert_eq!(state.get_current_path(), "[1]");
+
+        // Expand second line
+        state.toggle_expand_at_cursor();
+
+        // Navigate to "id" field in second line
+        state.move_cursor_down();
+        assert_eq!(state.get_current_path(), "[1].id");
     }
 }
