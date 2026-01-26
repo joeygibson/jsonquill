@@ -90,7 +90,8 @@ pub fn render_status_line(f: &mut Frame, area: Rect, state: &EditorState, colors
 
     // Calculate padding to position right-aligned text
     let total_width = area.width as usize;
-    let left_len = mode_and_file.len() + path_display.len() + dirty_indicator.len() + search_info.len();
+    let left_len =
+        mode_and_file.len() + path_display.len() + dirty_indicator.len() + search_info.len();
     let position_len = position.len();
 
     // Ensure we don't overflow
@@ -105,13 +106,9 @@ pub fn render_status_line(f: &mut Frame, area: Rect, state: &EditorState, colors
         .fg(colors.status_line_fg)
         .bg(colors.status_line_bg);
 
-    let path_style = Style::default()
-        .fg(colors.key)
-        .bg(colors.status_line_bg);
+    let path_style = Style::default().fg(colors.key).bg(colors.status_line_bg);
 
-    let mut spans = vec![
-        Span::styled(mode_and_file, default_style),
-    ];
+    let mut spans = vec![Span::styled(mode_and_file, default_style)];
 
     if !path_display.is_empty() {
         spans.push(Span::styled(path_display, path_style));
