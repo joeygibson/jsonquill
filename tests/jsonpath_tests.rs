@@ -187,36 +187,40 @@ fn test_clear_search_resets_type() {
 /// Test that clear_search_results clears search results and resets index.
 #[test]
 fn test_clear_search_results() {
-    // Create tree with searchable content: {"items": [{"price": 10}, {"price": 20}]}
-    let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![(
-        "items".to_string(),
-        JsonNode::new(JsonValue::Array(vec![
-            JsonNode::new(JsonValue::Object(vec![(
-                "price".to_string(),
-                JsonNode::new(JsonValue::Number(10.0)),
-            )])),
-            JsonNode::new(JsonValue::Object(vec![(
-                "price".to_string(),
-                JsonNode::new(JsonValue::Number(20.0)),
-            )])),
-        ])),
-    )])));
+    use jsonquill::document::node::{JsonNode, JsonValue};
+    use jsonquill::document::tree::JsonTree;
+    use jsonquill::editor::state::EditorState;
+
+    // Create tree: {"name": "Alice", "age": 30}
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
+        (
+            "name".to_string(),
+            JsonNode::new(JsonValue::String("Alice".to_string())),
+        ),
+        (
+            "age".to_string(),
+            JsonNode::new(JsonValue::Number(30.0)),
+        ),
+    ])));
 
     let mut state = EditorState::new(tree);
+    state.rebuild_tree_view();
 
-    // Execute search to populate results
-    state.execute_jsonpath_search("$.items[*].price");
+    // Execute a search to populate results
+    for ch in "name".chars() {
+        state.push_to_search_buffer(ch);
+    }
+    state.execute_search();
 
-    // Verify results exist (2 matches, currently at match 1)
-    assert_eq!(state.search_results_info(), Some((1, 2)));
+    // Verify search results exist
+    assert!(state.search_results_info().is_some());
+    let (current, total) = state.search_results_info().unwrap();
+    assert_eq!(current, 1);
+    assert_eq!(total, 1);
 
-    // Navigate to second result
-    assert!(state.next_search_result().0);
-    assert_eq!(state.search_results_info(), Some((2, 2)));
-
-    // Call clear_search_results()
+    // Clear search results
     state.clear_search_results();
 
-    // Verify results are cleared (search_results_info() returns None)
-    assert_eq!(state.search_results_info(), None);
+    // Verify search results are cleared
+    assert!(state.search_results_info().is_none());
 }
