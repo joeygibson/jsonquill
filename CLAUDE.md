@@ -146,7 +146,7 @@ Implemented modules:
 - ✅ Navigation (j/k/h/l, arrow keys) with count prefix support (e.g., `3j`, `5k`)
 - ✅ Mode switching (i for INSERT, : for COMMAND, / for SEARCH, Esc to NORMAL)
 - ✅ Status line showing current mode, filename, current path, and cursor position
-  - Shows current JSON path in dot notation (e.g., `users[0].name`, `config.database.port`)
+  - Shows current JSON path in dot notation (e.g., `users[0].name`, `config.database.port`) highlighted in the theme's key color
   - Path displayed after filename (before dirty indicator and search results)
   - Root node shows no path
 - ✅ Command mode with visible prompt and input buffer
