@@ -188,6 +188,7 @@ j/k         - Move down/up
 h/l         - Collapse/expand node
 E           - Fully expand current node and all descendants
 C           - Fully collapse current node and all descendants
+H           - Move to parent node (without collapsing)
 gg          - Jump to top of document
 G           - Jump to bottom of document
 <count>g    - Jump to specific line number (e.g., `10g` goes to line 10)

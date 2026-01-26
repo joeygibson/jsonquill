@@ -1244,6 +1244,38 @@ impl EditorState {
         }
     }
 
+    /// Moves the cursor to the parent node without collapsing.
+    ///
+    /// This is useful when you want to navigate to a parent node while keeping
+    /// its children visible. Unlike pressing 'h' which collapses, this just
+    /// moves the cursor up the tree hierarchy.
+    ///
+    /// # Examples
+    ///
+    /// Given a tree like:
+    /// ```text
+    /// {
+    ///   "users": [        <- pressing 'H' moves here
+    ///     {
+    ///       "name": "Alice",
+    ///       "age": 30      <- cursor here
+    ///     }
+    ///   ]
+    /// }
+    /// ```
+    pub fn move_to_parent(&mut self) {
+        let current_path = self.cursor.path();
+
+        // Can't move to parent if already at root
+        if current_path.is_empty() {
+            return;
+        }
+
+        // Parent path is current path minus the last index
+        let parent_path = &current_path[..current_path.len() - 1];
+        self.cursor.set_path(parent_path.to_vec());
+    }
+
     /// Moves to the previous node at the same depth or shallower (b command).
     ///
     /// This is useful for skipping back over deep nested structures to the

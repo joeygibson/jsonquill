@@ -119,6 +119,7 @@ jsonquill data.jsonl
 | `←` / `→` | Collapse / expand node | Arrow keys also work |
 | `E` | Fully expand subtree | Expands current node and all descendants |
 | `C` | Fully collapse subtree | Collapses current node and all descendants |
+| `H` | Move to parent | Navigate to parent node without collapsing |
 | `gg` | Jump to top of document | |
 | `G` | Jump to bottom of document | |
 | `<count>g` | Jump to line number | e.g., `10g` jumps to line 10 |

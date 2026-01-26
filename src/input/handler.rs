@@ -902,6 +902,10 @@ impl InputHandler {
                     state.clear_pending();
                     state.move_to_previous_at_same_or_shallower_depth();
                 }
+                InputEvent::MoveToParent => {
+                    state.clear_pending();
+                    state.move_to_parent();
+                }
                 InputEvent::ScreenPosition => {
                     // First 'z' press - set pending
                     state.clear_message();

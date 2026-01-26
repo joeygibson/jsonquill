@@ -85,6 +85,8 @@ pub enum InputEvent {
     NextAtSameOrShallowerDepth,
     /// Move to previous node at same or shallower depth (b)
     PreviousAtSameOrShallowerDepth,
+    /// Move to parent node without collapsing (H)
+    MoveToParent,
     /// Insert a character in insert mode
     InsertCharacter(char),
     /// Backspace in insert mode
@@ -160,6 +162,7 @@ pub fn map_key_event(event: Event, mode: &EditorMode) -> InputEvent {
             Key::Char('r') => InputEvent::Rename,
             Key::Char('E') => InputEvent::ExpandAll,
             Key::Char('C') => InputEvent::CollapseAll,
+            Key::Char('H') => InputEvent::MoveToParent,
             Key::Char('z') => InputEvent::ScreenPosition,
             Key::Char('}') => InputEvent::NextSibling,
             Key::Char('{') => InputEvent::PreviousSibling,
