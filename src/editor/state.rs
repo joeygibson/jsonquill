@@ -1224,15 +1224,16 @@ impl EditorState {
     /// ```
     pub fn move_to_next_at_same_or_shallower_depth(&mut self) {
         let current_path = self.cursor.path();
-        let current_depth = current_path.len();
 
-        // Find the current line index
+        // Find the current line to get its depth
         let lines = self.tree_view.lines();
         let current_line_idx = lines
             .iter()
             .position(|line| line.path == *current_path);
 
         if let Some(idx) = current_line_idx {
+            let current_depth = lines[idx].depth;
+
             // Search forward for a line with depth <= current_depth
             for line in &lines[idx + 1..] {
                 if line.depth <= current_depth {
@@ -1263,15 +1264,16 @@ impl EditorState {
     /// ```
     pub fn move_to_previous_at_same_or_shallower_depth(&mut self) {
         let current_path = self.cursor.path();
-        let current_depth = current_path.len();
 
-        // Find the current line index
+        // Find the current line to get its depth
         let lines = self.tree_view.lines();
         let current_line_idx = lines
             .iter()
             .position(|line| line.path == *current_path);
 
         if let Some(idx) = current_line_idx {
+            let current_depth = lines[idx].depth;
+
             // Search backward for a line with depth <= current_depth
             for line in lines[..idx].iter().rev() {
                 if line.depth <= current_depth {
