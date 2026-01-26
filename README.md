@@ -16,13 +16,15 @@ A terminal-based structural JSON editor with vim-style keybindings.
 [![Release](https://github.com/joeygibson/jsonquill/workflows/Release/badge.svg)](https://github.com/joeygibson/jsonquill/actions/workflows/release.yml)
 
 **Alpha Release** - Core functionality is implemented and usable. The editor supports:
-- JSON file loading and editing
+- JSON file loading and editing (including JSONL format)
 - Tree-based navigation with vim keybindings
+- Advanced navigation (sibling jumping, screen positioning, count prefixes)
 - Add, edit, delete operations for JSON values
 - Undo/redo functionality
-- Clipboard operations (yank/paste)
+- Clipboard operations (yank/paste with path copying)
+- Text and JSONPath structural search (with smart case and key search)
 - Customizable themes and settings
-- Search functionality
+- Line numbers (absolute and relative)
 - Configuration file support
 - Mouse/trackpad scrolling support
 
@@ -122,8 +124,13 @@ jsonquill data.jsonl
 | `<count>g` | Jump to line number | e.g., `10g` jumps to line 10 |
 | `Ctrl-d` | Page down | Scroll half page down |
 | `Ctrl-u` | Page up | Scroll half page up |
+| `zz` | Center cursor on screen | Scroll viewport to center current line |
+| `zt` | Move cursor to top of screen | Scroll viewport to place current line at top |
+| `zb` | Move cursor to bottom of screen | Scroll viewport to place current line at bottom |
 | `}` | Jump to next sibling | Move to the next node at the same level |
 | `{` | Jump to previous sibling | Move to the previous node at the same level |
+| `0` / `^` | Jump to first sibling | Move to first node at current level |
+| `$` | Jump to last sibling | Move to last node at current level |
 | Scroll wheel / Trackpad | Scroll viewport | Scroll up/down 3 lines per tick (toggle with `:set mouse`/`:set nomouse`) |
 
 ### Modes
@@ -145,6 +152,9 @@ jsonquill data.jsonl
 | `r` | Rename object key | Only works on object keys (not array elements) |
 | `dd` | Delete current node | Supports count prefix (e.g., `3dd` deletes 3 nodes) |
 | `yy` | Yank (copy) current node | Supports count prefix (e.g., `2yy` copies 2 nodes)<br>Copies to system clipboard |
+| `yp` | Yank path (dot notation) | Copy path like `.foo[3].bar` to clipboard |
+| `yb` | Yank path (bracket notation) | Copy path like `["foo"][3]["bar"]` to clipboard |
+| `yq` | Yank path (jq style) | Copy path in jq-style notation |
 | `p` | Paste after cursor | Insert yanked content after current node |
 | `P` | Paste before cursor | Insert yanked content before current node |
 | `u` | Undo last change | |
@@ -168,9 +178,11 @@ jsonquill data.jsonl
 
 | Key | Action | Description |
 |-----|--------|-------------|
-| `/` | Start forward search | Enter SEARCH mode to search forward through document |
+| `/` | Start forward search | Enter SEARCH mode to search forward through document<br>Uses smart case (case-insensitive unless pattern has uppercase) |
 | `?` | Start backward search | Enter SEARCH mode to search backward through document |
-| `n` | Jump to next match | Find next occurrence in search direction |
+| `n` | Jump to next match | Find next occurrence in search direction<br>Shows match counter (e.g., "Match 2/5")<br>Shows "W" when wrapping around |
+| `*` | Search forward for key | Search forward for current object key name |
+| `#` | Search backward for key | Search backward for current object key name |
 | `:find` | Enter text search mode | Same as pressing `/` |
 | `Esc` | Exit search mode | Return to NORMAL mode |
 
@@ -225,6 +237,8 @@ Type `:` to enter command mode, then:
 | `:set` | Show current settings | Display all configuration values |
 | `:set number` | Enable line numbers | Show line numbers in tree view |
 | `:set nonumber` | Disable line numbers | Hide line numbers |
+| `:set relativenumber` (or `:set rnu`) | Enable relative line numbers | Show distance from cursor line |
+| `:set norelativenumber` (or `:set nornu`) | Disable relative line numbers | Show absolute line numbers |
 | `:set mouse` | Enable mouse scrolling | Enable mouse/trackpad scrolling |
 | `:set nomouse` | Disable mouse scrolling | Disable mouse/trackpad scrolling |
 | `:set save` | Save settings to config | Write current settings to `~/.config/jsonquill/config.toml` |
@@ -270,6 +284,9 @@ indent_size = 2
 
 # Display line numbers (default: true)
 show_line_numbers = true
+
+# Show relative line numbers (default: false)
+relative_line_numbers = false
 
 # Automatically save on changes (default: false)
 auto_save = false
