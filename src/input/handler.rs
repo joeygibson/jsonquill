@@ -894,6 +894,14 @@ impl InputHandler {
                         }
                     }
                 }
+                InputEvent::NextAtSameOrShallowerDepth => {
+                    state.clear_pending();
+                    state.move_to_next_at_same_or_shallower_depth();
+                }
+                InputEvent::PreviousAtSameOrShallowerDepth => {
+                    state.clear_pending();
+                    state.move_to_previous_at_same_or_shallower_depth();
+                }
                 InputEvent::ScreenPosition => {
                     // First 'z' press - set pending
                     state.clear_message();

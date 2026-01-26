@@ -200,6 +200,8 @@ zb          - Move cursor to bottom of screen
 {           - Jump to previous sibling (same parent, previous index)
 0 or ^      - Jump to first sibling (same parent, index 0)
 $           - Jump to last sibling (same parent, last index)
+w           - Move to next node at same or shallower depth (skip deep nesting)
+b           - Move to previous node at same or shallower depth (skip deep nesting)
 Arrow keys  - Also work for navigation
 
 # Mouse

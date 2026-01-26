@@ -131,6 +131,8 @@ jsonquill data.jsonl
 | `{` | Jump to previous sibling | Move to the previous node at the same level |
 | `0` / `^` | Jump to first sibling | Move to first node at current level |
 | `$` | Jump to last sibling | Move to last node at current level |
+| `w` | Move to next at same/shallower depth | Skip over deep nested structures to next top-level node |
+| `b` | Move to previous at same/shallower depth | Skip back over deep nested structures to previous top-level node |
 | Scroll wheel / Trackpad | Scroll viewport | Scroll up/down 3 lines per tick (toggle with `:set mouse`/`:set nomouse`) |
 
 ### Modes

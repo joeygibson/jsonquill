@@ -81,6 +81,10 @@ pub enum InputEvent {
     SearchKeyBackward,
     /// Screen positioning command (z prefix)
     ScreenPosition,
+    /// Move to next node at same or shallower depth (w)
+    NextAtSameOrShallowerDepth,
+    /// Move to previous node at same or shallower depth (b)
+    PreviousAtSameOrShallowerDepth,
     /// Insert a character in insert mode
     InsertCharacter(char),
     /// Backspace in insert mode
@@ -164,6 +168,8 @@ pub fn map_key_event(event: Event, mode: &EditorMode) -> InputEvent {
             Key::Char('$') => InputEvent::LastSibling,
             Key::Char('*') => InputEvent::SearchKeyForward,
             Key::Char('#') => InputEvent::SearchKeyBackward,
+            Key::Char('w') => InputEvent::NextAtSameOrShallowerDepth,
+            Key::Char('b') => InputEvent::PreviousAtSameOrShallowerDepth,
             Key::Down => InputEvent::MoveDown,
             Key::Up => InputEvent::MoveUp,
             Key::Left => InputEvent::MoveLeft,

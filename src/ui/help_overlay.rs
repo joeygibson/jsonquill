@@ -100,6 +100,14 @@ pub fn render_help_overlay(f: &mut Frame, colors: &ThemeColors, scroll: usize) {
             Span::raw("Jump to last sibling"),
         ]),
         Line::from(vec![
+            Span::styled("  w             ", Style::default().fg(colors.number)),
+            Span::raw("Next node at same or shallower depth"),
+        ]),
+        Line::from(vec![
+            Span::styled("  b             ", Style::default().fg(colors.number)),
+            Span::raw("Previous node at same or shallower depth"),
+        ]),
+        Line::from(vec![
             Span::styled("  Arrow keys    ", Style::default().fg(colors.number)),
             Span::raw("Also work for navigation"),
         ]),

@@ -1202,6 +1202,86 @@ impl EditorState {
         }
     }
 
+    /// Moves to the next node at the same depth or shallower (w command).
+    ///
+    /// This is useful for skipping over deep nested structures and jumping to
+    /// the next "top-level" node. Similar to vim's word-forward motion but for
+    /// tree depth.
+    ///
+    /// # Examples
+    ///
+    /// Given a tree like:
+    /// ```text
+    /// {
+    ///   "users": [
+    ///     {
+    ///       "name": "Alice",  <- depth 3
+    ///       "age": 30
+    ///     }
+    ///   ],
+    ///   "config": { ... }      <- pressing 'w' jumps here (depth 1)
+    /// }
+    /// ```
+    pub fn move_to_next_at_same_or_shallower_depth(&mut self) {
+        let current_path = self.cursor.path();
+        let current_depth = current_path.len();
+
+        // Find the current line index
+        let lines = self.tree_view.lines();
+        let current_line_idx = lines
+            .iter()
+            .position(|line| line.path == *current_path);
+
+        if let Some(idx) = current_line_idx {
+            // Search forward for a line with depth <= current_depth
+            for line in &lines[idx + 1..] {
+                if line.depth <= current_depth {
+                    self.cursor.set_path(line.path.clone());
+                    return;
+                }
+            }
+        }
+    }
+
+    /// Moves to the previous node at the same depth or shallower (b command).
+    ///
+    /// This is useful for skipping back over deep nested structures to the
+    /// previous "top-level" node. Similar to vim's word-backward motion but for
+    /// tree depth.
+    ///
+    /// # Examples
+    ///
+    /// Given a tree like:
+    /// ```text
+    /// {
+    ///   "users": [ ... ]       <- pressing 'b' jumps here (depth 1)
+    ///   "config": {
+    ///     "timeout": 30,
+    ///     "retry": true        <- depth 2
+    ///   }
+    /// }
+    /// ```
+    pub fn move_to_previous_at_same_or_shallower_depth(&mut self) {
+        let current_path = self.cursor.path();
+        let current_depth = current_path.len();
+
+        // Find the current line index
+        let lines = self.tree_view.lines();
+        let current_line_idx = lines
+            .iter()
+            .position(|line| line.path == *current_path);
+
+        if let Some(idx) = current_line_idx {
+            // Search backward for a line with depth <= current_depth
+            for line in lines[..idx].iter().rev() {
+                if line.depth <= current_depth {
+                    self.cursor.set_path(line.path.clone());
+                    return;
+                }
+            }
+        }
+    }
+
     /// Returns the current message, if any.
     pub fn message(&self) -> Option<&Message> {
         self.message.as_ref()
