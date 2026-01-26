@@ -5,6 +5,40 @@ All notable changes to jsonquill will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.0] - 2026-01-26
+
+### Added
+
+- clear search results on non-search keys
+- add clear_search_results method
+- add color highlighting to path in status bar
+- display current path in status bar
+- add public API for getting current path in dot notation
+- add standalone release-notes generation script
+
+### Changed
+
+- Documentation: document search results auto-clear behavior
+- Documentation: add design for clearing search info on non-search keys
+- Documentation: document path color highlighting in status bar
+- Documentation: add design for colored path in status bar
+- Documentation: update plan to reflect actual implementation order
+- Documentation: document current path in status bar feature
+- Documentation: add design for current path in status bar
+- Documentation: document release-notes script
+
+### Fixed
+
+- use unique delimiter to avoid parsing conflicts
+- filter Co-Authored-By lines from release notes
+- extract full commit messages in release notes generation
+
+### Other
+
+- Testing: use text search in clear_search_results test per spec
+- style: apply cargo fmt formatting
+- Testing: add test for colored path in status bar
+- style: format multi-line format! macro in status line
 ## [0.6.0] - 2026-01-25
 
 ### Added
@@ -91,3 +125,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [0.4.0]: https://github.com/yourusername/jsonquill/compare/v0.3.0...v0.4.0
 [0.5.0]: https://github.com/yourusername/jsonquill/compare/v0.4.0...v0.5.0
 [0.6.0]: https://github.com/yourusername/jsonquill/compare/v0.5.0...v0.6.0
+[0.7.0]: https://github.com/yourusername/jsonquill/compare/v0.6.0...v0.7.0
