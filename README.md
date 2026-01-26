@@ -421,6 +421,23 @@ git show v0.3.0
 git push && git push origin v0.3.0
 ```
 
+### Regenerating Release Notes
+
+The `scripts/release-notes` script generates GitHub release notes independently:
+
+```bash
+# Generate release notes (auto-detects current version from Cargo.toml)
+./scripts/release-notes 0.7.0
+
+# Generate release notes for specific version range
+./scripts/release-notes 0.7.0 0.5.0
+
+# Save to file
+./scripts/release-notes 0.7.0 > release-notes-v0.7.0.md
+```
+
+This is useful when you need to regenerate release notes after editing commits or want to preview notes without running the full version bump workflow.
+
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details.

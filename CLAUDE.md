@@ -79,6 +79,26 @@ To push changes and tag, run:
 git push && git push origin v0.3.0
 ```
 
+### Regenerating Release Notes
+
+Use the `scripts/release-notes` script to generate GitHub release notes independently from the version bump workflow:
+
+```bash
+# Generate release notes (auto-detects current version from Cargo.toml)
+./scripts/release-notes 0.7.0
+
+# Generate release notes for specific version range
+./scripts/release-notes 0.7.0 0.5.0
+
+# Save to file
+./scripts/release-notes 0.7.0 > release-notes-v0.7.0.md
+```
+
+This is useful for:
+- Previewing release notes before running `ver`
+- Regenerating notes after editing commit messages
+- Creating notes for custom version ranges
+
 ## Architecture
 
 The project follows a standard Rust binary + library structure:
