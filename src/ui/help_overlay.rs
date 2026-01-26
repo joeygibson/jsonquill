@@ -269,6 +269,14 @@ pub fn render_help_overlay(f: &mut Frame, colors: &ThemeColors, scroll: usize) {
             Span::raw("Disable line numbers"),
         ]),
         Line::from(vec![
+            Span::styled("  :set rnu      ", Style::default().fg(colors.number)),
+            Span::raw("Enable relative line numbers"),
+        ]),
+        Line::from(vec![
+            Span::styled("  :set nornu    ", Style::default().fg(colors.number)),
+            Span::raw("Disable relative line numbers"),
+        ]),
+        Line::from(vec![
             Span::styled("  :set mouse    ", Style::default().fg(colors.number)),
             Span::raw("Enable mouse scrolling"),
         ]),

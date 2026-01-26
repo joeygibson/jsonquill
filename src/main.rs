@@ -123,6 +123,7 @@ fn main() -> Result<()> {
     // Apply config settings
     state.set_current_theme(theme_name.to_string());
     state.set_show_line_numbers(config.show_line_numbers);
+    state.set_relative_line_numbers(config.relative_line_numbers);
     state.set_enable_mouse(config.enable_mouse);
 
     // Main event loop

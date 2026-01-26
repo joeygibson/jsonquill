@@ -49,6 +49,7 @@ fn test_custom_config() {
         sync_unnamed_register: false,
         lazy_load_threshold: 52_428_800, // 50MB
         enable_mouse: false,
+        relative_line_numbers: false,
     };
 
     assert_eq!(config.theme, "gruvbox");
@@ -166,6 +167,7 @@ fn test_roundtrip_serialization() {
         sync_unnamed_register: false,
         lazy_load_threshold: 1_048_576, // 1MB
         enable_mouse: false,
+        relative_line_numbers: true,
     };
 
     // Serialize to TOML

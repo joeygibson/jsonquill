@@ -448,9 +448,10 @@ use ratatui::{
 /// tree_view.rebuild(&tree);
 ///
 /// terminal.draw(|f| {
-///     render_tree_view(f, f.area(), &tree_view, &cursor, &colors, true, 0);
+///     render_tree_view(f, f.area(), &tree_view, &cursor, &colors, true, false, 0);
 /// }).unwrap();
 /// ```
+#[allow(clippy::too_many_arguments)]
 pub fn render_tree_view(
     f: &mut Frame,
     area: Rect,
@@ -458,6 +459,7 @@ pub fn render_tree_view(
     cursor: &Cursor,
     colors: &ThemeColors,
     show_line_numbers: bool,
+    relative_line_numbers: bool,
     scroll_offset: usize,
 ) {
     let mut lines_to_render = Vec::new();
@@ -466,6 +468,13 @@ pub fn render_tree_view(
     } else {
         0
     };
+
+    // Find the cursor line number for relative numbering
+    let cursor_line_num = tree_view
+        .lines()
+        .iter()
+        .position(|l| l.path == cursor.path())
+        .unwrap_or(0);
 
     let viewport_height = area.height as usize;
 
@@ -482,7 +491,20 @@ pub fn render_tree_view(
 
         // Line number
         if show_line_numbers {
-            let line_num_str = format!("{:>width$} ", line_num + 1, width = max_line_num_width);
+            let display_num = if relative_line_numbers {
+                if is_cursor {
+                    // Show absolute line number on cursor line
+                    line_num + 1
+                } else {
+                    // Show relative distance from cursor
+                    line_num.abs_diff(cursor_line_num)
+                }
+            } else {
+                // Absolute line numbers
+                line_num + 1
+            };
+
+            let line_num_str = format!("{:>width$} ", display_num, width = max_line_num_width);
             spans.push(Span::styled(
                 line_num_str,
                 Style::default()
@@ -859,7 +881,7 @@ mod tests {
 
         terminal
             .draw(|f| {
-                render_tree_view(f, f.area(), &state, &cursor, &colors, false, 0);
+                render_tree_view(f, f.area(), &state, &cursor, &colors, false, false, 0);
             })
             .unwrap();
 
@@ -910,7 +932,7 @@ mod tests {
 
         terminal
             .draw(|f| {
-                render_tree_view(f, f.area(), &state, &cursor, &colors, false, 0);
+                render_tree_view(f, f.area(), &state, &cursor, &colors, false, false, 0);
             })
             .unwrap();
 
@@ -980,7 +1002,7 @@ mod tests {
 
         terminal
             .draw(|f| {
-                render_tree_view(f, f.area(), &state, &cursor, &colors, false, 0);
+                render_tree_view(f, f.area(), &state, &cursor, &colors, false, false, 0);
             })
             .unwrap();
 

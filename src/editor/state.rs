@@ -170,6 +170,7 @@ pub struct EditorState {
     search_forward: bool,
     search_type: Option<SearchType>,
     show_line_numbers: bool,
+    relative_line_numbers: bool,
     enable_mouse: bool,
     edit_buffer: Option<String>,
     edit_cursor: usize,
@@ -254,6 +255,7 @@ impl EditorState {
             search_forward: true,
             search_type: None,
             show_line_numbers: true,
+            relative_line_numbers: false,
             enable_mouse: true,
             edit_buffer: None,
             edit_cursor: 0,
@@ -1893,6 +1895,16 @@ impl EditorState {
         self.show_line_numbers = show;
     }
 
+    /// Returns whether relative line numbers should be shown.
+    pub fn relative_line_numbers(&self) -> bool {
+        self.relative_line_numbers
+    }
+
+    /// Sets whether relative line numbers should be shown.
+    pub fn set_relative_line_numbers(&mut self, show: bool) {
+        self.relative_line_numbers = show;
+    }
+
     /// Returns whether mouse support is enabled.
     pub fn enable_mouse(&self) -> bool {
         self.enable_mouse
@@ -1910,6 +1922,7 @@ impl EditorState {
         let config = Config {
             theme: self.current_theme.clone(),
             show_line_numbers: self.show_line_numbers,
+            relative_line_numbers: self.relative_line_numbers,
             enable_mouse: self.enable_mouse,
             ..Config::default()
         };

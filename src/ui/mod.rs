@@ -151,6 +151,7 @@ impl UI {
                 state.cursor(),
                 &self.theme.colors,
                 state.show_line_numbers(),
+                state.relative_line_numbers(),
                 state.scroll_offset(),
             );
 

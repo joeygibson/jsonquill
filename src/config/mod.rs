@@ -83,6 +83,10 @@ pub struct Config {
     /// Enable mouse/trackpad scrolling
     #[serde(default = "default_enable_mouse")]
     pub enable_mouse: bool,
+
+    /// Show relative line numbers (like vim's relativenumber)
+    #[serde(default)]
+    pub relative_line_numbers: bool,
 }
 
 /// Returns the default theme name.
@@ -163,6 +167,7 @@ impl Default for Config {
             sync_unnamed_register: true,
             lazy_load_threshold: default_lazy_load_threshold(),
             enable_mouse: default_enable_mouse(),
+            relative_line_numbers: false,
         }
     }
 }

@@ -960,6 +960,11 @@ impl InputHandler {
             } else {
                 settings.push("nonumber");
             }
+            if state.relative_line_numbers() {
+                settings.push("relativenumber");
+            } else {
+                settings.push("norelativenumber");
+            }
             if state.enable_mouse() {
                 settings.push("mouse");
             } else {
@@ -1007,6 +1012,17 @@ impl InputHandler {
                         };
                         state.set_message(format!("number is {}", value), MessageLevel::Info);
                     }
+                    "relativenumber" | "rnu" => {
+                        let value = if state.relative_line_numbers() {
+                            "on"
+                        } else {
+                            "off"
+                        };
+                        state.set_message(
+                            format!("relativenumber is {}", value),
+                            MessageLevel::Info,
+                        );
+                    }
                     "mouse" => {
                         let value = if state.enable_mouse() { "on" } else { "off" };
                         state.set_message(format!("mouse is {}", value), MessageLevel::Info);
@@ -1030,6 +1046,20 @@ impl InputHandler {
                 "nonumber" | "nonu" => {
                     state.set_show_line_numbers(false);
                     state.set_message("Line numbers disabled".to_string(), MessageLevel::Info);
+                }
+                "relativenumber" | "rnu" => {
+                    state.set_relative_line_numbers(true);
+                    state.set_message(
+                        "Relative line numbers enabled".to_string(),
+                        MessageLevel::Info,
+                    );
+                }
+                "norelativenumber" | "nornu" => {
+                    state.set_relative_line_numbers(false);
+                    state.set_message(
+                        "Relative line numbers disabled".to_string(),
+                        MessageLevel::Info,
+                    );
                 }
                 "mouse" => {
                     state.set_enable_mouse(true);

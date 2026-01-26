@@ -122,6 +122,7 @@ Implemented modules:
 - ✅ Tree view rendering with expand/collapse and auto-expansion
 - ✅ Array indices displayed as `[0]`, `[1]`, `[2]` when expanded
 - ✅ Line numbers (enabled by default, toggle with `:set number`/`:set nonumber`)
+- ✅ Relative line numbers (vim-style, toggle with `:set relativenumber`/`:set norelativenumber`)
 - ✅ Navigation (j/k/h/l, arrow keys) with count prefix support (e.g., `3j`, `5k`)
 - ✅ Mode switching (i for INSERT, : for COMMAND, / for SEARCH, Esc to NORMAL)
 - ✅ Status line showing current mode, filename, and cursor position (row,col row/total)
@@ -264,6 +265,8 @@ Esc         - Cancel editing and return to NORMAL mode
 :set          - Show current settings
 :set number   - Enable line numbers
 :set nonumber - Disable line numbers
+:set relativenumber (or :set rnu) - Enable relative line numbers
+:set norelativenumber (or :set nornu) - Disable relative line numbers
 :set mouse    - Enable mouse scrolling
 :set nomouse  - Disable mouse scrolling
 :set save     - Save settings to config file
