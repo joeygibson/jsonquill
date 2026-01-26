@@ -145,7 +145,10 @@ Implemented modules:
 - ✅ Relative line numbers (vim-style, toggle with `:set relativenumber`/`:set norelativenumber`)
 - ✅ Navigation (j/k/h/l, arrow keys) with count prefix support (e.g., `3j`, `5k`)
 - ✅ Mode switching (i for INSERT, : for COMMAND, / for SEARCH, Esc to NORMAL)
-- ✅ Status line showing current mode, filename, and cursor position (row,col row/total)
+- ✅ Status line showing current mode, filename, current path, and cursor position
+  - Shows current JSON path in dot notation (e.g., `users[0].name`, `config.database.port`)
+  - Path displayed after filename (before dirty indicator and search results)
+  - Root node shows no path
 - ✅ Command mode with visible prompt and input buffer
 - ✅ Command execution (`:w`, `:q`, `:q!`, `:wq`, `:x`)
 - ✅ Save functionality (`:w` writes changes to disk atomically)
