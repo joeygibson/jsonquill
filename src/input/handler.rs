@@ -545,6 +545,7 @@ impl InputHandler {
             match input_event {
                 InputEvent::Quit => {
                     state.clear_pending();
+                    state.clear_search_results();
                     if state.is_dirty() {
                         use crate::editor::state::MessageLevel;
                         state.set_message(
@@ -557,6 +558,7 @@ impl InputHandler {
                 }
                 InputEvent::EnterInsertMode => {
                     state.clear_pending();
+                    state.clear_search_results();
                     use crate::editor::state::MessageLevel;
                     state.start_editing();
                     if state.edit_buffer().is_some() {
@@ -571,6 +573,7 @@ impl InputHandler {
                 }
                 InputEvent::EnterCommandMode => {
                     state.clear_pending();
+                    state.clear_search_results();
                     state.clear_command_buffer();
                     state.set_mode(EditorMode::Command);
                 }
@@ -607,15 +610,18 @@ impl InputHandler {
                 }
                 InputEvent::Help => {
                     state.clear_pending();
+                    state.clear_search_results();
                     state.toggle_help();
                 }
                 InputEvent::ExitMode => {
                     state.clear_pending();
+                    state.clear_search_results();
                     state.set_mode(EditorMode::Normal);
                 }
                 InputEvent::MoveDown => {
                     let count = state.get_count();
                     state.clear_pending();
+                    state.clear_search_results();
                     for _ in 0..count {
                         state.move_cursor_down();
                     }
@@ -623,6 +629,7 @@ impl InputHandler {
                 InputEvent::MoveUp => {
                     let count = state.get_count();
                     state.clear_pending();
+                    state.clear_search_results();
                     for _ in 0..count {
                         state.move_cursor_up();
                     }
@@ -630,6 +637,7 @@ impl InputHandler {
                 InputEvent::MoveRight => {
                     let count = state.get_count();
                     state.clear_pending();
+                    state.clear_search_results();
                     for _ in 0..count {
                         state.toggle_expand_at_cursor();
                     }
@@ -637,16 +645,19 @@ impl InputHandler {
                 InputEvent::MoveLeft => {
                     let count = state.get_count();
                     state.clear_pending();
+                    state.clear_search_results();
                     for _ in 0..count {
                         state.toggle_expand_at_cursor();
                     }
                 }
                 InputEvent::ExpandAll => {
                     state.clear_pending();
+                    state.clear_search_results();
                     state.expand_all_at_cursor();
                 }
                 InputEvent::CollapseAll => {
                     state.clear_pending();
+                    state.clear_search_results();
                     state.collapse_all_at_cursor();
                 }
                 InputEvent::Yank => {
@@ -655,6 +666,7 @@ impl InputHandler {
                     if state.pending_command() == Some('y') {
                         let count = state.get_count();
                         state.clear_pending();
+                        state.clear_search_results();
 
                         let mut yanked = false;
                         for _ in 0..count {
@@ -691,6 +703,7 @@ impl InputHandler {
                     if state.pending_command() == Some('d') {
                         let count = state.get_count();
                         state.clear_pending();
+                        state.clear_search_results();
 
                         let mut deleted_count = 0;
                         let mut had_error = false;
@@ -737,6 +750,7 @@ impl InputHandler {
                 }
                 InputEvent::Paste => {
                     state.clear_pending();
+                    state.clear_search_results();
                     use crate::editor::state::MessageLevel;
                     match state.paste_node_at_cursor() {
                         Ok(_) => {
@@ -749,6 +763,7 @@ impl InputHandler {
                 }
                 InputEvent::PasteBefore => {
                     state.clear_pending();
+                    state.clear_search_results();
                     use crate::editor::state::MessageLevel;
                     match state.paste_node_before_cursor() {
                         Ok(_) => {
@@ -764,6 +779,7 @@ impl InputHandler {
                     // Check if this is the second 'Z' press
                     if state.pending_command() == Some('Z') {
                         state.clear_pending();
+                        state.clear_search_results();
                         // Save the file
                         if let Some(filename) = state.filename() {
                             use crate::file::saver::save_json_file;
@@ -796,10 +812,12 @@ impl InputHandler {
                     if state.pending_count().is_some() {
                         let line_num = state.get_count();
                         state.clear_pending();
+                        state.clear_search_results();
                         state.jump_to_line(line_num as usize);
                     } else if state.pending_command() == Some('g') {
                         // Second 'g' press (gg) - jump to top
                         state.clear_pending();
+                        state.clear_search_results();
                         state.jump_to_top();
                     } else {
                         // First 'g' press - set pending
@@ -809,18 +827,22 @@ impl InputHandler {
                 }
                 InputEvent::JumpToBottom => {
                     state.clear_pending();
+                    state.clear_search_results();
                     state.jump_to_bottom();
                 }
                 InputEvent::PageDown => {
                     state.clear_pending();
+                    state.clear_search_results();
                     state.page_down();
                 }
                 InputEvent::PageUp => {
                     state.clear_pending();
+                    state.clear_search_results();
                     state.page_up();
                 }
                 InputEvent::Undo => {
                     state.clear_pending();
+                    state.clear_search_results();
                     use crate::editor::state::MessageLevel;
                     if state.undo() {
                         state.set_message("Undo".to_string(), MessageLevel::Info);
@@ -833,6 +855,7 @@ impl InputHandler {
                 }
                 InputEvent::Redo => {
                     state.clear_pending();
+                    state.clear_search_results();
                     use crate::editor::state::MessageLevel;
                     if state.redo() {
                         state.set_message("Redo".to_string(), MessageLevel::Info);
@@ -845,38 +868,47 @@ impl InputHandler {
                 }
                 InputEvent::Add => {
                     state.clear_pending();
+                    state.clear_search_results();
                     state.start_add_operation();
                 }
                 InputEvent::AddArray => {
                     state.clear_pending();
+                    state.clear_search_results();
                     state.start_add_container_operation(false); // false = array
                 }
                 InputEvent::AddObject => {
                     state.clear_pending();
+                    state.clear_search_results();
                     state.start_add_container_operation(true); // true = object
                 }
                 InputEvent::Rename => {
                     state.clear_pending();
+                    state.clear_search_results();
                     state.start_rename_operation();
                 }
                 InputEvent::NextSibling => {
                     state.clear_pending();
+                    state.clear_search_results();
                     state.move_to_next_sibling();
                 }
                 InputEvent::PreviousSibling => {
                     state.clear_pending();
+                    state.clear_search_results();
                     state.move_to_previous_sibling();
                 }
                 InputEvent::FirstSibling => {
                     state.clear_pending();
+                    state.clear_search_results();
                     state.move_to_first_sibling();
                 }
                 InputEvent::LastSibling => {
                     state.clear_pending();
+                    state.clear_search_results();
                     state.move_to_last_sibling();
                 }
                 InputEvent::SearchKeyForward => {
                     state.clear_pending();
+                    state.clear_search_results();
                     use crate::editor::state::MessageLevel;
                     if state.execute_key_search(true) {
                         if let Some((current, total)) = state.search_results_info() {
@@ -889,6 +921,7 @@ impl InputHandler {
                 }
                 InputEvent::SearchKeyBackward => {
                     state.clear_pending();
+                    state.clear_search_results();
                     use crate::editor::state::MessageLevel;
                     if state.execute_key_search(false) {
                         if let Some((current, total)) = state.search_results_info() {
@@ -901,29 +934,35 @@ impl InputHandler {
                 }
                 InputEvent::NextAtSameOrShallowerDepth => {
                     state.clear_pending();
+                    state.clear_search_results();
                     state.move_to_next_at_same_or_shallower_depth();
                 }
                 InputEvent::PreviousAtSameOrShallowerDepth => {
                     state.clear_pending();
+                    state.clear_search_results();
                     state.move_to_previous_at_same_or_shallower_depth();
                 }
                 InputEvent::MoveToParent => {
                     state.clear_pending();
+                    state.clear_search_results();
                     state.move_to_parent();
                 }
                 InputEvent::ScreenPosition => {
                     // First 'z' press - set pending
                     state.clear_message();
+                    state.clear_search_results();
                     state.set_pending_command('z');
                 }
                 InputEvent::InsertCharacter(_)
                 | InputEvent::InsertBackspace
                 | InputEvent::InsertEnter => {
                     state.clear_pending();
+                    state.clear_search_results();
                     // These are handled earlier in insert mode, should never reach here
                 }
                 InputEvent::Unknown => {
                     state.clear_pending();
+                    state.clear_search_results();
                     // Ignore unknown keys
                 }
             }
