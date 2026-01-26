@@ -149,47 +149,62 @@ generate_github_release_notes() {
         prev_tag=""
     fi
 
-    # Get commits since last version
+    # Get commits since last version with full message
+    # Format: hash|||subject|||body
     local commits
     if [ -n "$prev_tag" ]; then
-        commits=$(git log --pretty=format:"%h %s" "$prev_tag..HEAD" 2>/dev/null)
+        commits=$(git log --pretty=format:"%h|||%s|||%b|||END" "$prev_tag..HEAD" 2>/dev/null)
     else
-        commits=$(git log --pretty=format:"%h %s" 2>/dev/null)
+        commits=$(git log --pretty=format:"%h|||%s|||%b|||END" 2>/dev/null)
     fi
 
-    # Parse commits into categories
-    local feat_commits=()
-    local fix_commits=()
-    local docs_commits=()
-    local refactor_commits=()
-    local perf_commits=()
-    local test_commits=()
-    local other_commits=()
+    # Parse commits into categories with full messages
+    declare -A feat_commits
+    declare -A fix_commits
+    declare -A docs_commits
+    declare -A refactor_commits
+    declare -A perf_commits
+    declare -A test_commits
+    declare -A other_commits
 
-    while IFS= read -r commit; do
-        [ -z "$commit" ] && continue
+    local commit_buffer=""
+    while IFS= read -r line; do
+        if [[ $line == *"|||END" ]]; then
+            # Process accumulated commit
+            if [ -n "$commit_buffer" ]; then
+                # Split on ||| delimiter - extract hash first
+                local hash="${commit_buffer%%|||*}"
+                local rest="${commit_buffer#*|||}"
+                # Now split rest to get subject and body
+                local subject="${rest%%|||*}"
+                local body="${rest#*|||}"
 
-        local hash=$(echo "$commit" | awk '{print $1}')
-        local msg=$(echo "$commit" | cut -d' ' -f2-)
+                # Skip chore commits
+                if [[ ! $subject =~ ^chore(\(.*\))?: ]]; then
+                    # Store subject and body together
+                    local full_msg="$subject|||$body"
 
-        # Skip chore commits
-        [[ $msg =~ ^chore(\(.*\))?: ]] && continue
-
-        # Categorize by type
-        if [[ $msg =~ ^feat(\(.*\))?: ]]; then
-            feat_commits+=("$msg")
-        elif [[ $msg =~ ^fix(\(.*\))?: ]]; then
-            fix_commits+=("$msg")
-        elif [[ $msg =~ ^docs(\(.*\))?: ]]; then
-            docs_commits+=("$msg")
-        elif [[ $msg =~ ^refactor(\(.*\))?: ]]; then
-            refactor_commits+=("$msg")
-        elif [[ $msg =~ ^perf(\(.*\))?: ]]; then
-            perf_commits+=("$msg")
-        elif [[ $msg =~ ^test(\(.*\))?: ]]; then
-            test_commits+=("$msg")
+                    # Categorize by type
+                    if [[ $subject =~ ^feat(\(.*\))?: ]]; then
+                        feat_commits[$hash]="$full_msg"
+                    elif [[ $subject =~ ^fix(\(.*\))?: ]]; then
+                        fix_commits[$hash]="$full_msg"
+                    elif [[ $subject =~ ^docs(\(.*\))?: ]]; then
+                        docs_commits[$hash]="$full_msg"
+                    elif [[ $subject =~ ^refactor(\(.*\))?: ]]; then
+                        refactor_commits[$hash]="$full_msg"
+                    elif [[ $subject =~ ^perf(\(.*\))?: ]]; then
+                        perf_commits[$hash]="$full_msg"
+                    elif [[ $subject =~ ^test(\(.*\))?: ]]; then
+                        test_commits[$hash]="$full_msg"
+                    else
+                        other_commits[$hash]="$full_msg"
+                    fi
+                fi
+            fi
+            commit_buffer=""
         else
-            other_commits+=("$msg")
+            commit_buffer+="$line"$'\n'
         fi
     done <<< "$commits"
 
@@ -201,21 +216,34 @@ generate_github_release_notes() {
     # New Features section
     if [ ${#feat_commits[@]} -gt 0 ]; then
         notes+="## 🎉 New Features\n\n"
-        for commit in "${feat_commits[@]}"; do
-            # Extract description (remove feat prefix and scope)
-            local desc=$(echo "$commit" | sed 's/^feat(\(.*\)): //' | sed 's/^feat: //')
+        for hash in "${!feat_commits[@]}"; do
+            local full_msg="${feat_commits[$hash]}"
+            # Split on ||| delimiter using bash
+            local subject="${full_msg%%|||*}"
+            local body="${full_msg#*|||}"
+
+            # Extract title (remove feat prefix and scope)
+            local title=$(echo "$subject" | sed 's/^feat(\(.*\)): //' | sed 's/^feat: //')
             # Capitalize first letter
-            desc="$(echo ${desc:0:1} | tr '[:lower:]' '[:upper:]')${desc:1}"
-            notes+="### $desc\n\n"
-            notes+="[Add detailed description here]\n\n"
+            title="$(echo ${title:0:1} | tr '[:lower:]' '[:upper:]')${title:1}"
+            notes+="### $title\n\n"
+
+            # Add body if it exists, otherwise add a placeholder
+            if [ -n "$body" ]; then
+                notes+="$body\n\n"
+            else
+                notes+="_No additional details provided._\n\n"
+            fi
         done
     fi
 
     # Documentation section
     if [ ${#docs_commits[@]} -gt 0 ]; then
         notes+="## 📚 Documentation\n\n"
-        for commit in "${docs_commits[@]}"; do
-            local desc=$(echo "$commit" | sed 's/^docs(\(.*\)): //' | sed 's/^docs: //')
+        for hash in "${!docs_commits[@]}"; do
+            local full_msg="${docs_commits[$hash]}"
+            local subject="${full_msg%%|||*}"
+            local desc=$(echo "$subject" | sed 's/^docs(\(.*\)): //' | sed 's/^docs: //')
             notes+="- $desc\n"
         done
         notes+="\n"
@@ -224,8 +252,10 @@ generate_github_release_notes() {
     # Testing section
     if [ ${#test_commits[@]} -gt 0 ]; then
         notes+="## 🧪 Testing\n\n"
-        for commit in "${test_commits[@]}"; do
-            local desc=$(echo "$commit" | sed 's/^test(\(.*\)): //' | sed 's/^test: //')
+        for hash in "${!test_commits[@]}"; do
+            local full_msg="${test_commits[$hash]}"
+            local subject="${full_msg%%|||*}"
+            local desc=$(echo "$subject" | sed 's/^test(\(.*\)): //' | sed 's/^test: //')
             notes+="- $desc\n"
         done
         notes+="\n"
@@ -234,12 +264,16 @@ generate_github_release_notes() {
     # Technical Details section
     if [ ${#refactor_commits[@]} -gt 0 ] || [ ${#perf_commits[@]} -gt 0 ]; then
         notes+="## 🔧 Technical Details\n\n"
-        for commit in "${refactor_commits[@]}"; do
-            local desc=$(echo "$commit" | sed 's/^refactor(\(.*\)): //' | sed 's/^refactor: //')
+        for hash in "${!refactor_commits[@]}"; do
+            local full_msg="${refactor_commits[$hash]}"
+            local subject="${full_msg%%|||*}"
+            local desc=$(echo "$subject" | sed 's/^refactor(\(.*\)): //' | sed 's/^refactor: //')
             notes+="- $desc\n"
         done
-        for commit in "${perf_commits[@]}"; do
-            local desc=$(echo "$commit" | sed 's/^perf(\(.*\)): //' | sed 's/^perf: //')
+        for hash in "${!perf_commits[@]}"; do
+            local full_msg="${perf_commits[$hash]}"
+            local subject="${full_msg%%|||*}"
+            local desc=$(echo "$subject" | sed 's/^perf(\(.*\)): //' | sed 's/^perf: //')
             notes+="- $desc\n"
         done
         notes+="\n"
@@ -248,8 +282,10 @@ generate_github_release_notes() {
     # Fixes section
     if [ ${#fix_commits[@]} -gt 0 ]; then
         notes+="## 🛠️ Fixes\n\n"
-        for commit in "${fix_commits[@]}"; do
-            local desc=$(echo "$commit" | sed 's/^fix(\(.*\)): //' | sed 's/^fix: //')
+        for hash in "${!fix_commits[@]}"; do
+            local full_msg="${fix_commits[$hash]}"
+            local subject="${full_msg%%|||*}"
+            local desc=$(echo "$subject" | sed 's/^fix(\(.*\)): //' | sed 's/^fix: //')
             notes+="- $desc\n"
         done
         notes+="\n"
@@ -258,8 +294,10 @@ generate_github_release_notes() {
     # Other changes section
     if [ ${#other_commits[@]} -gt 0 ]; then
         notes+="## 📝 Other Changes\n\n"
-        for commit in "${other_commits[@]}"; do
-            notes+="- $commit\n"
+        for hash in "${!other_commits[@]}"; do
+            local full_msg="${other_commits[$hash]}"
+            local subject="${full_msg%%|||*}"
+            notes+="- $subject\n"
         done
         notes+="\n"
     fi
