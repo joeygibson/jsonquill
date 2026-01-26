@@ -2106,6 +2106,14 @@ impl EditorState {
         self.search_type.as_ref()
     }
 
+    /// Clears search results but preserves search buffer and type.
+    /// This removes search info from the status bar while keeping
+    /// the search query available for potential "repeat search" features.
+    pub fn clear_search_results(&mut self) {
+        self.search_results.clear();
+        self.search_index = 0;
+    }
+
     /// Returns whether line numbers should be shown.
     pub fn show_line_numbers(&self) -> bool {
         self.show_line_numbers

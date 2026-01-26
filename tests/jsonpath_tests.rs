@@ -183,3 +183,40 @@ fn test_clear_search_resets_type() {
     // Verify search type is cleared
     assert!(state.search_type().is_none());
 }
+
+/// Test that clear_search_results clears search results and resets index.
+#[test]
+fn test_clear_search_results() {
+    // Create tree with searchable content: {"items": [{"price": 10}, {"price": 20}]}
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![(
+        "items".to_string(),
+        JsonNode::new(JsonValue::Array(vec![
+            JsonNode::new(JsonValue::Object(vec![(
+                "price".to_string(),
+                JsonNode::new(JsonValue::Number(10.0)),
+            )])),
+            JsonNode::new(JsonValue::Object(vec![(
+                "price".to_string(),
+                JsonNode::new(JsonValue::Number(20.0)),
+            )])),
+        ])),
+    )])));
+
+    let mut state = EditorState::new(tree);
+
+    // Execute search to populate results
+    state.execute_jsonpath_search("$.items[*].price");
+
+    // Verify results exist (2 matches, currently at match 1)
+    assert_eq!(state.search_results_info(), Some((1, 2)));
+
+    // Navigate to second result
+    assert!(state.next_search_result().0);
+    assert_eq!(state.search_results_info(), Some((2, 2)));
+
+    // Call clear_search_results()
+    state.clear_search_results();
+
+    // Verify results are cleared (search_results_info() returns None)
+    assert_eq!(state.search_results_info(), None);
+}
