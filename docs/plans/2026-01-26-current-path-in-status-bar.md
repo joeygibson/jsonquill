@@ -349,7 +349,7 @@ Manual verification:
 - Navigate through the JSON tree using j/k keys
 - Verify the status bar shows the current path (e.g., `users[0].name`)
 - Verify root node shows no path
-- Verify path appears between filename and search results (if searching)
+- Verify path appears after filename (before dirty indicator and search results)
 
 **Step 8: Commit**
 
@@ -357,7 +357,7 @@ Manual verification:
 git add src/ui/status_line.rs
 git commit -m "feat(ui): display current path in status bar
 
-- Show path in dot notation (e.g., users[0].name) between filename and search results
+- Show path in dot notation (e.g., users[0].name) after filename
 - Empty string at root node (no path displayed)
 - Add tests for path display and root node behavior"
 ```
@@ -388,7 +388,7 @@ Also add a description in the relevant section explaining the feature:
 Find the "Working Features" section and add after the status line entry:
 ```markdown
   - Shows current JSON path in dot notation (e.g., `users[0].name`, `config.database.port`)
-  - Path displayed between filename and search results
+  - Path displayed after filename (before dirty indicator and search results)
   - Root node shows no path
 ```
 
