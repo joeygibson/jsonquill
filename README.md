@@ -51,6 +51,16 @@ JSONQuill is a Rust-based terminal application for viewing and editing JSON file
 
 ## Installation & Usage
 
+### Homebrew (macOS and Linux)
+
+```bash
+# Add the tap
+brew tap joeygibson/tools
+
+# Install jsonquill
+brew install jsonquill
+```
+
 ### Build from Source
 
 ```bash
