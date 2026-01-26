@@ -225,6 +225,8 @@ After executing a JSONPath search, use `n` to navigate through matches just like
 
 Type `:` to enter command mode, then:
 
+**Tab Completion:** Press `Tab` to autocomplete theme names (`:theme <Tab>`) and setting names (`:set <Tab>`). Press `Tab` multiple times to cycle through options.
+
 | Command | Action | Notes |
 |---------|--------|-------|
 | `:w` | Save file | Write changes to disk |

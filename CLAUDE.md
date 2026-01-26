@@ -257,6 +257,8 @@ Enter       - Commit changes and return to NORMAL mode
 Esc         - Cancel editing and return to NORMAL mode
 
 # Commands (in COMMAND mode)
+Tab         - Autocomplete theme names (:theme <Tab>) and settings (:set <Tab>)
+            - Press Tab multiple times to cycle through completions
 :w          - Save file
 :w <file>   - Save to new file and update current filename
 :q          - Quit (warns if unsaved)

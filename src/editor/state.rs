@@ -186,6 +186,10 @@ pub struct EditorState {
     add_insertion_point: Option<Vec<usize>>,
     is_renaming_key: bool,
     rename_original_key: Option<String>,
+    // Tab-completion state
+    completion_candidates: Vec<String>,
+    completion_index: usize,
+    completion_prefix: String,
 }
 
 impl EditorState {
@@ -271,6 +275,9 @@ impl EditorState {
             add_insertion_point: None,
             is_renaming_key: false,
             rename_original_key: None,
+            completion_candidates: Vec::new(),
+            completion_index: 0,
+            completion_prefix: String::new(),
         }
     }
 
@@ -1340,16 +1347,86 @@ impl EditorState {
     /// Appends a character to the command buffer.
     pub fn push_to_command_buffer(&mut self, ch: char) {
         self.command_buffer.push(ch);
+        self.reset_completion();
     }
 
     /// Removes the last character from the command buffer.
     pub fn pop_from_command_buffer(&mut self) {
         self.command_buffer.pop();
+        self.reset_completion();
     }
 
     /// Clears the command buffer.
     pub fn clear_command_buffer(&mut self) {
         self.command_buffer.clear();
+        self.reset_completion();
+    }
+
+    /// Handles tab-completion for command mode.
+    ///
+    /// Generates completion candidates based on the current command buffer
+    /// and cycles through them on subsequent Tab presses.
+    pub fn handle_tab_completion(&mut self) {
+        // If we don't have candidates yet, generate them
+        if self.completion_candidates.is_empty() {
+            self.completion_prefix = self.command_buffer.clone();
+            self.completion_candidates = self.generate_completions(&self.completion_prefix);
+            self.completion_index = 0;
+        } else {
+            // Cycle to next candidate
+            if !self.completion_candidates.is_empty() {
+                self.completion_index =
+                    (self.completion_index + 1) % self.completion_candidates.len();
+            }
+        }
+
+        // Apply the current completion
+        if !self.completion_candidates.is_empty() {
+            self.command_buffer = self.completion_candidates[self.completion_index].clone();
+        }
+    }
+
+    /// Generates completion candidates for the given command prefix.
+    fn generate_completions(&self, prefix: &str) -> Vec<String> {
+        // Handle `:theme ` completion
+        if let Some(partial) = prefix.strip_prefix("theme ") {
+            let themes = crate::theme::list_builtin_themes();
+            return themes
+                .into_iter()
+                .filter(|t| t.starts_with(partial))
+                .map(|t| format!("theme {}", t))
+                .collect();
+        }
+
+        // Handle `:set ` completion
+        if let Some(partial) = prefix.strip_prefix("set ") {
+            let settings = vec![
+                "number",
+                "nonumber",
+                "relativenumber",
+                "norelativenumber",
+                "rnu",
+                "nornu",
+                "mouse",
+                "nomouse",
+                "save",
+            ];
+            return settings
+                .into_iter()
+                .filter(|s| s.starts_with(partial))
+                .map(|s| format!("set {}", s))
+                .collect();
+        }
+
+        // No completions for other commands
+        Vec::new()
+    }
+
+    /// Resets tab-completion state.
+    pub fn reset_completion(&mut self) {
+        self.completion_candidates.clear();
+        self.completion_index = 0;
+        self.completion_prefix.clear();
     }
 
     /// Returns whether the help overlay is shown.

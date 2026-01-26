@@ -310,6 +310,11 @@ impl InputHandler {
                         state.set_mode(EditorMode::Normal);
                         return self.execute_command(&command, state);
                     }
+                    Key::Char('\t') => {
+                        // Tab completion
+                        state.handle_tab_completion();
+                        return Ok(false);
+                    }
                     Key::Char(c) => {
                         state.push_to_command_buffer(c);
                         return Ok(false);
