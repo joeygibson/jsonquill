@@ -59,15 +59,13 @@ pub fn render_status_line(f: &mut Frame, area: Rect, state: &EditorState, colors
         String::new()
     };
 
-    let mut left = format!(
-        "{} | {}{}{}",
-        mode_text, filename, path_display, dirty_indicator
-    );
+    // Build left side components
+    let mode_and_file = format!("{} | {}", mode_text, filename);
 
     // Add search results info if available
-    if let Some((current, total)) = state.search_results_info() {
+    let search_info = if let Some((current, total)) = state.search_results_info() {
         use crate::editor::state::SearchType;
-        let search_info = match state.search_type() {
+        match state.search_type() {
             Some(SearchType::Text) => {
                 format!(
                     " [Search: \"{}\"] Match {}/{}",
@@ -80,35 +78,57 @@ pub fn render_status_line(f: &mut Frame, area: Rect, state: &EditorState, colors
                 format!(" [JSONPath: {}] Match {}/{}", query, current, total)
             }
             None => format!(" Match {}/{}", current, total),
-        };
-        left.push_str(&search_info);
-    }
+        }
+    } else {
+        String::new()
+    };
 
     // Get cursor position
     let row = state.cursor_position().0;
     let total = state.total_lines();
-    let right = format!("{}/{}", row, total);
+    let position = format!("{}/{}", row, total);
 
     // Calculate padding to position right-aligned text
     let total_width = area.width as usize;
-    let right_len = right.len();
-    let left_len = left.len();
+    let left_len = mode_and_file.len() + path_display.len() + dirty_indicator.len() + search_info.len();
+    let position_len = position.len();
 
     // Ensure we don't overflow
-    let padding = if left_len + right_len + 1 < total_width {
-        total_width - left_len - right_len
+    let padding = if left_len + position_len + 1 < total_width {
+        total_width - left_len - position_len
     } else {
         1
     };
 
-    let content = format!("{}{}{}", left, " ".repeat(padding), right);
+    // Build multi-span line with colored path
+    let default_style = Style::default()
+        .fg(colors.status_line_fg)
+        .bg(colors.status_line_bg);
 
-    let line = Line::from(Span::styled(
-        content,
-        Style::default()
-            .fg(colors.status_line_fg)
-            .bg(colors.status_line_bg),
-    ));
+    let path_style = Style::default()
+        .fg(colors.key)
+        .bg(colors.status_line_bg);
+
+    let mut spans = vec![
+        Span::styled(mode_and_file, default_style),
+    ];
+
+    if !path_display.is_empty() {
+        spans.push(Span::styled(path_display, path_style));
+    }
+
+    if !dirty_indicator.is_empty() {
+        spans.push(Span::styled(dirty_indicator, default_style));
+    }
+
+    if !search_info.is_empty() {
+        spans.push(Span::styled(search_info, default_style));
+    }
+
+    spans.push(Span::styled(" ".repeat(padding), default_style));
+    spans.push(Span::styled(position, default_style));
+
+    let line = Line::from(spans);
 
     let status = Paragraph::new(line);
 
