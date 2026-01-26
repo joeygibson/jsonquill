@@ -179,6 +179,9 @@ generate_github_release_notes() {
                 local subject="${rest%%|||*}"
                 local body="${rest#*|||}"
 
+                # Filter out Co-Authored-By lines
+                body=$(echo "$body" | grep -v "^Co-Authored-By: Claude Sonnet")
+
                 # Skip chore commits
                 if [[ ! $subject =~ ^chore(\(.*\))?: ]]; then
                     # Store subject and body together
