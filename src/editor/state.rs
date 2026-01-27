@@ -1757,133 +1757,85 @@ impl EditorState {
 
     /// Returns whether there's something in the clipboard.
     pub fn has_clipboard(&self) -> bool {
-        // TODO: update for registers
-        // self.clipboard.is_some()
-        false
+        !self.registers.get_unnamed().is_empty()
     }
 
-    /// Pastes the clipboard node after the current cursor position.
-    /// For objects, generates a unique key name. For arrays, inserts after current index.
+    /// Pastes nodes at cursor from register (after current position).
+    pub fn paste_nodes_at_cursor(&mut self) -> anyhow::Result<()> {
+        use anyhow::anyhow;
+
+        // Get content from appropriate register
+        let content = if let Some(reg) = self.pending_register {
+            self.registers
+                .get_named(reg)
+                .ok_or_else(|| anyhow!("Nothing in register '{}'", reg))?
+                .clone()
+        } else {
+            self.registers.get_unnamed().clone()
+        };
+
+        if content.is_empty() {
+            return Err(anyhow!("Nothing to paste"));
+        }
+
+        // Create undo checkpoint
+        self.checkpoint();
+
+        // Paste each node
+        for (node, key) in content.nodes.iter().zip(content.keys.iter()) {
+            self.paste_single_node(node.clone(), key.clone(), true)?;
+        }
+
+        self.mark_dirty();
+        Ok(())
+    }
+
+    /// Deprecated alias for paste_nodes_at_cursor (for backwards compatibility).
     pub fn paste_node_at_cursor(&mut self) -> anyhow::Result<()> {
-        // TODO: update for registers
-        use anyhow::anyhow;
-        Err(anyhow!("Paste not yet implemented with registers"))
-        /*
-        use crate::document::node::JsonValue;
-
-        let clipboard_node = self
-            .clipboard
-            .clone()
-            .ok_or_else(|| anyhow!("Nothing to paste"))?;
-
-        let current_path = self.cursor.path().to_vec();
-
-        // Determine parent and insert position
-        if current_path.is_empty() {
-            return Err(anyhow!("Cannot paste at root level"));
-        }
-
-        let parent_path = &current_path[..current_path.len() - 1];
-        let current_index = current_path[current_path.len() - 1];
-        let insert_index = current_index + 1;
-
-        // Get parent node to determine type
-        let parent = if parent_path.is_empty() {
-            self.tree.root()
-        } else {
-            self.tree
-                .get_node(parent_path)
-                .ok_or_else(|| anyhow!("Parent node not found"))?
-        };
-
-        match parent.value() {
-            JsonValue::Object(_) => {
-                // Use the original key name if available, otherwise use "pasted"
-                // TODO: update for registers
-                let base_key = "pasted".to_string();
-                /*
-                let base_key = self
-                    .clipboard_key
-                    .clone()
-                    .unwrap_or_else(|| "pasted".to_string());
-                */
-                let mut key_name = base_key.clone();
-                let mut counter = 1;
-
-                // Keep trying until we find a unique key
-                loop {
-                    let test_key = if counter == 1 {
-                        key_name.clone()
-                    } else {
-                        format!("{}{}", base_key, counter)
-                    };
-
-                    // Check if key exists
-                    let parent_ref = if parent_path.is_empty() {
-                        self.tree.root()
-                    } else {
-                        self.tree.get_node(parent_path).unwrap()
-                    };
-
-                    let key_exists = if let JsonValue::Object(entries) = parent_ref.value() {
-                        entries.iter().any(|(k, _)| k == &test_key)
-                    } else {
-                        false
-                    };
-
-                    if !key_exists {
-                        key_name = test_key;
-                        break;
-                    }
-
-                    counter += 1;
-                }
-
-                // Build the full path for insertion
-                let mut insert_path = parent_path.to_vec();
-                insert_path.push(insert_index);
-
-                self.tree
-                    .insert_node_in_object(&insert_path, key_name, clipboard_node.clone())?;
-            }
-            JsonValue::Array(_) => {
-                let mut insert_path = parent_path.to_vec();
-                insert_path.push(insert_index);
-
-                self.tree
-                    .insert_node_in_array(&insert_path, clipboard_node.clone())?;
-            }
-            _ => {
-                return Err(anyhow!("Parent is not a container type"));
-            }
-        }
-
-        self.mark_dirty();
-        self.rebuild_tree_view();
-
-        // Move cursor to newly pasted node
-        let mut new_cursor_path = parent_path.to_vec();
-        new_cursor_path.push(insert_index);
-        self.cursor.set_path(new_cursor_path);
-
-        self.checkpoint();
-        Ok(())
-        */
+        self.paste_nodes_at_cursor()
     }
 
-    /// Pastes the clipboard node before the current cursor position.
-    /// For objects, generates a unique key name. For arrays, inserts before current index.
-    pub fn paste_node_before_cursor(&mut self) -> anyhow::Result<()> {
-        // TODO: update for registers
+    /// Pastes nodes before cursor from register.
+    pub fn paste_nodes_before_cursor(&mut self) -> anyhow::Result<()> {
         use anyhow::anyhow;
-        Err(anyhow!("Paste not yet implemented with registers"))
-        /*
-        use crate::document::node::JsonValue;
 
-        let clipboard_node = self
-            .clipboard
-            .clone()
-            .ok_or_else(|| anyhow!("Nothing to paste"))?;
+        let content = if let Some(reg) = self.pending_register {
+            self.registers
+                .get_named(reg)
+                .ok_or_else(|| anyhow!("Nothing in register '{}'", reg))?
+                .clone()
+        } else {
+            self.registers.get_unnamed().clone()
+        };
+
+        if content.is_empty() {
+            return Err(anyhow!("Nothing to paste"));
+        }
+
+        self.checkpoint();
+
+        for (node, key) in content.nodes.iter().zip(content.keys.iter()) {
+            self.paste_single_node(node.clone(), key.clone(), false)?;
+        }
+
+        self.mark_dirty();
+        Ok(())
+    }
+
+    /// Deprecated alias for paste_nodes_before_cursor (for backwards compatibility).
+    pub fn paste_node_before_cursor(&mut self) -> anyhow::Result<()> {
+        self.paste_nodes_before_cursor()
+    }
+
+    /// Helper to paste a single node.
+    fn paste_single_node(
+        &mut self,
+        node: JsonNode,
+        key: Option<String>,
+        after: bool,
+    ) -> anyhow::Result<()> {
+        use crate::document::node::JsonValue;
+        use anyhow::anyhow;
 
         let current_path = self.cursor.path().to_vec();
 
@@ -1894,7 +1846,11 @@ impl EditorState {
 
         let parent_path = &current_path[..current_path.len() - 1];
         let current_index = current_path[current_path.len() - 1];
-        let insert_index = current_index; // Insert BEFORE current (at current position)
+        let insert_index = if after {
+            current_index + 1
+        } else {
+            current_index
+        };
 
         // Get parent node to determine type
         let parent = if parent_path.is_empty() {
@@ -1908,14 +1864,7 @@ impl EditorState {
         match parent.value() {
             JsonValue::Object(_) => {
                 // Use the original key name if available, otherwise use "pasted"
-                // TODO: update for registers
-                let base_key = "pasted".to_string();
-                /*
-                let base_key = self
-                    .clipboard_key
-                    .clone()
-                    .unwrap_or_else(|| "pasted".to_string());
-                */
+                let base_key = key.unwrap_or_else(|| "pasted".to_string());
                 let mut key_name = base_key.clone();
                 let mut counter = 1;
 
@@ -1953,21 +1902,20 @@ impl EditorState {
                 insert_path.push(insert_index);
 
                 self.tree
-                    .insert_node_in_object(&insert_path, key_name, clipboard_node.clone())?;
+                    .insert_node_in_object(&insert_path, key_name, node.clone())?;
             }
             JsonValue::Array(_) => {
                 let mut insert_path = parent_path.to_vec();
                 insert_path.push(insert_index);
 
                 self.tree
-                    .insert_node_in_array(&insert_path, clipboard_node.clone())?;
+                    .insert_node_in_array(&insert_path, node.clone())?;
             }
             _ => {
                 return Err(anyhow!("Parent is not a container type"));
             }
         }
 
-        self.mark_dirty();
         self.rebuild_tree_view();
 
         // Move cursor to newly pasted node
@@ -1975,9 +1923,7 @@ impl EditorState {
         new_cursor_path.push(insert_index);
         self.cursor.set_path(new_cursor_path);
 
-        self.checkpoint();
         Ok(())
-        */
     }
 
     /// Returns the current search buffer.
@@ -3396,5 +3342,31 @@ mod tests {
         // Should be in register 'a'
         let reg_a = state.registers.get_named('a').unwrap();
         assert_eq!(reg_a.nodes.len(), 1);
+    }
+
+    #[test]
+    fn test_paste_from_named_register() {
+        let tree = JsonTree::new(JsonNode::new(JsonValue::Array(vec![
+            JsonNode::new(JsonValue::String("existing".to_string())),
+        ])));
+
+        let mut state = EditorState::new(tree);
+
+        // Expand the array to see its contents
+        state.toggle_expand_at_cursor();
+
+        // Move cursor to the first element in the array
+        state.move_cursor_down();
+
+        // Manually populate register 'a'
+        let node = JsonNode::new(JsonValue::String("test".to_string()));
+        let content = crate::editor::registers::RegisterContent::new(vec![node], vec![None]);
+        state.registers.set_named('a', content);
+
+        // Paste from register 'a'
+        state.set_pending_register('a', false);
+        let result = state.paste_nodes_at_cursor();
+
+        assert!(result.is_ok());
     }
 }
