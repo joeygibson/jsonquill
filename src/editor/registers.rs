@@ -79,6 +79,35 @@ impl RegisterSet {
         debug_assert!(index < 10, "numbered register index must be 0-9");
         self.numbered[index] = content;
     }
+
+    /// Appends content to a named register. If the register doesn't exist,
+    /// creates it with the provided content.
+    pub fn append_named(&mut self, register: char, content: RegisterContent) {
+        let key = register.to_ascii_lowercase();
+        if let Some(existing) = self.named.get_mut(&key) {
+            existing.nodes.extend(content.nodes);
+            existing.keys.extend(content.keys);
+        } else {
+            self.named.insert(key, content);
+        }
+    }
+
+    /// Pushes new content to delete history. Shifts all history registers:
+    /// "9 is lost, "8→"9, ..., "2→"3, "1→"2, and new content goes to "1.
+    pub fn push_delete_history(&mut self, content: RegisterContent) {
+        // Shift history: "9 lost, "8→"9, ..., "2→"3, "1→"2
+        for i in (1..9).rev() {
+            self.numbered[i + 1] = self.numbered[i].clone();
+        }
+        // New delete goes to "1
+        self.numbered[1] = content;
+    }
+
+    /// Updates the yank register "0 with the latest yank content.
+    pub fn update_yank_register(&mut self, content: RegisterContent) {
+        // Update "0 with latest yank
+        self.numbered[0] = content;
+    }
 }
 
 impl Default for RegisterSet {
@@ -157,5 +186,47 @@ mod tests {
             let retrieved = regs.get_numbered(i);
             assert_eq!(retrieved.nodes.len(), 1);
         }
+    }
+
+    #[test]
+    fn test_register_append_named() {
+        let mut regs = RegisterSet::new();
+        let node1 = JsonNode::new(JsonValue::Number(1.0));
+        let node2 = JsonNode::new(JsonValue::Number(2.0));
+
+        regs.set_named('a', RegisterContent::new(vec![node1.clone()], vec![None]));
+        regs.append_named('a', RegisterContent::new(vec![node2.clone()], vec![None]));
+
+        let retrieved = regs.get_named('a').unwrap();
+        assert_eq!(retrieved.nodes.len(), 2);
+    }
+
+    #[test]
+    fn test_register_push_delete_history() {
+        let mut regs = RegisterSet::new();
+        let node1 = JsonNode::new(JsonValue::Number(1.0));
+        let node2 = JsonNode::new(JsonValue::Number(2.0));
+        let node3 = JsonNode::new(JsonValue::Number(3.0));
+
+        regs.push_delete_history(RegisterContent::new(vec![node1.clone()], vec![None]));
+        regs.push_delete_history(RegisterContent::new(vec![node2.clone()], vec![None]));
+        regs.push_delete_history(RegisterContent::new(vec![node3.clone()], vec![None]));
+
+        // "1 should have most recent (node3)
+        assert_eq!(regs.get_numbered(1).nodes.len(), 1);
+        // "2 should have node2
+        assert_eq!(regs.get_numbered(2).nodes.len(), 1);
+    }
+
+    #[test]
+    fn test_register_update_yank_register() {
+        let mut regs = RegisterSet::new();
+        let node = JsonNode::new(JsonValue::Boolean(true));
+        let content = RegisterContent::new(vec![node.clone()], vec![None]);
+
+        regs.update_yank_register(content.clone());
+
+        // "0 should have the yanked content
+        assert_eq!(regs.get_numbered(0).nodes.len(), 1);
     }
 }
