@@ -815,7 +815,7 @@ mod tests {
         // Should only show the "user" field, not its children (not expanded)
         assert_eq!(state.lines().len(), 1);
         assert_eq!(state.lines()[0].key, Some("user".to_string()));
-        assert_eq!(state.lines()[0].expandable, true);
+        assert!(state.lines()[0].expandable);
     }
 
     #[test]
@@ -849,7 +849,10 @@ mod tests {
             state.get_value_preview(&JsonValue::String("test".to_string())),
             "\"test\""
         );
-        assert_eq!(state.get_value_preview(&JsonValue::Number(3.14)), "3.14");
+        assert_eq!(
+            state.get_value_preview(&JsonValue::Number(std::f64::consts::PI)),
+            std::f64::consts::PI.to_string()
+        );
         assert_eq!(state.get_value_preview(&JsonValue::Boolean(true)), "true");
         assert_eq!(state.get_value_preview(&JsonValue::Null), "null");
 
@@ -1191,7 +1194,7 @@ mod tests {
         assert_eq!(state.lines().len(), 1);
 
         // Expand first line
-        state.toggle_expand(&vec![0]);
+        state.toggle_expand(&[0]);
         state.rebuild(&tree);
 
         // Should now show 3 lines: object + 2 fields

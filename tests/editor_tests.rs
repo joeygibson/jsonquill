@@ -273,7 +273,7 @@ fn test_mode_equality() {
 #[test]
 fn test_mode_clone() {
     let mode = EditorMode::Insert;
-    let cloned = mode.clone();
+    let cloned = mode;
     assert_eq!(mode, cloned);
 }
 
@@ -831,7 +831,7 @@ fn test_commit_editing_boolean() {
 
     let node = state.tree().get_node(&[0]).unwrap();
     match node.value() {
-        JsonValue::Boolean(b) => assert_eq!(*b, false),
+        JsonValue::Boolean(b) => assert!(!*b),
         _ => panic!("Expected boolean value"),
     }
 }

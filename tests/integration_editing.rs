@@ -519,7 +519,7 @@ fn test_add_boolean_to_array() {
 
     let node = state.tree().get_node(&[1]).unwrap();
     match node.value() {
-        JsonValue::Boolean(b) => assert_eq!(*b, true),
+        JsonValue::Boolean(b) => assert!(*b),
         _ => panic!("Expected boolean"),
     }
 }

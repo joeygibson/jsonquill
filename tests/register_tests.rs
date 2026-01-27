@@ -309,7 +309,7 @@ fn test_register_pending_state() {
     let mut state = EditorState::new(tree);
 
     // Initially no pending register
-    assert!(!state.get_pending_register().is_some());
+    assert!(state.get_pending_register().is_none());
 
     // Set pending register
     state.set_pending_register('a', false);
@@ -317,7 +317,7 @@ fn test_register_pending_state() {
 
     // Clear pending register
     state.clear_register_pending();
-    assert!(!state.get_pending_register().is_some());
+    assert!(state.get_pending_register().is_none());
 }
 
 #[test]

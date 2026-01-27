@@ -57,53 +57,11 @@ pub fn load_json_file<P: AsRef<Path>>(path: P) -> Result<JsonTree> {
     parse_json(&content).context("Failed to parse JSON")
 }
 
-/// Loads and parses JSON from standard input.
+/// Helper function to parse JSONL content (newline-delimited JSON).
 ///
-/// This function reads from stdin until EOF and parses the contents as JSON,
-/// returning a `JsonTree` structure ready for editing. This is useful for
-/// piping JSON data into the editor.
-///
-/// # Returns
-///
-/// Returns a `Result` containing:
-/// - `Ok(JsonTree)` if stdin was successfully read and parsed
-/// - `Err(anyhow::Error)` if:
-///   - Reading from stdin failed
-///   - The input contents are not valid JSON
-///
-/// # Examples
-///
-/// ```no_run
-/// use jsonquill::file::loader::load_json_from_stdin;
-///
-/// // Usage: echo '{"key": "value"}' | cargo run -- -
-/// let tree = load_json_from_stdin().unwrap();
-/// ```
-///
-/// # Errors
-///
-/// This function will return an error if:
-/// - Reading from stdin fails
-/// - The input contents are not valid JSON
-pub fn load_json_from_stdin() -> Result<JsonTree> {
-    use std::io::{self, Read};
-
-    let mut buffer = String::new();
-    io::stdin()
-        .read_to_string(&mut buffer)
-        .context("Failed to read from stdin")?;
-
-    parse_json(&buffer).context("Failed to parse JSON from stdin")
-}
-
-/// Loads and parses a JSONL (JSON Lines) file from the filesystem.
-///
-/// Each line in the file must be a valid JSON value. Blank lines are skipped.
-/// The result is a JsonTree with a JsonlRoot containing all lines.
-pub fn load_jsonl_file<P: AsRef<Path>>(path: P) -> Result<JsonTree> {
+/// Each line must be a valid JSON value. Blank lines are skipped.
+fn parse_jsonl_content(content: &str) -> Result<JsonTree> {
     use crate::document::node::{JsonNode, JsonValue};
-
-    let content = fs::read_to_string(path.as_ref()).context("Failed to read JSONL file")?;
 
     let mut lines = Vec::new();
 
@@ -119,8 +77,71 @@ pub fn load_jsonl_file<P: AsRef<Path>>(path: P) -> Result<JsonTree> {
         lines.push(node);
     }
 
+    if lines.is_empty() {
+        anyhow::bail!("No valid JSON found in JSONL content");
+    }
+
     let root = JsonNode::new(JsonValue::JsonlRoot(lines));
     Ok(JsonTree::new(root))
+}
+
+/// Loads and parses JSON from standard input.
+///
+/// This function reads from stdin until EOF and parses the contents as JSON,
+/// returning a `JsonTree` structure ready for editing. This is useful for
+/// piping JSON data into the editor.
+///
+/// The function automatically detects whether the input is regular JSON or
+/// JSONL format (newline-delimited JSON). It tries regular JSON first, and
+/// if that fails, it attempts to parse as JSONL.
+///
+/// # Returns
+///
+/// Returns a `Result` containing:
+/// - `Ok(JsonTree)` if stdin was successfully read and parsed
+/// - `Err(anyhow::Error)` if:
+///   - Reading from stdin failed
+///   - The input contents are not valid JSON or JSONL
+///
+/// # Examples
+///
+/// ```no_run
+/// use jsonquill::file::loader::load_json_from_stdin;
+///
+/// // Usage: echo '{"key": "value"}' | cargo run -- -
+/// let tree = load_json_from_stdin().unwrap();
+/// ```
+///
+/// # Errors
+///
+/// This function will return an error if:
+/// - Reading from stdin fails
+/// - The input contents are not valid JSON or JSONL
+pub fn load_json_from_stdin() -> Result<JsonTree> {
+    use std::io::{self, Read};
+
+    let mut buffer = String::new();
+    io::stdin()
+        .read_to_string(&mut buffer)
+        .context("Failed to read from stdin")?;
+
+    // Try to parse as regular JSON first
+    if let Ok(tree) = parse_json(&buffer) {
+        return Ok(tree);
+    }
+
+    // If regular JSON parsing fails, try JSONL format
+    parse_jsonl_content(&buffer)
+        .context("Failed to parse JSON from stdin: input is neither valid JSON nor valid JSONL")
+}
+
+/// Loads and parses a JSONL (JSON Lines) file from the filesystem.
+///
+/// Each line in the file must be a valid JSON value. Blank lines are skipped.
+/// The result is a JsonTree with a JsonlRoot containing all lines.
+pub fn load_jsonl_file<P: AsRef<Path>>(path: P) -> Result<JsonTree> {
+    let content = fs::read_to_string(path.as_ref()).context("Failed to read JSONL file")?;
+    parse_jsonl_content(&content)
 }
 
 #[cfg(test)]

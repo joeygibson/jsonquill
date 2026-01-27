@@ -360,9 +360,9 @@ mod tests {
         let result = serialize_node(&node, 2, 0);
         assert_eq!(result, "42");
 
-        let node = JsonNode::new(JsonValue::Number(3.14));
+        let node = JsonNode::new(JsonValue::Number(2.5));
         let result = serialize_node(&node, 2, 0);
-        assert_eq!(result, "3.14");
+        assert_eq!(result, "2.5");
     }
 
     #[test]
