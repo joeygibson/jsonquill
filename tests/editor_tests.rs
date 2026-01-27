@@ -994,7 +994,7 @@ fn test_paste_node_in_object() {
 
     // Yank first element
     state.cursor_mut().set_path(vec![0]);
-    state.yank_node();
+    state.yank_nodes(1);
 
     // Now move to position [1] and paste
     state.cursor_mut().set_path(vec![1]);
@@ -1019,7 +1019,7 @@ fn test_paste_node_in_array() {
 
     // Yank first element
     state.cursor_mut().set_path(vec![0]);
-    state.yank_node();
+    state.yank_nodes(1);
 
     // Paste after first element
     let result = state.paste_node_at_cursor();

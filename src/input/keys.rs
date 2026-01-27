@@ -87,6 +87,8 @@ pub enum InputEvent {
     PreviousAtSameOrShallowerDepth,
     /// Move to parent node without collapsing (H)
     MoveToParent,
+    /// Register selection prefix (")
+    RegisterSelect,
     /// Insert a character in insert mode
     InsertCharacter(char),
     /// Backspace in insert mode
@@ -173,6 +175,7 @@ pub fn map_key_event(event: Event, mode: &EditorMode) -> InputEvent {
             Key::Char('#') => InputEvent::SearchKeyBackward,
             Key::Char('w') => InputEvent::NextAtSameOrShallowerDepth,
             Key::Char('b') => InputEvent::PreviousAtSameOrShallowerDepth,
+            Key::Char('"') => InputEvent::RegisterSelect,
             Key::Down => InputEvent::MoveDown,
             Key::Up => InputEvent::MoveUp,
             Key::Left => InputEvent::MoveLeft,

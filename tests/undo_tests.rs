@@ -115,7 +115,7 @@ fn test_undo_after_paste() {
 
     // Yank and paste
     state.cursor_mut().set_path(vec![0]);
-    state.yank_node();
+    state.yank_nodes(1);
     state.paste_node_at_cursor().unwrap();
 
     // Should have 2 elements
