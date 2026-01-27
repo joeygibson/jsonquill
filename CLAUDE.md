@@ -175,6 +175,7 @@ Implemented modules:
 - ✅ JSONL (.jsonl, .ndjson) file support
 - ✅ Collapsed object/array previews (jless-style)
 - ✅ Mouse/trackpad scrolling (3 lines per tick, toggle with `:set mouse`/`:set nomouse`)
+- ✅ Named registers (a-z) with append mode (A-Z) and history (0-9)
 - ✅ All tests passing
 
 **Known Issues / TODO:**
@@ -183,7 +184,6 @@ Implemented modules:
 - ❌ **No previous search** - `N` for previous search match not implemented (note: `/` and `?` already provide forward/backward search with `n`)
 
 **Advanced Features:**
-- ❌ **No named registers** - `"ayy`, `"ap` for named register operations
 - ✅ **Structural search** - `:path`, `:jp` for JSONPath-style queries
 - ❌ **No format preservation** - Original formatting not preserved on save
 - ❌ **No lazy loading** - Large files (≥100MB) not optimized
@@ -328,13 +328,26 @@ o           - Add empty object {} after current node
 r           - Rename object key (only works on object keys, not array elements)
             - Pre-populates with current key name
             - Enter to commit, Esc to cancel
-yy          - Yank (copy) current node to clipboard
+
+Registers:
+"a          - Select register 'a' for next operation (a-z)
+"A          - Select register 'a' in append mode (A-Z)
+"0-"9       - Select numbered register (0=last yank, 1-9=delete history)
+"ayy        - Yank to register 'a'
+"ap / "aP   - Paste from register 'a'
+"add        - Delete to register 'a'
+yy / dd     - Use unnamed register (syncs with system clipboard by default)
+
+Yank/Delete/Paste:
+yy          - Yank (copy) current node to unnamed register
 yp          - Yank path in dot notation (.foo[3].bar)
 yb          - Yank path in bracket notation (["foo"][3]["bar"])
 yq          - Yank path in jq style
 dd          - Delete current node (removes from tree)
-p           - Paste clipboard content after current node
-P           - Paste clipboard content before current node
+p           - Paste register content after current node
+P           - Paste register content before current node
+
+Undo/Redo:
 u           - Undo last change
 Ctrl-r      - Redo last undone change
 
