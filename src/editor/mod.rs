@@ -22,5 +22,6 @@
 
 pub mod cursor;
 pub mod mode;
+pub mod registers;
 pub mod state;
 pub mod undo;
