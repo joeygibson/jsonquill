@@ -62,6 +62,17 @@ pub fn render_status_line(f: &mut Frame, area: Rect, state: &EditorState, colors
     // Build left side components
     let mode_and_file = format!("{} | {}", mode_text, filename);
 
+    // Show pending register if any
+    let register_info = if let Some(reg) = state.get_pending_register() {
+        if state.get_append_mode() {
+            format!(" \"{}", reg.to_ascii_uppercase())
+        } else {
+            format!(" \"{}", reg)
+        }
+    } else {
+        String::new()
+    };
+
     // Add search results info if available
     let search_info = if let Some((current, total)) = state.search_results_info() {
         use crate::editor::state::SearchType;
@@ -90,8 +101,11 @@ pub fn render_status_line(f: &mut Frame, area: Rect, state: &EditorState, colors
 
     // Calculate padding to position right-aligned text
     let total_width = area.width as usize;
-    let left_len =
-        mode_and_file.len() + path_display.len() + dirty_indicator.len() + search_info.len();
+    let left_len = mode_and_file.len()
+        + path_display.len()
+        + dirty_indicator.len()
+        + register_info.len()
+        + search_info.len();
     let position_len = position.len();
 
     // Ensure we don't overflow
@@ -107,6 +121,9 @@ pub fn render_status_line(f: &mut Frame, area: Rect, state: &EditorState, colors
         .bg(colors.status_line_bg);
 
     let path_style = Style::default().fg(colors.key).bg(colors.status_line_bg);
+    let register_style = Style::default()
+        .fg(colors.warning)
+        .bg(colors.status_line_bg);
 
     let mut spans = vec![Span::styled(mode_and_file, default_style)];
 
@@ -116,6 +133,10 @@ pub fn render_status_line(f: &mut Frame, area: Rect, state: &EditorState, colors
 
     if !dirty_indicator.is_empty() {
         spans.push(Span::styled(dirty_indicator, default_style));
+    }
+
+    if !register_info.is_empty() {
+        spans.push(Span::styled(register_info, register_style));
     }
 
     if !search_info.is_empty() {

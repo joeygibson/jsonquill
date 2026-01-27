@@ -18,6 +18,8 @@ use termion::input::TermRead;
 pub struct InputHandler {
     /// File handle for /dev/tty when stdin was piped
     tty_file: Option<File>,
+    /// True if waiting for register name after " key
+    awaiting_register: bool,
 }
 
 impl InputHandler {
@@ -31,7 +33,10 @@ impl InputHandler {
     /// let handler = InputHandler::new();
     /// ```
     pub fn new() -> Self {
-        Self { tty_file: None }
+        Self {
+            tty_file: None,
+            awaiting_register: false,
+        }
     }
 
     /// Creates a new InputHandler that reads from /dev/tty.
@@ -45,6 +50,7 @@ impl InputHandler {
 
         Ok(Self {
             tty_file: Some(tty_file),
+            awaiting_register: false,
         })
     }
 
@@ -123,7 +129,27 @@ impl InputHandler {
     /// let should_quit = handler.handle_event(event, &mut state).unwrap();
     /// assert!(should_quit);
     /// ```
-    pub fn handle_event(&self, event: Event, state: &mut EditorState) -> Result<bool> {
+    pub fn handle_event(&mut self, event: Event, state: &mut EditorState) -> Result<bool> {
+        // Handle register selection if awaiting register
+        if self.awaiting_register {
+            if let Event::Key(Key::Char(c)) = event {
+                // Check if it's a valid register (a-z, A-Z, 0-9, ")
+                if c.is_ascii_alphanumeric() || c == '"' {
+                    // Uppercase letters enable append mode
+                    if c.is_ascii_uppercase() {
+                        state.set_pending_register(c.to_ascii_lowercase(), true);
+                    } else {
+                        state.set_pending_register(c, false);
+                    }
+                    self.awaiting_register = false;
+                    return Ok(false);
+                }
+            }
+            // Invalid register or non-character key - cancel register selection
+            self.awaiting_register = false;
+            return Ok(false);
+        }
+
         // Handle mouse events if mouse is enabled
         if let Event::Mouse(mouse_event) = event {
             if state.enable_mouse() {
@@ -698,8 +724,7 @@ impl InputHandler {
                         let mut had_error = false;
 
                         for _ in 0..count {
-                            // Yank before deleting (like vim's dd)
-                            state.yank_nodes(1);
+                            // delete_node_at_cursor now handles register updates internally
                             match state.delete_node_at_cursor() {
                                 Ok(_) => {
                                     deleted_count += 1;
@@ -941,6 +966,12 @@ impl InputHandler {
                     state.clear_message();
                     state.clear_search_results();
                     state.set_pending_command('z');
+                }
+                InputEvent::RegisterSelect => {
+                    // " key pressed - wait for register name
+                    self.awaiting_register = true;
+                    state.clear_message();
+                    state.clear_search_results();
                 }
                 InputEvent::InsertCharacter(_)
                 | InputEvent::InsertBackspace
@@ -1329,7 +1360,7 @@ mod tests {
 
     #[test]
     fn test_quit_event() {
-        let handler = InputHandler::new();
+        let mut handler = InputHandler::new();
         let tree = JsonTree::new(JsonNode::new(JsonValue::Null));
         let mut state = EditorState::new(tree);
         let event = Event::Key(Key::Char('q'));
@@ -1340,7 +1371,7 @@ mod tests {
 
     #[test]
     fn test_quit_blocked_when_dirty() {
-        let handler = InputHandler::new();
+        let mut handler = InputHandler::new();
         let tree = JsonTree::new(JsonNode::new(JsonValue::Null));
         let mut state = EditorState::new(tree);
 
@@ -1363,7 +1394,7 @@ mod tests {
 
     #[test]
     fn test_enter_insert_mode() {
-        let handler = InputHandler::new();
+        let mut handler = InputHandler::new();
         let tree = JsonTree::new(JsonNode::new(JsonValue::Null));
         let mut state = EditorState::new(tree);
         assert_eq!(*state.mode(), EditorMode::Normal);
@@ -1377,7 +1408,7 @@ mod tests {
 
     #[test]
     fn test_enter_command_mode() {
-        let handler = InputHandler::new();
+        let mut handler = InputHandler::new();
         let tree = JsonTree::new(JsonNode::new(JsonValue::Null));
         let mut state = EditorState::new(tree);
 
@@ -1389,7 +1420,7 @@ mod tests {
 
     #[test]
     fn test_exit_mode() {
-        let handler = InputHandler::new();
+        let mut handler = InputHandler::new();
         let tree = JsonTree::new(JsonNode::new(JsonValue::Null));
         let mut state = EditorState::new(tree);
         state.set_mode(EditorMode::Insert);
@@ -1402,7 +1433,7 @@ mod tests {
 
     #[test]
     fn test_movement_keys_dont_quit() {
-        let handler = InputHandler::new();
+        let mut handler = InputHandler::new();
         let tree = JsonTree::new(JsonNode::new(JsonValue::Null));
         let mut state = EditorState::new(tree);
 
@@ -1417,7 +1448,7 @@ mod tests {
         use std::fs;
         use tempfile::TempDir;
 
-        let handler = InputHandler::new();
+        let mut handler = InputHandler::new();
         let tree = JsonTree::new(JsonNode::new(JsonValue::Number(42.0)));
         let mut state = EditorState::new(tree);
 
@@ -1458,7 +1489,7 @@ mod tests {
         use std::fs;
         use tempfile::TempDir;
 
-        let handler = InputHandler::new();
+        let mut handler = InputHandler::new();
         let tree = JsonTree::new(JsonNode::new(JsonValue::String("test".to_string())));
         let mut state = EditorState::new(tree);
 

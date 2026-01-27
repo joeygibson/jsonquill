@@ -591,9 +591,63 @@ impl EditorState {
     }
 
     /// Deletes the node at the current cursor position.
+    /// Stores the deleted node in register history before deletion.
     /// Adjusts the cursor position after deletion and rebuilds the tree view.
     pub fn delete_node_at_cursor(&mut self) -> anyhow::Result<()> {
+        use crate::document::node::JsonValue;
+        use crate::editor::registers::RegisterContent;
+
         let path = self.cursor.path().to_vec();
+
+        // Collect the node to delete
+        let node = self
+            .tree
+            .get_node(&path)
+            .ok_or_else(|| anyhow::anyhow!("No node at cursor"))?
+            .clone();
+
+        // Store key if deleting from object
+        let key = if !path.is_empty() {
+            let parent_path = &path[..path.len() - 1];
+            let index = path[path.len() - 1];
+            if let Some(parent) = self.tree.get_node(parent_path) {
+                if let JsonValue::Object(fields) = parent.value() {
+                    Some(fields[index].0.clone())
+                } else {
+                    None
+                }
+            } else {
+                None
+            }
+        } else {
+            None
+        };
+
+        let content = RegisterContent::new(vec![node], vec![key]);
+
+        // Update target register if specified
+        if let Some(reg) = self.pending_register {
+            if self.append_mode {
+                self.registers.append_named(reg, content.clone());
+            } else {
+                self.registers.set_named(reg, content.clone());
+            }
+        } else {
+            // Update unnamed register
+            self.registers.set_unnamed(content.clone());
+
+            // Sync to system clipboard
+            let json_value = self.node_to_serde_value(content.nodes[0].value());
+            if let Ok(json_str) = serde_json::to_string_pretty(&json_value) {
+                use arboard::Clipboard;
+                if let Ok(mut clipboard) = Clipboard::new() {
+                    let _ = clipboard.set_text(json_str);
+                }
+            }
+        }
+
+        // Push to delete history ("1-"9)
+        self.registers.push_delete_history(content);
 
         // Find current line index before deletion
         let lines = self.tree_view.lines();
@@ -1713,6 +1767,11 @@ impl EditorState {
     /// Yanks (copies) the path to the current cursor position in dot notation (`.foo[3].bar`).
     /// Returns true if successful.
     pub fn yank_path_dot(&mut self) -> bool {
+        // Path yanks to registers not implemented (YAGNI)
+        if self.pending_register.is_some() {
+            return false;
+        }
+
         if let Some(path_str) = self.compute_path_string("dot") {
             // Try to copy to system clipboard
             use arboard::Clipboard;
@@ -1728,6 +1787,11 @@ impl EditorState {
     /// Yanks (copies) the path to the current cursor position in bracket notation (`["foo"][3]["bar"]`).
     /// Returns true if successful.
     pub fn yank_path_bracket(&mut self) -> bool {
+        // Path yanks to registers not implemented (YAGNI)
+        if self.pending_register.is_some() {
+            return false;
+        }
+
         if let Some(path_str) = self.compute_path_string("bracket") {
             // Try to copy to system clipboard
             use arboard::Clipboard;
@@ -1743,6 +1807,11 @@ impl EditorState {
     /// Yanks (copies) the path to the current cursor position in jq-style notation.
     /// Returns true if successful.
     pub fn yank_path_jq(&mut self) -> bool {
+        // Path yanks to registers not implemented (YAGNI)
+        if self.pending_register.is_some() {
+            return false;
+        }
+
         if let Some(path_str) = self.compute_path_string("jq") {
             // Try to copy to system clipboard
             use arboard::Clipboard;
@@ -1767,7 +1836,7 @@ impl EditorState {
         // Get content from appropriate register
         let content = if let Some(reg) = self.pending_register {
             self.registers
-                .get_named(reg)
+                .get(reg)
                 .ok_or_else(|| anyhow!("Nothing in register '{}'", reg))?
                 .clone()
         } else {
@@ -1801,7 +1870,7 @@ impl EditorState {
 
         let content = if let Some(reg) = self.pending_register {
             self.registers
-                .get_named(reg)
+                .get(reg)
                 .ok_or_else(|| anyhow!("Nothing in register '{}'", reg))?
                 .clone()
         } else {
@@ -1908,8 +1977,7 @@ impl EditorState {
                 let mut insert_path = parent_path.to_vec();
                 insert_path.push(insert_index);
 
-                self.tree
-                    .insert_node_in_array(&insert_path, node.clone())?;
+                self.tree.insert_node_in_array(&insert_path, node.clone())?;
             }
             _ => {
                 return Err(anyhow!("Parent is not a container type"));
@@ -2475,6 +2543,11 @@ impl EditorState {
     /// Returns whether append mode is active for the pending register.
     pub fn get_append_mode(&self) -> bool {
         self.append_mode
+    }
+
+    /// Returns a reference to the register set.
+    pub fn registers(&self) -> &RegisterSet {
+        &self.registers
     }
 
     /// Clears the pending register and append mode.
@@ -3346,9 +3419,9 @@ mod tests {
 
     #[test]
     fn test_paste_from_named_register() {
-        let tree = JsonTree::new(JsonNode::new(JsonValue::Array(vec![
-            JsonNode::new(JsonValue::String("existing".to_string())),
-        ])));
+        let tree = JsonTree::new(JsonNode::new(JsonValue::Array(vec![JsonNode::new(
+            JsonValue::String("existing".to_string()),
+        )])));
 
         let mut state = EditorState::new(tree);
 
@@ -3368,5 +3441,53 @@ mod tests {
         let result = state.paste_nodes_at_cursor();
 
         assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_paste_from_numbered_register() {
+        let tree = JsonTree::new(JsonNode::new(JsonValue::Array(vec![JsonNode::new(
+            JsonValue::String("existing".to_string()),
+        )])));
+
+        let mut state = EditorState::new(tree);
+
+        // Expand the array to see its contents
+        state.toggle_expand_at_cursor();
+
+        // Move cursor to the first element in the array
+        state.move_cursor_down();
+
+        // Manually populate register "0
+        let node = JsonNode::new(JsonValue::Number(42.0));
+        let content = crate::editor::registers::RegisterContent::new(vec![node], vec![None]);
+        state.registers.set_numbered(0, content);
+
+        // Paste from register "0
+        state.set_pending_register('0', false);
+        let result = state.paste_nodes_at_cursor();
+
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_delete_pushes_to_history() {
+        let tree = JsonTree::new(JsonNode::new(JsonValue::Array(vec![
+            JsonNode::new(JsonValue::Number(1.0)),
+            JsonNode::new(JsonValue::Number(2.0)),
+        ])));
+
+        let mut state = EditorState::new(tree);
+
+        // Expand array to see elements
+        state.toggle_expand_at_cursor();
+
+        // Move to first element
+        state.move_cursor_down();
+
+        // Delete should push to "1
+        let _ = state.delete_node_at_cursor();
+
+        let reg_1 = state.registers.get_numbered(1);
+        assert_eq!(reg_1.nodes.len(), 1);
     }
 }

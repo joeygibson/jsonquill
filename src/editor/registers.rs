@@ -62,6 +62,15 @@ impl RegisterSet {
         self.named.insert(register.to_ascii_lowercase(), content);
     }
 
+    /// Get content from any register (named a-z or numbered 0-9).
+    pub fn get(&self, register: char) -> Option<&RegisterContent> {
+        if register.is_ascii_digit() {
+            register.to_digit(10).map(|d| &self.numbered[d as usize])
+        } else {
+            self.get_named(register)
+        }
+    }
+
     /// Gets content from numbered register (0-9).
     ///
     /// # Panics
@@ -228,5 +237,29 @@ mod tests {
 
         // "0 should have the yanked content
         assert_eq!(regs.get_numbered(0).nodes.len(), 1);
+    }
+
+    #[test]
+    fn test_register_get_unified() {
+        let mut regs = RegisterSet::new();
+        let node1 = JsonNode::new(JsonValue::Number(1.0));
+        let node2 = JsonNode::new(JsonValue::Number(2.0));
+
+        // Set a named register
+        regs.set_named('a', RegisterContent::new(vec![node1.clone()], vec![None]));
+
+        // Set a numbered register
+        regs.set_numbered(5, RegisterContent::new(vec![node2.clone()], vec![None]));
+
+        // Test get() for named register
+        let retrieved_a = regs.get('a').unwrap();
+        assert_eq!(retrieved_a.nodes.len(), 1);
+
+        // Test get() for numbered register
+        let retrieved_5 = regs.get('5').unwrap();
+        assert_eq!(retrieved_5.nodes.len(), 1);
+
+        // Test get() for non-existent named register
+        assert!(regs.get('z').is_none());
     }
 }

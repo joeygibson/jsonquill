@@ -174,6 +174,48 @@ pub fn render_help_overlay(f: &mut Frame, colors: &ThemeColors, scroll: usize) {
             Span::styled("  p/P           ", Style::default().fg(colors.number)),
             Span::raw("Paste after/before cursor"),
         ]),
+        Line::from(""),
+        Line::from(vec![Span::styled(
+            "Registers",
+            Style::default().fg(colors.key).add_modifier(Modifier::BOLD),
+        )]),
+        Line::from(vec![
+            Span::styled("  \"a            ", Style::default().fg(colors.number)),
+            Span::raw("Select register 'a' for next yank/paste/delete"),
+        ]),
+        Line::from(vec![
+            Span::styled("  \"A            ", Style::default().fg(colors.number)),
+            Span::raw("Select register 'a' (append mode)"),
+        ]),
+        Line::from(vec![
+            Span::styled("  \"5            ", Style::default().fg(colors.number)),
+            Span::raw("Select numbered register 5"),
+        ]),
+        Line::from(vec![
+            Span::styled("  \"ayy          ", Style::default().fg(colors.number)),
+            Span::raw("Yank to register 'a'"),
+        ]),
+        Line::from(vec![
+            Span::styled("  \"ap           ", Style::default().fg(colors.number)),
+            Span::raw("Paste from register 'a'"),
+        ]),
+        Line::from(vec![
+            Span::styled("  \"0p           ", Style::default().fg(colors.number)),
+            Span::raw("Paste from last yank"),
+        ]),
+        Line::from(vec![
+            Span::styled("  \"1p           ", Style::default().fg(colors.number)),
+            Span::raw("Paste from last delete"),
+        ]),
+        Line::from(vec![
+            Span::styled("  yy / dd       ", Style::default().fg(colors.number)),
+            Span::raw("Yank/delete to unnamed register (syncs clipboard)"),
+        ]),
+        Line::from(""),
+        Line::from(vec![Span::styled(
+            "Adding Nodes",
+            Style::default().fg(colors.key).add_modifier(Modifier::BOLD),
+        )]),
         Line::from(vec![
             Span::styled("  i             ", Style::default().fg(colors.number)),
             Span::raw("Add scalar (inside containers, after scalars)"),
