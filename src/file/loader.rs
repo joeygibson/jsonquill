@@ -146,10 +146,107 @@ pub fn load_jsonl_file<P: AsRef<Path>>(path: P) -> Result<JsonTree> {
 
 #[cfg(test)]
 mod tests {
+    use super::*;
+    use crate::document::node::JsonValue;
+
+    #[test]
+    fn test_parse_jsonl_content_simple() {
+        let content = r#"{"id":1,"name":"Alice"}
+{"id":2,"name":"Bob"}
+{"id":3,"name":"Charlie"}"#;
+
+        let tree = parse_jsonl_content(content).unwrap();
+
+        match tree.root().value() {
+            JsonValue::JsonlRoot(lines) => {
+                assert_eq!(lines.len(), 3);
+
+                // Check first line has correct structure
+                if let JsonValue::Object(fields) = lines[0].value() {
+                    assert_eq!(fields.len(), 2);
+                } else {
+                    panic!("Expected object on line 1");
+                }
+            }
+            _ => panic!("Expected JsonlRoot"),
+        }
+    }
+
+    #[test]
+    fn test_parse_jsonl_content_skips_blank_lines() {
+        let content = r#"{"id":1}
+
+{"id":2}
+
+{"id":3}"#;
+
+        let tree = parse_jsonl_content(content).unwrap();
+
+        match tree.root().value() {
+            JsonValue::JsonlRoot(lines) => {
+                assert_eq!(lines.len(), 3);
+            }
+            _ => panic!("Expected JsonlRoot"),
+        }
+    }
+
+    #[test]
+    fn test_parse_jsonl_content_mixed_types() {
+        let content = r#"{"type":"object"}
+["array","values"]
+42
+"string value"
+true
+null"#;
+
+        let tree = parse_jsonl_content(content).unwrap();
+
+        match tree.root().value() {
+            JsonValue::JsonlRoot(lines) => {
+                assert_eq!(lines.len(), 6);
+
+                // Verify each type
+                assert!(matches!(lines[0].value(), JsonValue::Object(_)));
+                assert!(matches!(lines[1].value(), JsonValue::Array(_)));
+                assert!(matches!(lines[2].value(), JsonValue::Number(_)));
+                assert!(matches!(lines[3].value(), JsonValue::String(_)));
+                assert!(matches!(lines[4].value(), JsonValue::Boolean(_)));
+                assert!(matches!(lines[5].value(), JsonValue::Null));
+            }
+            _ => panic!("Expected JsonlRoot"),
+        }
+    }
+
+    #[test]
+    fn test_parse_jsonl_content_empty() {
+        let content = "";
+        let result = parse_jsonl_content(content);
+        assert!(result.is_err());
+        assert!(result
+            .unwrap_err()
+            .to_string()
+            .contains("No valid JSON found"));
+    }
+
+    #[test]
+    fn test_parse_jsonl_content_invalid_json_line() {
+        let content = r#"{"valid":true}
+{invalid json}
+{"valid":false}"#;
+
+        let result = parse_jsonl_content(content);
+        assert!(result.is_err());
+        assert!(result
+            .unwrap_err()
+            .to_string()
+            .contains("Invalid JSON on line 2"));
+    }
+
     #[test]
     fn test_load_json_from_stdin_requires_actual_stdin() {
         // This test documents that load_json_from_stdin requires actual stdin
         // It cannot be easily tested in unit tests without mocking
+        // The core JSONL parsing logic is tested via parse_jsonl_content tests
     }
 
     #[test]
