@@ -163,8 +163,8 @@ jsonquill data.jsonl
 | `a` | Add empty array `[]` | Adds after current node |
 | `o` | Add empty object `{}` | Adds after current node |
 | `r` | Rename object key | Only works on object keys (not array elements) |
-| `dd` | Delete current node | Supports count prefix (e.g., `3dd` deletes 3 nodes) |
-| `yy` | Yank (copy) current node | Supports count prefix (e.g., `2yy` copies 2 nodes)<br>Copies to system clipboard |
+| `dd` | Delete current node | Supports count prefix (e.g., `3dd` deletes 3 nodes)<br>Deletes to unnamed register (syncs with system clipboard) |
+| `yy` | Yank (copy) current node | Supports count prefix (e.g., `2yy` copies 2 nodes)<br>Copies to unnamed register (syncs with system clipboard) |
 | `yp` | Yank path (dot notation) | Copy path like `.foo[3].bar` to clipboard |
 | `yb` | Yank path (bracket notation) | Copy path like `["foo"][3]["bar"]` to clipboard |
 | `yq` | Yank path (jq style) | Copy path in jq-style notation |
@@ -173,6 +173,36 @@ jsonquill data.jsonl
 | `u` | Undo last change | |
 | `Ctrl-r` | Redo last undone change | |
 | `ZZ` | Save and quit | Only saves if file has been modified |
+
+### Named Registers
+
+JSONQuill supports vim-style named registers for managing multiple clipboards:
+
+| Key | Action | Notes |
+|-----|--------|-------|
+| `"a` - `"z` | Select register (a-z) | Use before `yy`, `dd`, `p`, or `P` to specify which register |
+| `"A` - `"Z` | Select register (append mode) | Uppercase letters append to existing register content |
+| `"0` | Yank register | Always contains the last yanked (copied) content |
+| `"1` - `"9` | Delete history | `"1` = most recent delete, `"2` = previous, etc. |
+| `""` | Unnamed register | Default register, syncs with system clipboard |
+
+**Examples:**
+```bash
+"ayy        # Yank current node to register 'a'
+"ap         # Paste from register 'a' after cursor
+"bdd        # Delete current node to register 'b'
+"b3dd       # Delete 3 nodes to register 'b'
+"Ayy        # Append current node to register 'a'
+"1p         # Paste from delete history (most recent delete)
+yy          # Yank to unnamed register (system clipboard)
+p           # Paste from unnamed register (system clipboard)
+```
+
+**Use cases:**
+- **Multiple clipboards**: Store different content in registers a-z
+- **Accumulate content**: Use uppercase (A-Z) to append to a register
+- **Delete history**: Access previously deleted content with registers 1-9
+- **System clipboard**: Unnamed register (`yy`/`dd`/`p`) syncs with system clipboard
 
 ### INSERT Mode
 
