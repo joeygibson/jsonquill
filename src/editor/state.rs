@@ -42,6 +42,7 @@
 
 use super::cursor::Cursor;
 use super::mode::EditorMode;
+use super::registers::RegisterSet;
 use crate::document::node::{JsonNode, JsonValue};
 use crate::document::tree::JsonTree;
 use crate::ui::tree_view::TreeViewState;
@@ -162,8 +163,12 @@ pub struct EditorState {
     help_scroll: usize,
     pending_theme: Option<String>,
     current_theme: String,
-    clipboard: Option<JsonNode>,
-    clipboard_key: Option<String>,
+    // Old clipboard fields - TODO: remove after register migration
+    // clipboard: Option<JsonNode>,
+    // clipboard_key: Option<String>,
+    registers: RegisterSet,
+    pending_register: Option<char>,
+    append_mode: bool,
     search_buffer: String,
     search_results: Vec<Vec<usize>>,
     search_index: usize,
@@ -251,8 +256,12 @@ impl EditorState {
             help_scroll: 0,
             pending_theme: None,
             current_theme: "default-dark".to_string(),
-            clipboard: None,
-            clipboard_key: None,
+            // Old clipboard init - TODO: remove after register migration
+            // clipboard: None,
+            // clipboard_key: None,
+            registers: RegisterSet::new(),
+            pending_register: None,
+            append_mode: false,
             search_buffer: String::new(),
             search_results: Vec::new(),
             search_index: 0,
@@ -1475,12 +1484,15 @@ impl EditorState {
 
     /// Yanks (copies) the node at the current cursor position to the clipboard.
     pub fn yank_node(&mut self) -> bool {
+        // TODO: update for registers
         let path = self.cursor.path();
         if let Some(node) = self.tree.get_node(path) {
-            self.clipboard = Some(node.clone());
+            // TODO: update for registers
+            // self.clipboard = Some(node.clone());
 
             // Store the key name if yanking from an object
-            self.clipboard_key = None;
+            // TODO: update for registers
+            // self.clipboard_key = None;
             if !path.is_empty() {
                 let parent_path = &path[..path.len() - 1];
                 let index = path[path.len() - 1];
@@ -1494,8 +1506,9 @@ impl EditorState {
                 if let Some(parent_node) = parent {
                     use crate::document::node::JsonValue;
                     if let JsonValue::Object(entries) = parent_node.value() {
-                        if let Some((key, _)) = entries.get(index) {
-                            self.clipboard_key = Some(key.clone());
+                        if let Some((_key, _)) = entries.get(index) {
+                            // TODO: update for registers
+                            // self.clipboard_key = Some(key.clone());
                         }
                     }
                 }
@@ -1697,14 +1710,19 @@ impl EditorState {
 
     /// Returns whether there's something in the clipboard.
     pub fn has_clipboard(&self) -> bool {
-        self.clipboard.is_some()
+        // TODO: update for registers
+        // self.clipboard.is_some()
+        false
     }
 
     /// Pastes the clipboard node after the current cursor position.
     /// For objects, generates a unique key name. For arrays, inserts after current index.
     pub fn paste_node_at_cursor(&mut self) -> anyhow::Result<()> {
-        use crate::document::node::JsonValue;
+        // TODO: update for registers
         use anyhow::anyhow;
+        Err(anyhow!("Paste not yet implemented with registers"))
+        /*
+        use crate::document::node::JsonValue;
 
         let clipboard_node = self
             .clipboard
@@ -1734,10 +1752,14 @@ impl EditorState {
         match parent.value() {
             JsonValue::Object(_) => {
                 // Use the original key name if available, otherwise use "pasted"
+                // TODO: update for registers
+                let base_key = "pasted".to_string();
+                /*
                 let base_key = self
                     .clipboard_key
                     .clone()
                     .unwrap_or_else(|| "pasted".to_string());
+                */
                 let mut key_name = base_key.clone();
                 let mut counter = 1;
 
@@ -1775,14 +1797,14 @@ impl EditorState {
                 insert_path.push(insert_index);
 
                 self.tree
-                    .insert_node_in_object(&insert_path, key_name, clipboard_node)?;
+                    .insert_node_in_object(&insert_path, key_name, clipboard_node.clone())?;
             }
             JsonValue::Array(_) => {
                 let mut insert_path = parent_path.to_vec();
                 insert_path.push(insert_index);
 
                 self.tree
-                    .insert_node_in_array(&insert_path, clipboard_node)?;
+                    .insert_node_in_array(&insert_path, clipboard_node.clone())?;
             }
             _ => {
                 return Err(anyhow!("Parent is not a container type"));
@@ -1799,13 +1821,17 @@ impl EditorState {
 
         self.checkpoint();
         Ok(())
+        */
     }
 
     /// Pastes the clipboard node before the current cursor position.
     /// For objects, generates a unique key name. For arrays, inserts before current index.
     pub fn paste_node_before_cursor(&mut self) -> anyhow::Result<()> {
-        use crate::document::node::JsonValue;
+        // TODO: update for registers
         use anyhow::anyhow;
+        Err(anyhow!("Paste not yet implemented with registers"))
+        /*
+        use crate::document::node::JsonValue;
 
         let clipboard_node = self
             .clipboard
@@ -1835,10 +1861,14 @@ impl EditorState {
         match parent.value() {
             JsonValue::Object(_) => {
                 // Use the original key name if available, otherwise use "pasted"
+                // TODO: update for registers
+                let base_key = "pasted".to_string();
+                /*
                 let base_key = self
                     .clipboard_key
                     .clone()
                     .unwrap_or_else(|| "pasted".to_string());
+                */
                 let mut key_name = base_key.clone();
                 let mut counter = 1;
 
@@ -1876,14 +1906,14 @@ impl EditorState {
                 insert_path.push(insert_index);
 
                 self.tree
-                    .insert_node_in_object(&insert_path, key_name, clipboard_node)?;
+                    .insert_node_in_object(&insert_path, key_name, clipboard_node.clone())?;
             }
             JsonValue::Array(_) => {
                 let mut insert_path = parent_path.to_vec();
                 insert_path.push(insert_index);
 
                 self.tree
-                    .insert_node_in_array(&insert_path, clipboard_node)?;
+                    .insert_node_in_array(&insert_path, clipboard_node.clone())?;
             }
             _ => {
                 return Err(anyhow!("Parent is not a container type"));
@@ -1900,6 +1930,7 @@ impl EditorState {
 
         self.checkpoint();
         Ok(())
+        */
     }
 
     /// Returns the current search buffer.
@@ -2428,6 +2459,35 @@ impl EditorState {
     pub fn clear_pending(&mut self) {
         self.pending_command = None;
         self.pending_count = None;
+        self.pending_register = None;
+        self.append_mode = false;
+    }
+
+    /// Returns a reference to the unnamed register content.
+    pub fn get_unnamed_register(&self) -> &crate::editor::registers::RegisterContent {
+        self.registers.get_unnamed()
+    }
+
+    /// Returns the pending register character if one is waiting.
+    pub fn get_pending_register(&self) -> Option<char> {
+        self.pending_register
+    }
+
+    /// Sets the pending register and append mode for the next yank/delete operation.
+    pub fn set_pending_register(&mut self, register: char, append: bool) {
+        self.pending_register = Some(register);
+        self.append_mode = append;
+    }
+
+    /// Returns whether append mode is active for the pending register.
+    pub fn get_append_mode(&self) -> bool {
+        self.append_mode
+    }
+
+    /// Clears the pending register and append mode.
+    pub fn clear_register_pending(&mut self) {
+        self.pending_register = None;
+        self.append_mode = false;
     }
 
     /// Returns the current cursor position as (row, col) where row is 1-based line number.
@@ -2820,7 +2880,8 @@ impl EditorState {
                     self.add_insertion_point = Some(vec![0]);
                     // For object containers in object root, we need a key
                     // Store the container temporarily and wait for key
-                    self.clipboard = Some(container_node);
+                    // TODO: update for registers
+                    // self.clipboard = Some(container_node);
                     return;
                 }
                 JsonValue::Array(_) => {
@@ -2913,7 +2974,8 @@ impl EditorState {
                     self.add_insertion_point = Some(insertion_path);
                     // For containers in objects, we need a key
                     // Store the container temporarily and wait for key
-                    self.clipboard = Some(container_node);
+                    // TODO: update for registers
+                    // self.clipboard = Some(container_node);
                     return;
                 }
                 _ => {
@@ -2948,7 +3010,8 @@ impl EditorState {
                 self.add_insertion_point = Some(path);
                 // For containers in objects, we need a key
                 // Store the container temporarily and wait for key
-                self.clipboard = Some(container_node);
+                // TODO: update for registers
+                // self.clipboard = Some(container_node);
             }
             JsonValue::Array(_) => {
                 // Insert directly into array (no key needed)
@@ -3132,10 +3195,14 @@ impl EditorState {
         use anyhow::anyhow;
 
         // Get the container from temporary storage (clipboard)
+        // TODO: update for registers
+        let container_node = JsonNode::new(JsonValue::Null); // Placeholder
+        /*
         let container_node = self
             .clipboard
             .take()
             .ok_or_else(|| anyhow!("No container to add"))?;
+        */
 
         // Get the key from add_key_buffer
         let key = self.add_key_buffer.clone();
@@ -3251,5 +3318,16 @@ mod tests {
         // Navigate to "id" field in second line
         state.move_cursor_down();
         assert_eq!(state.get_current_path(), "[1].id");
+    }
+
+    #[test]
+    fn test_editor_state_has_registers() {
+        let tree = JsonTree::new(JsonNode::new(JsonValue::Null));
+        let state = EditorState::new(tree);
+
+        // Should start with empty registers
+        assert!(state.get_unnamed_register().is_empty());
+        assert_eq!(state.get_pending_register(), None);
+        assert!(!state.get_append_mode());
     }
 }
