@@ -189,6 +189,7 @@ pub struct EditorState {
     add_mode_stage: AddModeStage,
     add_key_buffer: String,
     add_insertion_point: Option<Vec<usize>>,
+    temp_container: Option<JsonNode>, // Temporary storage for container during add operation
     is_renaming_key: bool,
     rename_original_key: Option<String>,
     // Tab-completion state
@@ -282,6 +283,7 @@ impl EditorState {
             add_mode_stage: AddModeStage::None,
             add_key_buffer: String::new(),
             add_insertion_point: None,
+            temp_container: None,
             is_renaming_key: false,
             rename_original_key: None,
             completion_candidates: Vec::new(),
@@ -2946,8 +2948,7 @@ impl EditorState {
                     self.add_insertion_point = Some(vec![0]);
                     // For object containers in object root, we need a key
                     // Store the container temporarily and wait for key
-                    // TODO: update for registers
-                    // self.clipboard = Some(container_node);
+                    self.temp_container = Some(container_node);
                     return;
                 }
                 JsonValue::Array(_) => {
@@ -3040,8 +3041,7 @@ impl EditorState {
                     self.add_insertion_point = Some(insertion_path);
                     // For containers in objects, we need a key
                     // Store the container temporarily and wait for key
-                    // TODO: update for registers
-                    // self.clipboard = Some(container_node);
+                    self.temp_container = Some(container_node);
                     return;
                 }
                 _ => {
@@ -3076,8 +3076,7 @@ impl EditorState {
                 self.add_insertion_point = Some(path);
                 // For containers in objects, we need a key
                 // Store the container temporarily and wait for key
-                // TODO: update for registers
-                // self.clipboard = Some(container_node);
+                self.temp_container = Some(container_node);
             }
             JsonValue::Array(_) => {
                 // Insert directly into array (no key needed)
@@ -3260,15 +3259,11 @@ impl EditorState {
     pub fn commit_container_add(&mut self) -> anyhow::Result<()> {
         use anyhow::anyhow;
 
-        // Get the container from temporary storage (clipboard)
-        // TODO: update for registers
-        let container_node = JsonNode::new(JsonValue::Null); // Placeholder
-                                                             /*
-                                                             let container_node = self
-                                                                 .clipboard
-                                                                 .take()
-                                                                 .ok_or_else(|| anyhow!("No container to add"))?;
-                                                             */
+        // Get the container from temporary storage
+        let container_node = self
+            .temp_container
+            .take()
+            .ok_or_else(|| anyhow!("No container to add"))?;
 
         // Get the key from add_key_buffer
         let key = self.add_key_buffer.clone();

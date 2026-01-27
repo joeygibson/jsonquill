@@ -75,9 +75,9 @@ fn test_delete_history() {
 
 #[test]
 fn test_yank_register_zero() {
-    let tree = JsonTree::new(JsonNode::new(JsonValue::Array(vec![
-        JsonNode::new(JsonValue::Number(1.0)),
-    ])));
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Array(vec![JsonNode::new(
+        JsonValue::Number(1.0),
+    )])));
 
     let mut state = EditorState::new(tree);
     state.cursor_mut().set_path(vec![0]);
@@ -123,9 +123,9 @@ fn test_named_register_lowercase_uppercase() {
 
 #[test]
 fn test_unnamed_register_sync() {
-    let tree = JsonTree::new(JsonNode::new(JsonValue::Array(vec![
-        JsonNode::new(JsonValue::Number(42.0)),
-    ])));
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Array(vec![JsonNode::new(
+        JsonValue::Number(42.0),
+    )])));
 
     let mut state = EditorState::new(tree);
     state.cursor_mut().set_path(vec![0]);
@@ -286,9 +286,9 @@ fn test_empty_register_get() {
 
 #[test]
 fn test_append_to_nonexistent_register() {
-    let tree = JsonTree::new(JsonNode::new(JsonValue::Array(vec![
-        JsonNode::new(JsonValue::Number(1.0)),
-    ])));
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Array(vec![JsonNode::new(
+        JsonValue::Number(1.0),
+    )])));
 
     let mut state = EditorState::new(tree);
     state.cursor_mut().set_path(vec![0]);
@@ -340,7 +340,10 @@ fn test_append_mode_state() {
 #[test]
 fn test_register_content_with_object_keys() {
     let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
-        ("name".to_string(), JsonNode::new(JsonValue::String("Alice".to_string()))),
+        (
+            "name".to_string(),
+            JsonNode::new(JsonValue::String("Alice".to_string())),
+        ),
         ("age".to_string(), JsonNode::new(JsonValue::Number(30.0))),
     ])));
 

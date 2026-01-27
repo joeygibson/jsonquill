@@ -122,7 +122,7 @@ impl InputHandler {
     /// use jsonquill::document::node::{JsonNode, JsonValue};
     /// use termion::event::{Event, Key};
     ///
-    /// let handler = InputHandler::new();
+    /// let mut handler = InputHandler::new();
     /// let tree = JsonTree::new(JsonNode::new(JsonValue::Null));
     /// let mut state = EditorState::new(tree);
     /// let event = Event::Key(Key::Char('q'));
