@@ -67,7 +67,7 @@ fn test_full_yank_paste_workflow() {
 
     // Yank first element
     state.cursor_mut().set_path(vec![0]);
-    assert!(state.yank_node());
+    assert!(state.yank_nodes(1));
 
     // Paste after first element
     let result = state.paste_node_at_cursor();
@@ -161,7 +161,7 @@ fn test_count_with_delete() {
     state.clear_pending();
 
     for _ in 0..count {
-        state.yank_node();
+        state.yank_nodes(1);
         let _ = state.delete_node_at_cursor();
     }
 
@@ -191,7 +191,7 @@ fn test_count_with_yank() {
     state.clear_pending();
 
     for _ in 0..count {
-        state.yank_node();
+        state.yank_nodes(1);
         state.move_cursor_down();
     }
 

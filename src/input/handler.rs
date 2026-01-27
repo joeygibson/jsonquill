@@ -668,18 +668,7 @@ impl InputHandler {
                         state.clear_pending();
                         state.clear_search_results();
 
-                        let mut yanked = false;
-                        for _ in 0..count {
-                            if state.yank_node() {
-                                yanked = true;
-                                // Move down for next iteration (except last)
-                                state.move_cursor_down();
-                            } else {
-                                break;
-                            }
-                        }
-
-                        if yanked {
+                        if state.yank_nodes(count) {
                             if count > 1 {
                                 state.set_message(
                                     format!("{} nodes yanked", count),
@@ -710,7 +699,7 @@ impl InputHandler {
 
                         for _ in 0..count {
                             // Yank before deleting (like vim's dd)
-                            state.yank_node();
+                            state.yank_nodes(1);
                             match state.delete_node_at_cursor() {
                                 Ok(_) => {
                                     deleted_count += 1;
