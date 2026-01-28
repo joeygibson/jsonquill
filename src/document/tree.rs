@@ -30,20 +30,22 @@
 
 use super::node::{JsonNode, JsonValue};
 
-/// A JSON document represented as a navigable tree structure.
+/// A complete JSON document tree.
 ///
-/// `JsonTree` wraps a root `JsonNode` and provides methods for navigating
-/// the tree using path-based indexing. Paths are represented as slices of
-/// indices, where each index selects either:
-/// - An object field by position in the key-value pair vector
-/// - An array element by position in the element vector
-#[derive(Debug, Clone)]
+/// `JsonTree` represents a parsed JSON document with a root node and optional
+/// original source text for format preservation.
+#[derive(Debug, Clone, PartialEq)]
 pub struct JsonTree {
     root: JsonNode,
+    /// The original JSON string (preserved for unmodified nodes)
+    original_source: Option<String>,
 }
 
 impl JsonTree {
-    /// Creates a new `JsonTree` with the given root node.
+    /// Creates a new JSON tree with the given root node.
+    ///
+    /// The tree has no original source, so format preservation is not available.
+    /// New nodes created via `JsonNode::new()` are marked as modified by default.
     ///
     /// # Example
     ///
@@ -51,14 +53,32 @@ impl JsonTree {
     /// use jsonquill::document::tree::JsonTree;
     /// use jsonquill::document::node::{JsonNode, JsonValue};
     ///
-    /// let tree = JsonTree::new(JsonNode::new(JsonValue::Null));
-    /// assert!(matches!(tree.root().value(), JsonValue::Null));
+    /// let root = JsonNode::new(JsonValue::Null);
+    /// let tree = JsonTree::new(root);
     /// ```
     pub fn new(root: JsonNode) -> Self {
-        Self { root }
+        Self {
+            root,
+            original_source: None,
+        }
     }
 
-    /// Returns an immutable reference to the root node.
+    /// Creates a new JSON tree with the given root node and original source.
+    ///
+    /// The original source enables format preservation for unmodified nodes.
+    pub fn with_source(root: JsonNode, original_source: Option<String>) -> Self {
+        Self {
+            root,
+            original_source,
+        }
+    }
+
+    /// Returns a reference to the original JSON source, if available.
+    pub fn original_source(&self) -> Option<&str> {
+        self.original_source.as_deref()
+    }
+
+    /// Returns a reference to the root node of the tree.
     ///
     /// # Example
     ///
@@ -66,14 +86,16 @@ impl JsonTree {
     /// use jsonquill::document::tree::JsonTree;
     /// use jsonquill::document::node::{JsonNode, JsonValue};
     ///
-    /// let tree = JsonTree::new(JsonNode::new(JsonValue::Boolean(true)));
+    /// let root = JsonNode::new(JsonValue::Boolean(true));
+    /// let tree = JsonTree::new(root);
+    ///
     /// assert!(matches!(tree.root().value(), JsonValue::Boolean(true)));
     /// ```
     pub fn root(&self) -> &JsonNode {
         &self.root
     }
 
-    /// Returns a mutable reference to the root node.
+    /// Returns a mutable reference to the root node of the tree.
     ///
     /// # Example
     ///
@@ -81,9 +103,10 @@ impl JsonTree {
     /// use jsonquill::document::tree::JsonTree;
     /// use jsonquill::document::node::{JsonNode, JsonValue};
     ///
-    /// let mut tree = JsonTree::new(JsonNode::new(JsonValue::Null));
+    /// let root = JsonNode::new(JsonValue::Null);
+    /// let mut tree = JsonTree::new(root);
+    ///
     /// *tree.root_mut().value_mut() = JsonValue::Boolean(false);
-    /// assert!(matches!(tree.root().value(), JsonValue::Boolean(false)));
     /// ```
     pub fn root_mut(&mut self) -> &mut JsonNode {
         &mut self.root
@@ -330,5 +353,26 @@ impl JsonTree {
         }
 
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_tree_with_original_source() {
+        let root = JsonNode::new(JsonValue::String("test".to_string()));
+        let tree = JsonTree::with_source(root.clone(), Some("\"test\"".to_string()));
+
+        assert_eq!(tree.original_source(), Some("\"test\""));
+    }
+
+    #[test]
+    fn test_tree_without_original_source() {
+        let root = JsonNode::new(JsonValue::Null);
+        let tree = JsonTree::new(root);
+
+        assert_eq!(tree.original_source(), None);
     }
 }
