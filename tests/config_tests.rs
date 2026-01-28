@@ -50,6 +50,7 @@ fn test_custom_config() {
         lazy_load_threshold: 52_428_800, // 50MB
         enable_mouse: false,
         relative_line_numbers: false,
+        preserve_formatting: true,
     };
 
     assert_eq!(config.theme, "gruvbox");
@@ -168,6 +169,7 @@ fn test_roundtrip_serialization() {
         lazy_load_threshold: 1_048_576, // 1MB
         enable_mouse: false,
         relative_line_numbers: true,
+        preserve_formatting: true,
     };
 
     // Serialize to TOML

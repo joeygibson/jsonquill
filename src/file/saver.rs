@@ -75,8 +75,13 @@ pub fn save_json_file<P: AsRef<Path>>(path: P, tree: &JsonTree, config: &Config)
         fs::copy(path, backup_path).context("Failed to create backup")?;
     }
 
-    // Serialize to JSON
-    let json_str = serialize_node(tree.root(), config.indent_size, 0);
+    // Serialize with format preservation if original source is available
+    let json_str = if let Some(original) = tree.original_source() {
+        serialize_preserving_format(tree.root(), original, config, 0)
+    } else {
+        // No original source, use standard serialization
+        serialize_node(tree.root(), config.indent_size, 0)
+    };
 
     // Write to temp file first (atomic save)
     let temp_path = path.with_extension("tmp");
@@ -141,6 +146,104 @@ fn node_to_serde_value(node: &JsonNode) -> serde_json::Value {
             serde_json::Value::Object(map)
         }
     }
+}
+
+/// Serializes a node with format preservation for unmodified nodes.
+///
+/// If the node is unmodified and has a text span, extracts the original text.
+/// Otherwise, serializes using the configured formatting.
+fn serialize_preserving_format(
+    node: &JsonNode,
+    original: &str,
+    config: &Config,
+    depth: usize,
+) -> String {
+    // If format preservation is disabled, always use fresh serialization
+    if !config.preserve_formatting {
+        return serialize_node(node, config.indent_size, depth);
+    }
+
+    // If node is unmodified and has a span, use original text
+    if !node.is_modified() && node.metadata.text_span.is_some() {
+        let span = node.metadata.text_span.as_ref().unwrap();
+        return original[span.start..span.end].to_string();
+    }
+
+    // Node was modified or has no span - serialize fresh
+    match node.value() {
+        JsonValue::Object(entries) => serialize_object_preserving(entries, original, config, depth),
+        JsonValue::Array(elements) | JsonValue::JsonlRoot(elements) => {
+            serialize_array_preserving(elements, original, config, depth)
+        }
+        _ => serialize_node(node, config.indent_size, depth),
+    }
+}
+
+/// Serializes an object with format preservation for children.
+fn serialize_object_preserving(
+    entries: &[(String, JsonNode)],
+    original: &str,
+    config: &Config,
+    depth: usize,
+) -> String {
+    if entries.is_empty() {
+        return "{}".to_string();
+    }
+
+    let indent = " ".repeat(config.indent_size * depth);
+    let next_indent = " ".repeat(config.indent_size * (depth + 1));
+
+    let mut result = "{\n".to_string();
+    for (i, (key, value)) in entries.iter().enumerate() {
+        result.push_str(&next_indent);
+        result.push_str(&format!("\"{}\": ", escape_json_string(key)));
+        result.push_str(&serialize_preserving_format(
+            value,
+            original,
+            config,
+            depth + 1,
+        ));
+        if i < entries.len() - 1 {
+            result.push(',');
+        }
+        result.push('\n');
+    }
+    result.push_str(&indent);
+    result.push('}');
+    result
+}
+
+/// Serializes an array with format preservation for children.
+fn serialize_array_preserving(
+    elements: &[JsonNode],
+    original: &str,
+    config: &Config,
+    depth: usize,
+) -> String {
+    if elements.is_empty() {
+        return "[]".to_string();
+    }
+
+    let indent = " ".repeat(config.indent_size * depth);
+    let next_indent = " ".repeat(config.indent_size * (depth + 1));
+
+    let mut result = "[\n".to_string();
+    for (i, element) in elements.iter().enumerate() {
+        result.push_str(&next_indent);
+        result.push_str(&serialize_preserving_format(
+            element,
+            original,
+            config,
+            depth + 1,
+        ));
+        if i < elements.len() - 1 {
+            result.push(',');
+        }
+        result.push('\n');
+    }
+    result.push_str(&indent);
+    result.push(']');
+    result
 }
 
 /// Recursively serializes a JSON node to a formatted string.
@@ -488,5 +591,94 @@ mod tests {
             result.contains('\n'),
             "Long arrays should use multi-line formatting"
         );
+    }
+
+    #[test]
+    fn test_roundtrip_preserves_formatting() {
+        use crate::document::parser::parse_json;
+        use std::fs;
+        use tempfile::NamedTempFile;
+
+        let original_json = r#"{
+  "name": "Alice",
+  "age": 30,
+  "active": true
+}"#;
+
+        // Parse
+        let tree = parse_json(original_json).unwrap();
+        let config = Config::default();
+
+        // Save
+        let temp_file = NamedTempFile::new().unwrap();
+        save_json_file(temp_file.path(), &tree, &config).unwrap();
+
+        // Read back
+        let saved_json = fs::read_to_string(temp_file.path()).unwrap();
+
+        // Should be byte-for-byte identical
+        assert_eq!(saved_json, original_json);
+    }
+
+    #[test]
+    fn test_modified_node_uses_config_formatting() {
+        use crate::document::node::JsonValue;
+        use crate::document::parser::parse_json;
+        use std::fs;
+        use tempfile::NamedTempFile;
+
+        let original_json = r#"{"name":    "Alice"}"#; // Odd spacing
+
+        // Parse
+        let mut tree = parse_json(original_json).unwrap();
+
+        // Modify a value
+        if let JsonValue::Object(ref mut entries) = tree.root_mut().value_mut() {
+            *entries[0].1.value_mut() = JsonValue::String("Bob".to_string());
+        }
+
+        let config = Config::default();
+
+        // Save
+        let temp_file = NamedTempFile::new().unwrap();
+        save_json_file(temp_file.path(), &tree, &config).unwrap();
+
+        // Read back
+        let saved_json = fs::read_to_string(temp_file.path()).unwrap();
+
+        // Modified node should use clean formatting
+        assert!(saved_json.contains("\"name\": \"Bob\""));
+        // Should NOT preserve odd spacing
+        assert!(!saved_json.contains("\"name\":    "));
+    }
+
+    #[test]
+    fn test_preserve_formatting_can_be_disabled() {
+        use crate::document::parser::parse_json;
+        use std::fs;
+        use tempfile::NamedTempFile;
+
+        let original_json = r#"{
+    "name":    "Alice",
+    "age":     30
+}"#;
+
+        // Parse
+        let tree = parse_json(original_json).unwrap();
+
+        // Disable format preservation
+        let mut config = Config::default();
+        config.preserve_formatting = false;
+
+        // Save
+        let temp_file = NamedTempFile::new().unwrap();
+        save_json_file(temp_file.path(), &tree, &config).unwrap();
+
+        // Read back
+        let saved_json = fs::read_to_string(temp_file.path()).unwrap();
+
+        // Should use normalized formatting
+        assert!(saved_json.contains("\"name\": \"Alice\""));
+        assert!(saved_json.contains("\"age\": 30"));
     }
 }
