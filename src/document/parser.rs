@@ -2,7 +2,7 @@
 //!
 //! This module provides functionality to parse JSON strings into `JsonTree` structures
 //! while preserving formatting metadata. The parser converts standard JSON into our
-//! internal representation that tracks modification status and original text for
+//! internal representation that tracks modification status and text spans for
 //! format-preserving edits.
 //!
 //! # Example
@@ -26,7 +26,7 @@ use serde_json::Value as SerdeValue;
 ///
 /// This function uses `serde_json` to parse the JSON string, then converts
 /// the result into our internal `JsonTree` structure with metadata tracking.
-/// The root node preserves the original JSON string for format-preserving edits.
+/// The root node will have its text_span populated by the span tracker for format-preserving edits.
 ///
 /// # Arguments
 ///

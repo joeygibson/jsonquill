@@ -243,7 +243,7 @@ mod text_span_tests {
     #[test]
     fn test_text_span_clone() {
         let span1 = TextSpan { start: 0, end: 100 };
-        let span2 = span1.clone();
+        let span2 = span1;
 
         assert_eq!(span1, span2);
     }
