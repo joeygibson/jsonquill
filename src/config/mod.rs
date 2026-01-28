@@ -42,7 +42,7 @@ use serde::{Deserialize, Serialize};
 /// * `sync_unnamed_register` - Sync unnamed register with system clipboard (default: true)
 /// * `lazy_load_threshold` - File size in bytes to trigger lazy loading (default: 100MB)
 /// * `enable_mouse` - Enable mouse/trackpad scrolling support (default: true)
-/// * `preserve_formatting` - Preserve original formatting for unmodified nodes (default: false)
+/// * `preserve_formatting` - Preserve original formatting for unmodified nodes (default: true)
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Config {
     /// Color scheme name
@@ -89,8 +89,8 @@ pub struct Config {
     #[serde(default)]
     pub relative_line_numbers: bool,
 
-    /// Preserve original formatting for unmodified nodes (default: false)
-    /// WARNING: EXPERIMENTAL - Known to cause data corruption, do not enable
+    /// Preserve original formatting for unmodified nodes (default: true)
+    /// When enabled, unmodified portions of JSON retain exact original formatting
     #[serde(default = "default_preserve_formatting")]
     pub preserve_formatting: bool,
 }
@@ -137,7 +137,7 @@ fn default_enable_mouse() -> bool {
 
 /// Returns the default for preserving formatting.
 fn default_preserve_formatting() -> bool {
-    false // DISABLED: causes data corruption, do not enable
+    true // Enabled by default - preserves original formatting for unmodified nodes
 }
 
 impl Default for Config {
@@ -155,7 +155,7 @@ impl Default for Config {
     /// * `sync_unnamed_register`: true
     /// * `lazy_load_threshold`: 104,857,600 (100MB)
     /// * `enable_mouse`: true
-    /// * `preserve_formatting`: false
+    /// * `preserve_formatting`: true
     ///
     /// # Example
     ///
@@ -243,7 +243,7 @@ mod tests {
     #[test]
     fn test_preserve_formatting_default() {
         let config = Config::default();
-        assert!(!config.preserve_formatting); // Format preservation is disabled due to data corruption
+        assert!(config.preserve_formatting); // Format preservation is enabled by default
     }
 
     #[test]
