@@ -17,10 +17,142 @@
 //! let name_node = tree.get_node(&[0]).unwrap();
 //! ```
 
-use super::node::{JsonNode, JsonValue, NodeMetadata};
+use super::node::{JsonNode, JsonValue, NodeMetadata, TextSpan};
 use super::tree::JsonTree;
 use anyhow::{Context, Result};
 use serde_json::Value as SerdeValue;
+
+/// Tracks byte positions while parsing JSON.
+struct SpanTracker<'a> {
+    source: &'a str,
+    pos: usize,
+}
+
+impl<'a> SpanTracker<'a> {
+    fn new(source: &'a str) -> Self {
+        Self { source, pos: 0 }
+    }
+
+    /// Skip whitespace characters
+    fn skip_whitespace(&mut self) {
+        while self.pos < self.source.len() {
+            let ch = self.source.as_bytes()[self.pos];
+            if ch == b' ' || ch == b'\n' || ch == b'\r' || ch == b'\t' {
+                self.pos += 1;
+            } else {
+                break;
+            }
+        }
+    }
+
+    /// Find the span of a value in the source
+    fn find_value_span(&mut self, value: &SerdeValue) -> TextSpan {
+        self.skip_whitespace();
+        let start = self.pos;
+
+        // Calculate end position based on value type
+        let end = match value {
+            SerdeValue::Null => {
+                self.pos += 4; // "null"
+                self.pos
+            }
+            SerdeValue::Bool(true) => {
+                self.pos += 4; // "true"
+                self.pos
+            }
+            SerdeValue::Bool(false) => {
+                self.pos += 5; // "false"
+                self.pos
+            }
+            SerdeValue::Number(_) => {
+                self.find_number_end()
+            }
+            SerdeValue::String(_) => {
+                self.find_string_end()
+            }
+            SerdeValue::Array(_) => {
+                self.find_container_end('[', ']')
+            }
+            SerdeValue::Object(_) => {
+                self.find_container_end('{', '}')
+            }
+        };
+
+        TextSpan { start, end }
+    }
+
+    /// Find the end of a number
+    fn find_number_end(&mut self) -> usize {
+        while self.pos < self.source.len() {
+            let ch = self.source.as_bytes()[self.pos];
+            if ch.is_ascii_digit() || ch == b'-' || ch == b'+' || ch == b'.' || ch == b'e' || ch == b'E' {
+                self.pos += 1;
+            } else {
+                break;
+            }
+        }
+        self.pos
+    }
+
+    /// Find the end of a string
+    fn find_string_end(&mut self) -> usize {
+        if self.source.as_bytes()[self.pos] == b'"' {
+            self.pos += 1; // Skip opening quote
+
+            while self.pos < self.source.len() {
+                match self.source.as_bytes()[self.pos] {
+                    b'\\' => {
+                        self.pos += 2; // Skip escape sequence
+                    }
+                    b'"' => {
+                        self.pos += 1; // Skip closing quote
+                        break;
+                    }
+                    _ => {
+                        self.pos += 1;
+                    }
+                }
+            }
+        }
+        self.pos
+    }
+
+    /// Find the end of a container (array or object)
+    fn find_container_end(&mut self, open: char, close: char) -> usize {
+        let mut depth = 0;
+        let mut in_string = false;
+        let mut escape_next = false;
+
+        while self.pos < self.source.len() {
+            let ch = self.source.chars().nth(self.pos - self.source.char_indices().take(self.pos).count()).unwrap_or('\0');
+
+            if escape_next {
+                escape_next = false;
+                self.pos += ch.len_utf8();
+                continue;
+            }
+
+            match ch {
+                '\\' if in_string => escape_next = true,
+                '"' => in_string = !in_string,
+                c if c == open && !in_string => depth += 1,
+                c if c == close && !in_string => {
+                    depth -= 1;
+                    self.pos += ch.len_utf8();
+                    if depth == 0 {
+                        break;
+                    }
+                    continue;
+                }
+                _ => {}
+            }
+
+            self.pos += ch.len_utf8();
+        }
+
+        self.pos
+    }
+}
 
 /// Parses a JSON string into a `JsonTree`.
 ///
@@ -91,8 +223,75 @@ use serde_json::Value as SerdeValue;
 pub fn parse_json(json_str: &str) -> Result<JsonTree> {
     let serde_value: SerdeValue = serde_json::from_str(json_str).context("Failed to parse JSON")?;
 
-    let root = convert_serde_value(serde_value);
-    Ok(JsonTree::new(root))
+    let mut tracker = SpanTracker::new(json_str);
+    let root = convert_with_spans(&serde_value, &mut tracker);
+
+    Ok(JsonTree::with_source(root, Some(json_str.to_string())))
+}
+
+/// Converts a serde_json::Value to JsonNode with span tracking.
+fn convert_with_spans(value: &SerdeValue, tracker: &mut SpanTracker) -> JsonNode {
+    let span = tracker.find_value_span(value);
+
+    let json_value = match value {
+        SerdeValue::Object(map) => {
+            tracker.pos = span.start + 1; // Skip opening brace
+            let entries = map
+                .iter()
+                .map(|(k, v)| {
+                    tracker.skip_whitespace();
+                    // Skip the key string
+                    tracker.find_string_end();
+                    tracker.skip_whitespace();
+                    // Skip the colon
+                    if tracker.pos < tracker.source.len() && tracker.source.as_bytes()[tracker.pos] == b':' {
+                        tracker.pos += 1;
+                    }
+                    tracker.skip_whitespace();
+
+                    let node = convert_with_spans(v, tracker);
+
+                    tracker.skip_whitespace();
+                    // Skip comma if present
+                    if tracker.pos < tracker.source.len() && tracker.source.as_bytes()[tracker.pos] == b',' {
+                        tracker.pos += 1;
+                    }
+
+                    (k.clone(), node)
+                })
+                .collect();
+            JsonValue::Object(entries)
+        }
+        SerdeValue::Array(arr) => {
+            tracker.pos = span.start + 1; // Skip opening bracket
+            let elements = arr
+                .iter()
+                .map(|v| {
+                    tracker.skip_whitespace();
+                    let node = convert_with_spans(v, tracker);
+                    tracker.skip_whitespace();
+                    // Skip comma if present
+                    if tracker.pos < tracker.source.len() && tracker.source.as_bytes()[tracker.pos] == b',' {
+                        tracker.pos += 1;
+                    }
+                    node
+                })
+                .collect();
+            JsonValue::Array(elements)
+        }
+        SerdeValue::String(s) => JsonValue::String(s.clone()),
+        SerdeValue::Number(n) => JsonValue::Number(n.as_f64().unwrap_or(0.0)),
+        SerdeValue::Bool(b) => JsonValue::Boolean(*b),
+        SerdeValue::Null => JsonValue::Null,
+    };
+
+    JsonNode {
+        value: json_value,
+        metadata: NodeMetadata {
+            text_span: Some(span),
+            modified: false,
+        },
+    }
 }
 
 /// Converts a `serde_json::Value` into a `JsonNode`.
@@ -365,8 +564,8 @@ mod tests {
         let json = r#"{"name": "Alice"}"#;
         let tree = parse_json(json).unwrap();
 
-        // Root node should have no text span initially (will be added by span tracker)
-        assert!(tree.root().metadata.text_span.is_none());
+        // Root node should have text span populated by span tracker
+        assert!(tree.root().metadata.text_span.is_some());
         // Parsed nodes should not be marked as modified
         assert!(!tree.root().is_modified());
     }
@@ -472,5 +671,34 @@ mod tests {
             }
             _ => panic!("Expected object"),
         }
+    }
+
+    #[test]
+    fn test_parse_preserves_text_spans() {
+        let json = r#"{"name": "Alice", "age": 30}"#;
+        let tree = parse_json(json).unwrap();
+
+        // Root should have a span covering the entire input
+        assert!(tree.root().metadata.text_span.is_some());
+        let root_span = tree.root().metadata.text_span.unwrap();
+        assert_eq!(root_span.start, 0);
+        assert_eq!(root_span.end, json.len());
+    }
+
+    #[test]
+    fn test_parse_sets_modified_false_for_parsed_nodes() {
+        let json = r#"{"key": "value"}"#;
+        let tree = parse_json(json).unwrap();
+
+        // Parsed nodes should not be marked as modified
+        assert!(!tree.root().is_modified());
+    }
+
+    #[test]
+    fn test_parse_stores_original_source() {
+        let json = r#"[1, 2, 3]"#;
+        let tree = parse_json(json).unwrap();
+
+        assert_eq!(tree.original_source(), Some(json));
     }
 }
