@@ -658,6 +658,10 @@ impl EditorState {
         // Delete the node
         self.tree.delete_node(&path)?;
         self.mark_dirty();
+
+        // Update expanded paths to account for shifted indices after deletion
+        self.tree_view_mut().update_paths_after_deletion(&path);
+
         self.rebuild_tree_view();
 
         // Adjust cursor position

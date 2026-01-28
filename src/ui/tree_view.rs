@@ -390,6 +390,74 @@ impl TreeViewState {
             self.expanded_paths.insert(new_path);
         }
     }
+
+    /// Updates expanded_paths after a node deletion.
+    ///
+    /// When a node is deleted, all subsequent siblings and their descendants
+    /// need their indices shifted down by 1. This method updates the expanded_paths
+    /// set to reflect the new indices after deletion. Also removes the deleted path
+    /// and all its descendants from expanded_paths.
+    ///
+    /// # Arguments
+    /// * `deletion_path` - The path of the node that was deleted
+    pub fn update_paths_after_deletion(&mut self, deletion_path: &[usize]) {
+        if deletion_path.is_empty() {
+            return;
+        }
+
+        let parent_path = &deletion_path[..deletion_path.len() - 1];
+        let deletion_idx = deletion_path[deletion_path.len() - 1];
+
+        // Collect paths to remove (deleted node and its descendants)
+        let paths_to_remove: Vec<Vec<usize>> = self
+            .expanded_paths
+            .iter()
+            .filter(|path| {
+                // Remove if this is the deleted node or a descendant
+                path.len() >= deletion_path.len() && &path[..deletion_path.len()] == deletion_path
+            })
+            .cloned()
+            .collect();
+
+        // Collect paths that need index shifting (subsequent siblings and descendants)
+        let paths_to_update: Vec<Vec<usize>> = self
+            .expanded_paths
+            .iter()
+            .filter(|path| {
+                // Check if this path is affected by the deletion
+                if path.len() < parent_path.len() + 1 {
+                    return false;
+                }
+
+                // Check if path has the same parent
+                if &path[..parent_path.len()] != parent_path {
+                    return false;
+                }
+
+                // Check if the index at the deletion level is > deletion_idx
+                // (nodes after the deleted node need to shift down)
+                path[parent_path.len()] > deletion_idx
+            })
+            .cloned()
+            .collect();
+
+        // First pass: remove deleted node and its descendants
+        for path in &paths_to_remove {
+            self.expanded_paths.remove(path);
+        }
+
+        // Second pass: remove all old paths that need shifting
+        for old_path in &paths_to_update {
+            self.expanded_paths.remove(old_path);
+        }
+
+        // Third pass: insert all shifted paths
+        for old_path in paths_to_update {
+            let mut new_path = old_path.clone();
+            new_path[parent_path.len()] -= 1;
+            self.expanded_paths.insert(new_path);
+        }
+    }
 }
 
 impl Default for TreeViewState {
@@ -1201,5 +1269,117 @@ mod tests {
         assert!(state.lines().len() > 1);
         assert_eq!(state.lines()[0].depth, 0); // The JSONL line itself
         assert!(state.lines()[0].expanded);
+    }
+
+    #[test]
+    fn test_update_paths_after_deletion() {
+        use crate::document::node::{JsonNode, JsonValue};
+        use crate::document::tree::JsonTree;
+
+        // Create array with 4 objects
+        let _tree = JsonTree::new(JsonNode::new(JsonValue::Array(vec![
+            JsonNode::new(JsonValue::Object(vec![(
+                "name".to_string(),
+                JsonNode::new(JsonValue::String("Alice".to_string())),
+            )])),
+            JsonNode::new(JsonValue::Object(vec![(
+                "name".to_string(),
+                JsonNode::new(JsonValue::String("Bob".to_string())),
+            )])),
+            JsonNode::new(JsonValue::Object(vec![(
+                "name".to_string(),
+                JsonNode::new(JsonValue::String("Charlie".to_string())),
+            )])),
+            JsonNode::new(JsonValue::Object(vec![(
+                "name".to_string(),
+                JsonNode::new(JsonValue::String("Dave".to_string())),
+            )])),
+        ])));
+
+        let mut state = TreeViewState::new();
+
+        // Expand objects at [0, 1], [0, 2], and [0, 3]
+        state.toggle_expand(&[0, 1]);
+        state.toggle_expand(&[0, 2]);
+        state.toggle_expand(&[0, 3]);
+
+        assert!(state.is_expanded(&[0, 1]));
+        assert!(state.is_expanded(&[0, 2]));
+        assert!(state.is_expanded(&[0, 3]));
+
+        // Delete node at [0, 1] (Bob)
+        state.update_paths_after_deletion(&[0, 1]);
+
+        // [0, 2] (Charlie) should now be at [0, 1] and still expanded
+        assert!(state.is_expanded(&[0, 1]));
+
+        // [0, 3] should now be at [0, 2] (Dave shifted down)
+        assert!(state.is_expanded(&[0, 2]));
+
+        // Old paths should not exist
+        assert!(!state.is_expanded(&[0, 3]));
+    }
+
+    #[test]
+    fn test_deletion_preserves_sibling_expansion() {
+        use crate::document::node::{JsonNode, JsonValue};
+        use crate::document::tree::JsonTree;
+
+        // Create nested structure where we'll delete one object but others should stay expanded
+        let mut tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
+            (
+                "item1".to_string(),
+                JsonNode::new(JsonValue::Object(vec![(
+                    "nested".to_string(),
+                    JsonNode::new(JsonValue::Number(1.0)),
+                )])),
+            ),
+            (
+                "item2".to_string(),
+                JsonNode::new(JsonValue::Object(vec![(
+                    "nested".to_string(),
+                    JsonNode::new(JsonValue::Number(2.0)),
+                )])),
+            ),
+            (
+                "item3".to_string(),
+                JsonNode::new(JsonValue::Object(vec![(
+                    "nested".to_string(),
+                    JsonNode::new(JsonValue::Number(3.0)),
+                )])),
+            ),
+        ])));
+
+        let mut state = TreeViewState::new();
+
+        // Expand root and all items
+        state.toggle_expand(&[]);
+        state.toggle_expand(&[0]);
+        state.toggle_expand(&[1]);
+        state.toggle_expand(&[2]);
+        state.rebuild(&tree);
+
+        // Verify all are expanded
+        assert!(state.is_expanded(&[]));
+        assert!(state.is_expanded(&[0]));
+        assert!(state.is_expanded(&[1]));
+        assert!(state.is_expanded(&[2]));
+
+        // Delete item2 at index [1]
+        tree.delete_node(&[1]).unwrap();
+        state.update_paths_after_deletion(&[1]);
+        state.rebuild(&tree);
+
+        // Root should still be expanded
+        assert!(state.is_expanded(&[]));
+
+        // item1 at [0] should still be expanded (unaffected)
+        assert!(state.is_expanded(&[0]));
+
+        // item3 was at [2], now should be at [1] and still expanded
+        assert!(state.is_expanded(&[1]));
+
+        // Old path [2] should not be expanded
+        assert!(!state.is_expanded(&[2]));
     }
 }
