@@ -47,10 +47,14 @@ pub enum InputEvent {
     JumpToTop,
     /// Jump to bottom of document (G)
     JumpToBottom,
-    /// Page down (Ctrl-d)
-    PageDown,
-    /// Page up (Ctrl-u)
-    PageUp,
+    /// Half-page down (Ctrl-d)
+    HalfPageDown,
+    /// Half-page up (Ctrl-u)
+    HalfPageUp,
+    /// Full-page down (Ctrl-f, PageDown key)
+    FullPageDown,
+    /// Full-page up (Ctrl-b, PageUp key)
+    FullPageUp,
     /// Undo last change
     Undo,
     /// Redo last undone change
@@ -136,8 +140,10 @@ pub fn map_key_event(event: Event, mode: &EditorMode) -> InputEvent {
     match mode {
         EditorMode::Normal => match key {
             // Ctrl-modified keys
-            Key::Ctrl('d') => InputEvent::PageDown,
-            Key::Ctrl('u') => InputEvent::PageUp,
+            Key::Ctrl('d') => InputEvent::HalfPageDown,
+            Key::Ctrl('u') => InputEvent::HalfPageUp,
+            Key::Ctrl('f') => InputEvent::FullPageDown,
+            Key::Ctrl('b') => InputEvent::FullPageUp,
             Key::Ctrl('r') => InputEvent::Redo,
             // Regular keys
             Key::Char('q') => InputEvent::Quit,
@@ -180,6 +186,10 @@ pub fn map_key_event(event: Event, mode: &EditorMode) -> InputEvent {
             Key::Up => InputEvent::MoveUp,
             Key::Left => InputEvent::MoveLeft,
             Key::Right => InputEvent::MoveRight,
+            Key::PageDown => InputEvent::FullPageDown,
+            Key::PageUp => InputEvent::FullPageUp,
+            Key::Home => InputEvent::JumpToTop,
+            Key::End => InputEvent::JumpToBottom,
             Key::F(1) => InputEvent::Help,
             _ => InputEvent::Unknown,
         },

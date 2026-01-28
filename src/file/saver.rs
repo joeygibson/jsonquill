@@ -178,9 +178,7 @@ fn serialize_preserving_format(
 
     // Node was modified or has no span - serialize fresh
     match node.value() {
-        JsonValue::Object(entries) => {
-            serialize_object_preserving(entries, original, config, depth)
-        }
+        JsonValue::Object(entries) => serialize_object_preserving(entries, original, config, depth),
         JsonValue::Array(elements) | JsonValue::JsonlRoot(elements) => {
             serialize_array_preserving(elements, original, config, depth)
         }

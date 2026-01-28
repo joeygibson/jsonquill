@@ -131,11 +131,13 @@ jsonquill data.jsonl
 | `E` | Fully expand subtree | Expands current node and all descendants |
 | `C` | Fully collapse subtree | Collapses current node and all descendants |
 | `H` | Move to parent | Navigate to parent node without collapsing |
-| `gg` | Jump to top of document | |
-| `G` | Jump to bottom of document | |
+| `gg` / `Home` | Jump to top of document | |
+| `G` / `End` | Jump to bottom of document | |
 | `<count>g` | Jump to line number | e.g., `10g` jumps to line 10 |
-| `Ctrl-d` | Page down | Scroll half page down |
-| `Ctrl-u` | Page up | Scroll half page up |
+| `Ctrl-d` | Half-page down | Scroll half page down |
+| `Ctrl-u` | Half-page up | Scroll half page up |
+| `Ctrl-f` / `PgDn` | Full-page down | Scroll full page down |
+| `Ctrl-b` / `PgUp` | Full-page up | Scroll full page up |
 | `zz` | Center cursor on screen | Scroll viewport to center current line |
 | `zt` | Move cursor to top of screen | Scroll viewport to place current line at top |
 | `zb` | Move cursor to bottom of screen | Scroll viewport to place current line at bottom |

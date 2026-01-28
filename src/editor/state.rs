@@ -976,6 +976,68 @@ impl EditorState {
         self.cursor.set_path(lines[new_cursor_idx].path.clone());
     }
 
+    /// Scrolls down by a full page (viewport_height lines).
+    ///
+    /// Scrolls the viewport down by the entire visible height and moves the cursor
+    /// to maintain its relative position on screen (vim Ctrl-f behavior).
+    pub fn full_page_down(&mut self) {
+        if self.viewport_height == 0 {
+            return;
+        }
+
+        let lines = self.tree_view.lines();
+        if lines.is_empty() {
+            return;
+        }
+
+        let current_idx = lines
+            .iter()
+            .position(|l| l.path == self.cursor.path())
+            .unwrap_or(0);
+
+        // Calculate scroll amount (full viewport height)
+        let scroll_amount = self.viewport_height;
+
+        // Scroll the viewport down
+        let new_scroll = (self.scroll_offset + scroll_amount)
+            .min(lines.len().saturating_sub(self.viewport_height));
+        self.scroll_offset = new_scroll;
+
+        // Move cursor down by the same amount to maintain screen position
+        let new_cursor_idx = (current_idx + scroll_amount).min(lines.len() - 1);
+        self.cursor.set_path(lines[new_cursor_idx].path.clone());
+    }
+
+    /// Scrolls up by a full page (viewport_height lines).
+    ///
+    /// Scrolls the viewport up by the entire visible height and moves the cursor
+    /// to maintain its relative position on screen (vim Ctrl-b behavior).
+    pub fn full_page_up(&mut self) {
+        if self.viewport_height == 0 {
+            return;
+        }
+
+        let lines = self.tree_view.lines();
+        if lines.is_empty() {
+            return;
+        }
+
+        let current_idx = lines
+            .iter()
+            .position(|l| l.path == self.cursor.path())
+            .unwrap_or(0);
+
+        // Calculate scroll amount (full viewport height)
+        let scroll_amount = self.viewport_height;
+
+        // Scroll the viewport up
+        self.scroll_offset = self.scroll_offset.saturating_sub(scroll_amount);
+
+        // Move cursor up by the same amount to maintain screen position
+        let new_cursor_idx = current_idx.saturating_sub(scroll_amount);
+        self.cursor.set_path(lines[new_cursor_idx].path.clone());
+    }
+
     /// Centers the current cursor line on the screen (zz command).
     ///
     /// Adjusts the scroll offset so the cursor is in the middle of the viewport.

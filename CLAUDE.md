@@ -163,8 +163,8 @@ Implemented modules:
 - ✅ Paste operation (`p` inserts yanked nodes after, `P` inserts before)
 - ✅ Insert mode for editing values (strings, numbers, booleans, null)
 - ✅ Viewport scrolling (automatically scrolls when navigating off-screen)
-- ✅ Jump commands (`gg` for top, `G` for bottom, `<count>g` for specific line)
-- ✅ Page scrolling (`Ctrl-d` for half-page down, `Ctrl-u` for half-page up)
+- ✅ Jump commands (`gg`/`Home` for top, `G`/`End` for bottom, `<count>g` for specific line)
+- ✅ Page scrolling (`Ctrl-d`/`Ctrl-u` for half-page, `Ctrl-f`/`Ctrl-b`/`PgDn`/`PgUp` for full-page)
 - ✅ Save and quit (`ZZ` saves if dirty then quits)
 - ✅ Quit with dirty check (`q` warns if unsaved, matching `:q` behavior)
 - ✅ Default dark theme (gray/black, not blue)
@@ -213,11 +213,13 @@ h/l         - Collapse/expand node
 E           - Fully expand current node and all descendants
 C           - Fully collapse current node and all descendants
 H           - Move to parent node (without collapsing)
-gg          - Jump to top of document
-G           - Jump to bottom of document
+gg / Home   - Jump to top of document
+G / End     - Jump to bottom of document
 <count>g    - Jump to specific line number (e.g., `10g` goes to line 10)
-Ctrl-d      - Page down (half page)
-Ctrl-u      - Page up (half page)
+Ctrl-d      - Half-page down
+Ctrl-u      - Half-page up
+Ctrl-f/PgDn - Full-page down
+Ctrl-b/PgUp - Full-page up
 zz          - Center cursor on screen
 zt          - Move cursor to top of screen
 zb          - Move cursor to bottom of screen

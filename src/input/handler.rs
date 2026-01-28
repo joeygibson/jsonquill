@@ -844,15 +844,25 @@ impl InputHandler {
                     state.clear_search_results();
                     state.jump_to_bottom();
                 }
-                InputEvent::PageDown => {
+                InputEvent::HalfPageDown => {
                     state.clear_pending();
                     state.clear_search_results();
                     state.page_down();
                 }
-                InputEvent::PageUp => {
+                InputEvent::HalfPageUp => {
                     state.clear_pending();
                     state.clear_search_results();
                     state.page_up();
+                }
+                InputEvent::FullPageDown => {
+                    state.clear_pending();
+                    state.clear_search_results();
+                    state.full_page_down();
+                }
+                InputEvent::FullPageUp => {
+                    state.clear_pending();
+                    state.clear_search_results();
+                    state.full_page_up();
                 }
                 InputEvent::Undo => {
                     state.clear_pending();

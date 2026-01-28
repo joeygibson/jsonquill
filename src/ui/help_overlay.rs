@@ -56,11 +56,11 @@ pub fn render_help_overlay(f: &mut Frame, colors: &ThemeColors, scroll: usize) {
             Span::raw("Move to parent node (without collapsing)"),
         ]),
         Line::from(vec![
-            Span::styled("  gg            ", Style::default().fg(colors.number)),
+            Span::styled("  gg / Home     ", Style::default().fg(colors.number)),
             Span::raw("Jump to top of document"),
         ]),
         Line::from(vec![
-            Span::styled("  G             ", Style::default().fg(colors.number)),
+            Span::styled("  G / End       ", Style::default().fg(colors.number)),
             Span::raw("Jump to bottom of document"),
         ]),
         Line::from(vec![
@@ -69,11 +69,19 @@ pub fn render_help_overlay(f: &mut Frame, colors: &ThemeColors, scroll: usize) {
         ]),
         Line::from(vec![
             Span::styled("  Ctrl-d        ", Style::default().fg(colors.number)),
-            Span::raw("Page down"),
+            Span::raw("Half-page down"),
         ]),
         Line::from(vec![
             Span::styled("  Ctrl-u        ", Style::default().fg(colors.number)),
-            Span::raw("Page up"),
+            Span::raw("Half-page up"),
+        ]),
+        Line::from(vec![
+            Span::styled("  Ctrl-f / PgDn ", Style::default().fg(colors.number)),
+            Span::raw("Full-page down"),
+        ]),
+        Line::from(vec![
+            Span::styled("  Ctrl-b / PgUp ", Style::default().fg(colors.number)),
+            Span::raw("Full-page up"),
         ]),
         Line::from(vec![
             Span::styled("  zz            ", Style::default().fg(colors.number)),
