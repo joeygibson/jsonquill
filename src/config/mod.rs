@@ -42,6 +42,7 @@ use serde::{Deserialize, Serialize};
 /// * `sync_unnamed_register` - Sync unnamed register with system clipboard (default: true)
 /// * `lazy_load_threshold` - File size in bytes to trigger lazy loading (default: 100MB)
 /// * `enable_mouse` - Enable mouse/trackpad scrolling support (default: true)
+/// * `preserve_formatting` - Preserve original formatting for unmodified nodes (default: true)
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Config {
     /// Color scheme name
@@ -87,6 +88,10 @@ pub struct Config {
     /// Show relative line numbers (like vim's relativenumber)
     #[serde(default)]
     pub relative_line_numbers: bool,
+
+    /// Preserve original formatting for unmodified nodes
+    #[serde(default = "default_preserve_formatting")]
+    pub preserve_formatting: bool,
 }
 
 /// Returns the default theme name.
@@ -129,6 +134,11 @@ fn default_enable_mouse() -> bool {
     true
 }
 
+/// Returns the default for preserving formatting.
+fn default_preserve_formatting() -> bool {
+    true
+}
+
 impl Default for Config {
     /// Creates a new configuration with default values.
     ///
@@ -144,6 +154,7 @@ impl Default for Config {
     /// * `sync_unnamed_register`: true
     /// * `lazy_load_threshold`: 104,857,600 (100MB)
     /// * `enable_mouse`: true
+    /// * `preserve_formatting`: true
     ///
     /// # Example
     ///
@@ -168,6 +179,7 @@ impl Default for Config {
             lazy_load_threshold: default_lazy_load_threshold(),
             enable_mouse: default_enable_mouse(),
             relative_line_numbers: false,
+            preserve_formatting: default_preserve_formatting(),
         }
     }
 }
@@ -220,5 +232,23 @@ impl Config {
         std::fs::write(&config_path, toml_string)?;
 
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_preserve_formatting_default() {
+        let config = Config::default();
+        assert!(config.preserve_formatting);
+    }
+
+    #[test]
+    fn test_preserve_formatting_can_be_disabled() {
+        let mut config = Config::default();
+        config.preserve_formatting = false;
+        assert!(!config.preserve_formatting);
     }
 }
