@@ -171,9 +171,10 @@ fn serialize_preserving_format(
     }
 
     // If node is unmodified and has a valid text span, extract from original
-    if !node.is_modified() && node.metadata.text_span.is_some() {
-        let span = node.metadata.text_span.as_ref().unwrap();
-        return original[span.start..span.end].to_string();
+    if !node.is_modified() {
+        if let Some(span) = node.metadata.text_span.as_ref() {
+            return original[span.start..span.end].to_string();
+        }
     }
 
     // Node was modified or has no span - serialize fresh
