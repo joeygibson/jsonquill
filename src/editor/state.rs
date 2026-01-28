@@ -1831,6 +1831,11 @@ impl EditorState {
         !self.registers.get_unnamed().is_empty()
     }
 
+    /// Returns whether there's a temporary container waiting to be added.
+    pub fn has_temp_container(&self) -> bool {
+        self.temp_container.is_some()
+    }
+
     /// Pastes nodes at cursor from register (after current position).
     pub fn paste_nodes_at_cursor(&mut self) -> anyhow::Result<()> {
         use anyhow::anyhow;

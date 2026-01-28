@@ -516,9 +516,9 @@ impl InputHandler {
                     match key {
                         Key::Char('\n') => {
                             // Enter pressed - check if this is a container add or scalar add
-                            // Container adds have the node stored in clipboard temporarily
-                            if state.has_clipboard() {
-                                // This is a container add (ao/aa) - commit directly
+                            // Container adds have the node stored in temp_container
+                            if state.has_temp_container() {
+                                // This is a container add (a/o) - commit directly
                                 use crate::editor::state::MessageLevel;
                                 match state.commit_container_add() {
                                     Ok(_) => {
@@ -533,7 +533,7 @@ impl InputHandler {
                                     }
                                 }
                             } else {
-                                // This is a scalar add - transition to value stage
+                                // This is a scalar add (i) - transition to value stage
                                 state.transition_add_to_value();
                             }
                             return Ok(false);
