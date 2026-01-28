@@ -26,6 +26,18 @@
 //! }
 //! ```
 
+/// A byte range in the original JSON source.
+///
+/// TextSpan tracks the position of a node's text in the original JSON string,
+/// enabling exact format preservation for unmodified nodes.
+#[derive(Debug, Clone, PartialEq, Copy)]
+pub struct TextSpan {
+    /// Start byte offset in original JSON
+    pub start: usize,
+    /// End byte offset in original JSON (exclusive)
+    pub end: usize,
+}
+
 /// A JSON value without metadata.
 ///
 /// This enum represents the core JSON types: objects, arrays, strings, numbers,
@@ -204,5 +216,35 @@ impl JsonNode {
     /// ```
     pub fn is_modified(&self) -> bool {
         self.metadata.modified
+    }
+}
+
+#[cfg(test)]
+mod text_span_tests {
+    use super::*;
+
+    #[test]
+    fn test_text_span_creation() {
+        let span = TextSpan { start: 10, end: 25 };
+        assert_eq!(span.start, 10);
+        assert_eq!(span.end, 25);
+    }
+
+    #[test]
+    fn test_text_span_equality() {
+        let span1 = TextSpan { start: 5, end: 10 };
+        let span2 = TextSpan { start: 5, end: 10 };
+        let span3 = TextSpan { start: 5, end: 11 };
+
+        assert_eq!(span1, span2);
+        assert_ne!(span1, span3);
+    }
+
+    #[test]
+    fn test_text_span_clone() {
+        let span1 = TextSpan { start: 0, end: 100 };
+        let span2 = span1.clone();
+
+        assert_eq!(span1, span2);
     }
 }
