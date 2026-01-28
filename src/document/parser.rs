@@ -270,6 +270,8 @@ fn convert_with_spans(value: &SerdeValue, tracker: &mut SpanTracker) -> JsonNode
                     (k.clone(), node)
                 })
                 .collect();
+            // CRITICAL: Restore position to end of container after processing children
+            tracker.pos = span.end;
             JsonValue::Object(entries)
         }
         SerdeValue::Array(arr) => {
@@ -289,6 +291,8 @@ fn convert_with_spans(value: &SerdeValue, tracker: &mut SpanTracker) -> JsonNode
                     node
                 })
                 .collect();
+            // CRITICAL: Restore position to end of container after processing children
+            tracker.pos = span.end;
             JsonValue::Array(elements)
         }
         SerdeValue::String(s) => JsonValue::String(s.clone()),

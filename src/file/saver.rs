@@ -77,7 +77,7 @@ pub fn save_json_file<P: AsRef<Path>>(path: P, tree: &JsonTree, config: &Config)
 
     // Serialize with format preservation if original source is available
     let json_str = if let Some(original) = tree.original_source() {
-        serialize_preserving_format(tree.root(), original, config, 0, false)
+        serialize_preserving_format(tree.root(), original, config, 0)
     } else {
         // No original source, use standard serialization
         serialize_node(tree.root(), config.indent_size, 0)
@@ -152,62 +152,41 @@ fn node_to_serde_value(node: &JsonNode) -> serde_json::Value {
 ///
 /// If the node is unmodified and has a text span, extracts the original text.
 /// Otherwise, serializes using the configured formatting.
-///
-/// # Arguments
-///
-/// * `inside_modified_container` - True if we're serializing a child of a modified container.
-///   When true, we must NOT extract text from spans because the parent's modification
-///   invalidated all child byte positions.
 fn serialize_preserving_format(
     node: &JsonNode,
     original: &str,
     config: &Config,
     depth: usize,
-    inside_modified_container: bool,
 ) -> String {
     // If format preservation is disabled, always use fresh serialization
     if !config.preserve_formatting {
         return serialize_node(node, config.indent_size, depth);
     }
 
-    // CRITICAL: Only extract text from spans if BOTH conditions are true:
-    // 1. The node itself is unmodified
-    // 2. We're NOT inside a modified container (which would shift byte positions)
-    if !node.is_modified() && node.metadata.text_span.is_some() && !inside_modified_container {
+    // If node is unmodified and has a valid text span, extract from original
+    if !node.is_modified() && node.metadata.text_span.is_some() {
         let span = node.metadata.text_span.as_ref().unwrap();
         return original[span.start..span.end].to_string();
     }
 
-    // Node was modified, or has no span, or is inside a modified container - serialize fresh
-    // CRITICAL: Propagate the inside_modified_container flag down the tree
-    // If we're already inside a modified container OR this node is modified,
-    // then all descendants are inside a modified container
-    let propagate_flag = inside_modified_container || node.is_modified();
-
+    // Node was modified or has no span - serialize fresh
     match node.value() {
         JsonValue::Object(entries) => {
-            serialize_object_preserving(entries, original, config, depth, propagate_flag)
+            serialize_object_preserving(entries, original, config, depth)
         }
         JsonValue::Array(elements) | JsonValue::JsonlRoot(elements) => {
-            serialize_array_preserving(elements, original, config, depth, propagate_flag)
+            serialize_array_preserving(elements, original, config, depth)
         }
         _ => serialize_node(node, config.indent_size, depth),
     }
 }
 
 /// Serializes an object with format preservation for children.
-///
-/// # Arguments
-///
-/// * `container_is_modified` - True if this container node itself is marked as modified.
-///   When true, all children must be serialized fresh (not extracted from original source)
-///   because the container modification invalidated child byte positions.
 fn serialize_object_preserving(
     entries: &[(String, JsonNode)],
     original: &str,
     config: &Config,
     depth: usize,
-    container_is_modified: bool,
 ) -> String {
     if entries.is_empty() {
         return "{}".to_string();
@@ -225,7 +204,6 @@ fn serialize_object_preserving(
             original,
             config,
             depth + 1,
-            container_is_modified, // Pass flag to prevent extracting invalid spans
         ));
         if i < entries.len() - 1 {
             result.push(',');
@@ -238,18 +216,11 @@ fn serialize_object_preserving(
 }
 
 /// Serializes an array with format preservation for children.
-///
-/// # Arguments
-///
-/// * `container_is_modified` - True if this container node itself is marked as modified.
-///   When true, all children must be serialized fresh (not extracted from original source)
-///   because the container modification invalidated child byte positions.
 fn serialize_array_preserving(
     elements: &[JsonNode],
     original: &str,
     config: &Config,
     depth: usize,
-    container_is_modified: bool,
 ) -> String {
     if elements.is_empty() {
         return "[]".to_string();
@@ -266,7 +237,6 @@ fn serialize_array_preserving(
             original,
             config,
             depth + 1,
-            container_is_modified, // Pass flag to prevent extracting invalid spans
         ));
         if i < elements.len() - 1 {
             result.push(',');
