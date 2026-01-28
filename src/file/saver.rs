@@ -77,7 +77,7 @@ pub fn save_json_file<P: AsRef<Path>>(path: P, tree: &JsonTree, config: &Config)
 
     // Serialize with format preservation if original source is available
     let json_str = if let Some(original) = tree.original_source() {
-        serialize_preserving_format(tree.root(), original, config, 0)
+        serialize_preserving_format(tree.root(), original, config, 0, false)
     } else {
         // No original source, use standard serialization
         serialize_node(tree.root(), config.indent_size, 0)
@@ -152,39 +152,57 @@ fn node_to_serde_value(node: &JsonNode) -> serde_json::Value {
 ///
 /// If the node is unmodified and has a text span, extracts the original text.
 /// Otherwise, serializes using the configured formatting.
+///
+/// # Arguments
+///
+/// * `inside_modified_container` - True if we're serializing a child of a modified container.
+///   When true, we must NOT extract text from spans because the parent's modification
+///   invalidated all child byte positions.
 fn serialize_preserving_format(
     node: &JsonNode,
     original: &str,
     config: &Config,
     depth: usize,
+    inside_modified_container: bool,
 ) -> String {
     // If format preservation is disabled, always use fresh serialization
     if !config.preserve_formatting {
         return serialize_node(node, config.indent_size, depth);
     }
 
-    // If node is unmodified and has a span, use original text
-    if !node.is_modified() && node.metadata.text_span.is_some() {
+    // CRITICAL: Only extract text from spans if BOTH conditions are true:
+    // 1. The node itself is unmodified
+    // 2. We're NOT inside a modified container (which would shift byte positions)
+    if !node.is_modified() && node.metadata.text_span.is_some() && !inside_modified_container {
         let span = node.metadata.text_span.as_ref().unwrap();
         return original[span.start..span.end].to_string();
     }
 
-    // Node was modified or has no span - serialize fresh
+    // Node was modified, or has no span, or is inside a modified container - serialize fresh
     match node.value() {
-        JsonValue::Object(entries) => serialize_object_preserving(entries, original, config, depth),
+        JsonValue::Object(entries) => {
+            serialize_object_preserving(entries, original, config, depth, node.is_modified())
+        }
         JsonValue::Array(elements) | JsonValue::JsonlRoot(elements) => {
-            serialize_array_preserving(elements, original, config, depth)
+            serialize_array_preserving(elements, original, config, depth, node.is_modified())
         }
         _ => serialize_node(node, config.indent_size, depth),
     }
 }
 
 /// Serializes an object with format preservation for children.
+///
+/// # Arguments
+///
+/// * `container_is_modified` - True if this container node itself is marked as modified.
+///   When true, all children must be serialized fresh (not extracted from original source)
+///   because the container modification invalidated child byte positions.
 fn serialize_object_preserving(
     entries: &[(String, JsonNode)],
     original: &str,
     config: &Config,
     depth: usize,
+    container_is_modified: bool,
 ) -> String {
     if entries.is_empty() {
         return "{}".to_string();
@@ -202,6 +220,7 @@ fn serialize_object_preserving(
             original,
             config,
             depth + 1,
+            container_is_modified, // Pass flag to prevent extracting invalid spans
         ));
         if i < entries.len() - 1 {
             result.push(',');
@@ -214,11 +233,18 @@ fn serialize_object_preserving(
 }
 
 /// Serializes an array with format preservation for children.
+///
+/// # Arguments
+///
+/// * `container_is_modified` - True if this container node itself is marked as modified.
+///   When true, all children must be serialized fresh (not extracted from original source)
+///   because the container modification invalidated child byte positions.
 fn serialize_array_preserving(
     elements: &[JsonNode],
     original: &str,
     config: &Config,
     depth: usize,
+    container_is_modified: bool,
 ) -> String {
     if elements.is_empty() {
         return "[]".to_string();
@@ -235,6 +261,7 @@ fn serialize_array_preserving(
             original,
             config,
             depth + 1,
+            container_is_modified, // Pass flag to prevent extracting invalid spans
         ));
         if i < elements.len() - 1 {
             result.push(',');
@@ -680,5 +707,74 @@ mod tests {
         // Should use normalized formatting
         assert!(saved_json.contains("\"name\": \"Alice\""));
         assert!(saved_json.contains("\"age\": 30"));
+    }
+
+    #[test]
+    fn test_edit_parent_invalidates_child_spans() {
+        use crate::document::node::JsonValue;
+        use crate::document::parser::parse_json;
+        use std::fs;
+        use tempfile::NamedTempFile;
+
+        // Reproduce the exact scenario: company object with products array
+        // When we rename a key in company and add a field, the products array
+        // byte positions shift but the array itself isn't marked modified
+        let original_json = r#"{
+  "company": {
+    "name": "TechCorp",
+    "products": [
+      {
+        "id": "prod-1",
+        "title": "Product A"
+      }
+    ]
+  }
+}"#;
+
+        let mut tree = parse_json(original_json).unwrap();
+
+        // Navigate to company object and modify it
+        if let JsonValue::Object(ref mut root_entries) = tree.root_mut().value_mut() {
+            if let JsonValue::Object(ref mut company_entries) = root_entries[0].1.value_mut() {
+                // Rename "name" to "companyName" by modifying the first entry
+                company_entries[0].0 = "companyName".to_string();
+
+                // Add a new field "employees": 23
+                company_entries.insert(
+                    1,
+                    (
+                        "employees".to_string(),
+                        crate::document::node::JsonNode::new(JsonValue::Number(23.0)),
+                    ),
+                );
+            }
+        }
+
+        let config = crate::config::Config::default();
+        let temp_file = NamedTempFile::new().unwrap();
+        crate::file::saver::save_json_file(temp_file.path(), &tree, &config).unwrap();
+
+        let saved_json = fs::read_to_string(temp_file.path()).unwrap();
+
+        // The bug: products array gets corrupted because its text_span points to
+        // old byte positions, but the parent modification shifted everything
+
+        // Verify the saved JSON is valid
+        let reparsed = serde_json::from_str::<serde_json::Value>(&saved_json);
+        assert!(
+            reparsed.is_ok(),
+            "Saved JSON should be valid, but got: {}",
+            saved_json
+        );
+
+        // Verify products array is intact
+        assert!(saved_json.contains("\"products\":"));
+        assert!(saved_json.contains("\"prod-1\""));
+        assert!(saved_json.contains("\"title\": \"Product A\""));
+
+        // Verify no garbage text extraction
+        assert!(!saved_json.contains("]: n"));
+        assert!(!saved_json.contains("n\","));
+        assert!(!saved_json.contains("name\","));
     }
 }
