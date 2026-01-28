@@ -75,12 +75,12 @@ pub struct JsonNode {
 /// Metadata associated with a JSON node.
 ///
 /// This structure tracks information about a node beyond its value, including
-/// whether it has been modified since loading and its original text representation
-/// for preserving formatting during edits.
+/// whether it has been modified since loading and its byte position in the
+/// original source for format preservation.
 #[derive(Debug, Clone, PartialEq)]
 pub struct NodeMetadata {
-    /// Original formatting (whitespace, indentation)
-    pub original_text: Option<String>,
+    /// Byte range in the original JSON string (for unmodified nodes)
+    pub text_span: Option<TextSpan>,
     /// Whether this node has been modified
     pub modified: bool,
 }
@@ -148,7 +148,7 @@ impl JsonNode {
     /// Creates a new `JsonNode` with the given value.
     ///
     /// The node is marked as modified by default since it's newly created.
-    /// The original_text field is set to None.
+    /// The text_span field is set to None.
     ///
     /// # Example
     ///
@@ -162,7 +162,7 @@ impl JsonNode {
         Self {
             value,
             metadata: NodeMetadata {
-                original_text: None,
+                text_span: None,
                 modified: true,
             },
         }
@@ -246,5 +246,29 @@ mod text_span_tests {
         let span2 = span1.clone();
 
         assert_eq!(span1, span2);
+    }
+
+    #[test]
+    fn test_node_metadata_with_text_span() {
+        let metadata = NodeMetadata {
+            text_span: Some(TextSpan { start: 0, end: 10 }),
+            modified: false,
+        };
+
+        assert!(metadata.text_span.is_some());
+        assert_eq!(metadata.text_span.unwrap().start, 0);
+        assert_eq!(metadata.text_span.unwrap().end, 10);
+        assert!(!metadata.modified);
+    }
+
+    #[test]
+    fn test_node_metadata_without_text_span() {
+        let metadata = NodeMetadata {
+            text_span: None,
+            modified: true,
+        };
+
+        assert!(metadata.text_span.is_none());
+        assert!(metadata.modified);
     }
 }

@@ -91,7 +91,7 @@ use serde_json::Value as SerdeValue;
 pub fn parse_json(json_str: &str) -> Result<JsonTree> {
     let serde_value: SerdeValue = serde_json::from_str(json_str).context("Failed to parse JSON")?;
 
-    let root = convert_serde_value(serde_value, Some(json_str.to_string()));
+    let root = convert_serde_value(serde_value);
     Ok(JsonTree::new(root))
 }
 
@@ -99,42 +99,37 @@ pub fn parse_json(json_str: &str) -> Result<JsonTree> {
 ///
 /// This is a recursive function that traverses the serde_json value tree
 /// and converts each value into our internal representation with metadata.
-/// Only the root node preserves the original text; child nodes have `original_text`
-/// set to `None` since we track formatting at the document level.
+/// Text spans will be added by the span tracker in a later implementation phase.
 ///
 /// # Arguments
 ///
 /// * `value` - The `serde_json::Value` to convert
-/// * `original_text` - Optional original text representation (only used for root)
 ///
 /// # Returns
 ///
 /// Returns a `JsonNode` with:
 /// - The converted value
 /// - `modified: false` (since it's freshly parsed, not user-modified)
-/// - `original_text` preserved only for the root node
+/// - `text_span: None` (will be populated by span tracker later)
 pub fn parse_value(value: &SerdeValue) -> JsonNode {
-    convert_serde_value_impl(value, None)
+    convert_serde_value_impl(value)
 }
 
-fn convert_serde_value(value: SerdeValue, original_text: Option<String>) -> JsonNode {
-    convert_serde_value_impl(&value, original_text)
+fn convert_serde_value(value: SerdeValue) -> JsonNode {
+    convert_serde_value_impl(&value)
 }
 
-fn convert_serde_value_impl(value: &SerdeValue, original_text: Option<String>) -> JsonNode {
+fn convert_serde_value_impl(value: &SerdeValue) -> JsonNode {
     let json_value = match value {
         SerdeValue::Object(map) => {
             let entries = map
                 .iter()
-                .map(|(k, v)| (k.clone(), convert_serde_value_impl(v, None)))
+                .map(|(k, v)| (k.clone(), convert_serde_value_impl(v)))
                 .collect();
             JsonValue::Object(entries)
         }
         SerdeValue::Array(arr) => {
-            let elements = arr
-                .iter()
-                .map(|v| convert_serde_value_impl(v, None))
-                .collect();
+            let elements = arr.iter().map(convert_serde_value_impl).collect();
             JsonValue::Array(elements)
         }
         SerdeValue::String(s) => JsonValue::String(s.clone()),
@@ -146,7 +141,7 @@ fn convert_serde_value_impl(value: &SerdeValue, original_text: Option<String>) -
     JsonNode {
         value: json_value,
         metadata: NodeMetadata {
-            original_text,
+            text_span: None,
             modified: false,
         },
     }
@@ -366,13 +361,14 @@ mod tests {
     }
 
     #[test]
-    fn test_parse_preserves_original_text() {
+    fn test_parse_initializes_metadata() {
         let json = r#"{"name": "Alice"}"#;
         let tree = parse_json(json).unwrap();
 
-        // Root node should have original text
-        assert!(tree.root().metadata.original_text.is_some());
-        assert_eq!(tree.root().metadata.original_text.as_ref().unwrap(), json);
+        // Root node should have no text span initially (will be added by span tracker)
+        assert!(tree.root().metadata.text_span.is_none());
+        // Parsed nodes should not be marked as modified
+        assert!(!tree.root().is_modified());
     }
 
     #[test]
