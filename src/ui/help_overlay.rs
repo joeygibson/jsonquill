@@ -64,8 +64,8 @@ pub fn render_help_overlay(f: &mut Frame, colors: &ThemeColors, scroll: usize) {
             Span::raw("Jump to bottom of document"),
         ]),
         Line::from(vec![
-            Span::styled("  <count>g      ", Style::default().fg(colors.number)),
-            Span::raw("Jump to line <count> (e.g., 5g)"),
+            Span::styled("  <count>G/gg   ", Style::default().fg(colors.number)),
+            Span::raw("Jump to line <count> (e.g., 5G or 5gg)"),
         ]),
         Line::from(vec![
             Span::styled("  Ctrl-d        ", Style::default().fg(colors.number)),

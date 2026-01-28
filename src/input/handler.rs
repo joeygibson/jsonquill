@@ -840,9 +840,18 @@ impl InputHandler {
                     }
                 }
                 InputEvent::JumpToBottom => {
-                    state.clear_pending();
-                    state.clear_search_results();
-                    state.jump_to_bottom();
+                    // If there's a pending count, jump to that line number (vim: <count>G)
+                    if state.pending_count().is_some() {
+                        let line_num = state.get_count();
+                        state.clear_pending();
+                        state.clear_search_results();
+                        state.jump_to_line(line_num as usize);
+                    } else {
+                        // No count - jump to bottom
+                        state.clear_pending();
+                        state.clear_search_results();
+                        state.jump_to_bottom();
+                    }
                 }
                 InputEvent::HalfPageDown => {
                     state.clear_pending();

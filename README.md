@@ -133,7 +133,7 @@ jsonquill data.jsonl
 | `H` | Move to parent | Navigate to parent node without collapsing |
 | `gg` / `Home` | Jump to top of document | |
 | `G` / `End` | Jump to bottom of document | |
-| `<count>g` | Jump to line number | e.g., `10g` jumps to line 10 |
+| `<count>G` / `<count>gg` | Jump to line number | e.g., `10G` or `10gg` jumps to line 10 |
 | `Ctrl-d` | Half-page down | Scroll half page down |
 | `Ctrl-u` | Half-page up | Scroll half page up |
 | `Ctrl-f` / `PgDn` | Full-page down | Scroll full page down |

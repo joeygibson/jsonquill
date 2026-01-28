@@ -163,7 +163,7 @@ Implemented modules:
 - ✅ Paste operation (`p` inserts yanked nodes after, `P` inserts before)
 - ✅ Insert mode for editing values (strings, numbers, booleans, null)
 - ✅ Viewport scrolling (automatically scrolls when navigating off-screen)
-- ✅ Jump commands (`gg`/`Home` for top, `G`/`End` for bottom, `<count>g` for specific line)
+- ✅ Jump commands (`gg`/`Home` for top, `G`/`End` for bottom, `<count>G`/`<count>gg` for specific line)
 - ✅ Page scrolling (`Ctrl-d`/`Ctrl-u` for half-page, `Ctrl-f`/`Ctrl-b`/`PgDn`/`PgUp` for full-page)
 - ✅ Save and quit (`ZZ` saves if dirty then quits)
 - ✅ Quit with dirty check (`q` warns if unsaved, matching `:q` behavior)
@@ -215,7 +215,7 @@ C           - Fully collapse current node and all descendants
 H           - Move to parent node (without collapsing)
 gg / Home   - Jump to top of document
 G / End     - Jump to bottom of document
-<count>g    - Jump to specific line number (e.g., `10g` goes to line 10)
+<count>G or <count>gg - Jump to specific line number (e.g., `10G` or `10gg` goes to line 10)
 Ctrl-d      - Half-page down
 Ctrl-u      - Half-page up
 Ctrl-f/PgDn - Full-page down
