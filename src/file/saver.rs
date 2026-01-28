@@ -634,7 +634,8 @@ mod tests {
 
         // Parse
         let tree = parse_json(original_json).unwrap();
-        let config = Config::default();
+        let mut config = Config::default();
+        config.preserve_formatting = true; // Explicitly enable to test feature
 
         // Save
         let temp_file = NamedTempFile::new().unwrap();

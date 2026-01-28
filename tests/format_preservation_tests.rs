@@ -15,7 +15,8 @@ fn test_preserve_two_space_indent() {
 }"#;
 
     let tree = parse_json(json).unwrap();
-    let config = Config::default();
+    let mut config = Config::default();
+    config.preserve_formatting = true; // Explicitly enable to test feature
 
     let temp_file = NamedTempFile::new().unwrap();
     save_json_file(temp_file.path(), &tree, &config).unwrap();
@@ -32,7 +33,8 @@ fn test_preserve_four_space_indent() {
 }"#;
 
     let tree = parse_json(json).unwrap();
-    let config = Config::default();
+    let mut config = Config::default();
+    config.preserve_formatting = true; // Explicitly enable to test feature
 
     let temp_file = NamedTempFile::new().unwrap();
     save_json_file(temp_file.path(), &tree, &config).unwrap();
@@ -46,7 +48,8 @@ fn test_preserve_compact_format() {
     let json = r#"{"name":"Alice","age":30}"#;
 
     let tree = parse_json(json).unwrap();
-    let config = Config::default();
+    let mut config = Config::default();
+    config.preserve_formatting = true; // Explicitly enable to test feature
 
     let temp_file = NamedTempFile::new().unwrap();
     save_json_file(temp_file.path(), &tree, &config).unwrap();
@@ -64,7 +67,8 @@ fn test_preserve_array_formatting() {
 ]"#;
 
     let tree = parse_json(json).unwrap();
-    let config = Config::default();
+    let mut config = Config::default();
+    config.preserve_formatting = true; // Explicitly enable to test feature
 
     let temp_file = NamedTempFile::new().unwrap();
     save_json_file(temp_file.path(), &tree, &config).unwrap();
@@ -86,7 +90,8 @@ fn test_preserve_nested_structure() {
 }"#;
 
     let tree = parse_json(json).unwrap();
-    let config = Config::default();
+    let mut config = Config::default();
+    config.preserve_formatting = true; // Explicitly enable to test feature
 
     let temp_file = NamedTempFile::new().unwrap();
     save_json_file(temp_file.path(), &tree, &config).unwrap();
@@ -103,7 +108,8 @@ fn test_edit_single_value_preserves_rest() {
 }"#;
 
     let mut tree = parse_json(json).unwrap();
-    let config = Config::default();
+    let mut config = Config::default();
+    config.preserve_formatting = true; // Explicitly enable to test feature
 
     // First save unmodified to verify roundtrip
     let temp_file = NamedTempFile::new().unwrap();
@@ -156,7 +162,7 @@ fn test_empty_document_uses_standard_serialization() {
         JsonValue::Object(vec![]),
     ));
 
-    let config = Config::default();
+    let config = Config::default(); // Use default (format preservation disabled)
     let temp_file = NamedTempFile::new().unwrap();
     save_json_file(temp_file.path(), &tree, &config).unwrap();
 
@@ -174,7 +180,8 @@ fn test_preserve_mixed_scalar_types() {
 }"#;
 
     let tree = parse_json(json).unwrap();
-    let config = Config::default();
+    let mut config = Config::default();
+    config.preserve_formatting = true; // Explicitly enable to test feature
 
     let temp_file = NamedTempFile::new().unwrap();
     save_json_file(temp_file.path(), &tree, &config).unwrap();
