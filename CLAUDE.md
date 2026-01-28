@@ -176,6 +176,7 @@ Implemented modules:
 - ✅ Collapsed object/array previews (jless-style)
 - ✅ Mouse/trackpad scrolling (3 lines per tick, toggle with `:set mouse`/`:set nomouse`)
 - ✅ Named registers (a-z) with append mode (A-Z) and history (0-9)
+- ✅ Format preservation (whitespace, indentation for unmodified nodes)
 - ✅ All tests passing
 
 **Known Issues / TODO:**
@@ -185,7 +186,7 @@ Implemented modules:
 
 **Advanced Features:**
 - ✅ **Structural search** - `:path`, `:jp` for JSONPath-style queries
-- ❌ **No format preservation** - Original formatting not preserved on save
+- ✅ **Format preservation** - Unmodified nodes retain original formatting (whitespace, indentation)
 - ❌ **No lazy loading** - Large files (≥100MB) not optimized
 - ❌ **No advanced undo** - `g-`/`g+`, `:earlier`/`:later`, `:undolist` not implemented
 

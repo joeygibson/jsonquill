@@ -27,6 +27,7 @@ A terminal-based structural JSON editor with vim-style keybindings.
 - Line numbers (absolute and relative)
 - Configuration file support
 - Mouse/trackpad scrolling support
+- **Format Preservation**: Unmodified JSON nodes retain their exact original formatting (whitespace, indentation, newlines) when saved
 
 See [CLAUDE.md](CLAUDE.md) for detailed feature list and developer documentation.
 
@@ -381,6 +382,23 @@ enable_mouse = true
 
 # File size in bytes to trigger lazy loading (default: 104857600 = 100MB)
 lazy_load_threshold = 104857600
+
+# Preserve original formatting for unmodified nodes (default: true)
+preserve_formatting = true
+```
+
+### Format Preservation
+
+JSONQuill preserves the original formatting of unmodified JSON nodes when saving files. This means:
+- Nodes you don't edit keep their exact original whitespace, indentation, and newlines
+- Only modified nodes are reformatted according to your indent settings
+- This is particularly useful for large JSON files where you only need to edit specific values
+
+You can disable format preservation if you want all output to be reformatted consistently:
+
+```toml
+# Preserve original formatting for unmodified nodes (default: true)
+preserve_formatting = true
 ```
 
 ### Saving Settings
