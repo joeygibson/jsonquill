@@ -248,8 +248,10 @@ mod tests {
 
     #[test]
     fn test_preserve_formatting_can_be_disabled() {
-        let mut config = Config::default();
-        config.preserve_formatting = false;
+        let config = Config {
+            preserve_formatting: false,
+            ..Default::default()
+        };
         assert!(!config.preserve_formatting);
     }
 }

@@ -179,12 +179,17 @@ fn serialize_preserving_format(
     }
 
     // Node was modified, or has no span, or is inside a modified container - serialize fresh
+    // CRITICAL: Propagate the inside_modified_container flag down the tree
+    // If we're already inside a modified container OR this node is modified,
+    // then all descendants are inside a modified container
+    let propagate_flag = inside_modified_container || node.is_modified();
+
     match node.value() {
         JsonValue::Object(entries) => {
-            serialize_object_preserving(entries, original, config, depth, node.is_modified())
+            serialize_object_preserving(entries, original, config, depth, propagate_flag)
         }
         JsonValue::Array(elements) | JsonValue::JsonlRoot(elements) => {
-            serialize_array_preserving(elements, original, config, depth, node.is_modified())
+            serialize_array_preserving(elements, original, config, depth, propagate_flag)
         }
         _ => serialize_node(node, config.indent_size, depth),
     }
@@ -634,8 +639,10 @@ mod tests {
 
         // Parse
         let tree = parse_json(original_json).unwrap();
-        let mut config = Config::default();
-        config.preserve_formatting = true; // Explicitly enable to test feature
+        let config = Config {
+            preserve_formatting: true,
+            ..Default::default()
+        };
 
         // Save
         let temp_file = NamedTempFile::new().unwrap();
@@ -695,8 +702,10 @@ mod tests {
         let tree = parse_json(original_json).unwrap();
 
         // Disable format preservation
-        let mut config = Config::default();
-        config.preserve_formatting = false;
+        let config = Config {
+            preserve_formatting: false,
+            ..Default::default()
+        };
 
         // Save
         let temp_file = NamedTempFile::new().unwrap();
