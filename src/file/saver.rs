@@ -76,12 +76,19 @@ pub fn save_json_file<P: AsRef<Path>>(path: P, tree: &JsonTree, config: &Config)
     }
 
     // Serialize with format preservation if original source is available
-    let json_str = if let Some(original) = tree.original_source() {
+    let mut json_str = if let Some(original) = tree.original_source() {
         serialize_preserving_format(tree.root(), original, config, 0)
     } else {
         // No original source, use standard serialization
         serialize_node(tree.root(), config.indent_size, 0)
     };
+
+    // Preserve trailing newline from original if present
+    if let Some(original) = tree.original_source() {
+        if original.ends_with('\n') && !json_str.ends_with('\n') {
+            json_str.push('\n');
+        }
+    }
 
     // Write to temp file first (atomic save)
     let temp_path = path.with_extension("tmp");
