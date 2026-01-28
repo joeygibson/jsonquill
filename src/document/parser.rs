@@ -102,7 +102,15 @@ impl<'a> SpanTracker<'a> {
             while self.pos < self.source.len() {
                 match self.source.as_bytes()[self.pos] {
                     b'\\' => {
-                        self.pos += 2; // Skip escape sequence
+                        self.pos += 1; // Move past backslash
+                        if self.pos < self.source.len() {
+                            let next_byte = self.source.as_bytes()[self.pos];
+                            if next_byte == b'u' {
+                                self.pos += 5; // \uXXXX is 6 bytes total, already moved past \
+                            } else {
+                                self.pos += 1; // Standard 2-byte escape
+                            }
+                        }
                     }
                     b'"' => {
                         self.pos += 1; // Skip closing quote
@@ -124,7 +132,7 @@ impl<'a> SpanTracker<'a> {
         let mut escape_next = false;
 
         while self.pos < self.source.len() {
-            let ch = self.source.chars().nth(self.pos - self.source.char_indices().take(self.pos).count()).unwrap_or('\0');
+            let ch = self.source[self.pos..].chars().next().unwrap_or('\0');
 
             if escape_next {
                 escape_next = false;
@@ -312,10 +320,6 @@ fn convert_with_spans(value: &SerdeValue, tracker: &mut SpanTracker) -> JsonNode
 /// - `text_span: None` (will be populated by span tracker later)
 pub fn parse_value(value: &SerdeValue) -> JsonNode {
     convert_serde_value_impl(value)
-}
-
-fn convert_serde_value(value: SerdeValue) -> JsonNode {
-    convert_serde_value_impl(&value)
 }
 
 fn convert_serde_value_impl(value: &SerdeValue) -> JsonNode {
@@ -700,5 +704,30 @@ mod tests {
         let tree = parse_json(json).unwrap();
 
         assert_eq!(tree.original_source(), Some(json));
+    }
+
+    #[test]
+    fn test_parse_unicode_escape_in_string() {
+        let json = r#"{"emoji": "Hello\u0041World", "chinese": "\u4f60\u597d"}"#;
+        let tree = parse_json(json).unwrap();
+
+        match tree.root().value() {
+            JsonValue::Object(entries) => {
+                assert_eq!(entries.len(), 2);
+
+                // Check Unicode escape sequence \u0041 (A)
+                match entries[0].1.value() {
+                    JsonValue::String(s) => assert_eq!(s, "HelloAWorld"),
+                    _ => panic!("Expected string"),
+                }
+
+                // Check Unicode escape sequences for Chinese characters
+                match entries[1].1.value() {
+                    JsonValue::String(s) => assert_eq!(s, "你好"),
+                    _ => panic!("Expected string"),
+                }
+            }
+            _ => panic!("Expected object"),
+        }
     }
 }
