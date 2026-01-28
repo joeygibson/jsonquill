@@ -144,17 +144,17 @@ fn test_disable_preservation() {
     let saved = fs::read_to_string(temp_file.path()).unwrap();
 
     // Should use normalized formatting - check for clean formatting without odd spacing
-    assert!(!saved.contains("\"name\":    "));  // Not odd spacing
-    assert!(!saved.contains("\"age\":     "));  // Not odd spacing
+    assert!(!saved.contains("\"name\":    ")); // Not odd spacing
+    assert!(!saved.contains("\"age\":     ")); // Not odd spacing
     assert!(saved.contains("\"name\": \"Alice\""));
     assert!(saved.contains("\"age\": 30"));
 }
 
 #[test]
 fn test_empty_document_uses_standard_serialization() {
-    let tree = jsonquill::document::tree::JsonTree::new(
-        jsonquill::document::node::JsonNode::new(JsonValue::Object(vec![]))
-    );
+    let tree = jsonquill::document::tree::JsonTree::new(jsonquill::document::node::JsonNode::new(
+        JsonValue::Object(vec![]),
+    ));
 
     let config = Config::default();
     let temp_file = NamedTempFile::new().unwrap();

@@ -64,18 +64,10 @@ impl<'a> SpanTracker<'a> {
                 self.pos += 5; // "false"
                 self.pos
             }
-            SerdeValue::Number(_) => {
-                self.find_number_end()
-            }
-            SerdeValue::String(_) => {
-                self.find_string_end()
-            }
-            SerdeValue::Array(_) => {
-                self.find_container_end('[', ']')
-            }
-            SerdeValue::Object(_) => {
-                self.find_container_end('{', '}')
-            }
+            SerdeValue::Number(_) => self.find_number_end(),
+            SerdeValue::String(_) => self.find_string_end(),
+            SerdeValue::Array(_) => self.find_container_end('[', ']'),
+            SerdeValue::Object(_) => self.find_container_end('{', '}'),
         };
 
         TextSpan { start, end }
@@ -85,7 +77,13 @@ impl<'a> SpanTracker<'a> {
     fn find_number_end(&mut self) -> usize {
         while self.pos < self.source.len() {
             let ch = self.source.as_bytes()[self.pos];
-            if ch.is_ascii_digit() || ch == b'-' || ch == b'+' || ch == b'.' || ch == b'e' || ch == b'E' {
+            if ch.is_ascii_digit()
+                || ch == b'-'
+                || ch == b'+'
+                || ch == b'.'
+                || ch == b'e'
+                || ch == b'E'
+            {
                 self.pos += 1;
             } else {
                 break;
@@ -252,7 +250,9 @@ fn convert_with_spans(value: &SerdeValue, tracker: &mut SpanTracker) -> JsonNode
                     tracker.find_string_end();
                     tracker.skip_whitespace();
                     // Skip the colon
-                    if tracker.pos < tracker.source.len() && tracker.source.as_bytes()[tracker.pos] == b':' {
+                    if tracker.pos < tracker.source.len()
+                        && tracker.source.as_bytes()[tracker.pos] == b':'
+                    {
                         tracker.pos += 1;
                     }
                     tracker.skip_whitespace();
@@ -261,7 +261,9 @@ fn convert_with_spans(value: &SerdeValue, tracker: &mut SpanTracker) -> JsonNode
 
                     tracker.skip_whitespace();
                     // Skip comma if present
-                    if tracker.pos < tracker.source.len() && tracker.source.as_bytes()[tracker.pos] == b',' {
+                    if tracker.pos < tracker.source.len()
+                        && tracker.source.as_bytes()[tracker.pos] == b','
+                    {
                         tracker.pos += 1;
                     }
 
@@ -279,7 +281,9 @@ fn convert_with_spans(value: &SerdeValue, tracker: &mut SpanTracker) -> JsonNode
                     let node = convert_with_spans(v, tracker);
                     tracker.skip_whitespace();
                     // Skip comma if present
-                    if tracker.pos < tracker.source.len() && tracker.source.as_bytes()[tracker.pos] == b',' {
+                    if tracker.pos < tracker.source.len()
+                        && tracker.source.as_bytes()[tracker.pos] == b','
+                    {
                         tracker.pos += 1;
                     }
                     node
