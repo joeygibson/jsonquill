@@ -115,13 +115,12 @@ fn main() -> Result<()> {
         InputHandler::new()
     };
 
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new(tree, theme_name.to_string());
     if let Some(name) = filename {
         state.set_filename(name);
     }
 
-    // Apply config settings
-    state.set_current_theme(theme_name.to_string());
+    // Apply config settings (theme already set in constructor)
     state.set_show_line_numbers(config.show_line_numbers);
     state.set_relative_line_numbers(config.relative_line_numbers);
     state.set_enable_mouse(config.enable_mouse);

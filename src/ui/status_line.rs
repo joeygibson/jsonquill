@@ -36,7 +36,7 @@ use ratatui::{
 /// use jsonquill::theme;
 ///
 /// # fn example(f: &mut Frame, area: Rect) {
-/// let state = EditorState::new(jsonquill::document::tree::JsonTree::new(
+/// let state = EditorState::new_with_default_theme(jsonquill::document::tree::JsonTree::new(
 ///     jsonquill::document::node::JsonNode::new(
 ///         jsonquill::document::node::JsonValue::Null
 ///     )
@@ -168,7 +168,7 @@ mod tests {
         let backend = TestBackend::new(80, 3);
         let mut terminal = Terminal::new(backend).unwrap();
         let tree = JsonTree::new(JsonNode::new(JsonValue::Null));
-        let state = EditorState::new(tree);
+        let state = EditorState::new_with_default_theme(tree);
         let theme = theme::get_builtin_theme("default-dark").unwrap();
 
         terminal
@@ -195,7 +195,7 @@ mod tests {
         let backend = TestBackend::new(80, 3);
         let mut terminal = Terminal::new(backend).unwrap();
         let tree = JsonTree::new(JsonNode::new(JsonValue::Null));
-        let mut state = EditorState::new(tree);
+        let mut state = EditorState::new_with_default_theme(tree);
         state.set_filename("test.json".to_string());
         let theme = theme::get_builtin_theme("default-dark").unwrap();
 
@@ -222,7 +222,7 @@ mod tests {
         let backend = TestBackend::new(80, 3);
         let mut terminal = Terminal::new(backend).unwrap();
         let tree = JsonTree::new(JsonNode::new(JsonValue::Null));
-        let mut state = EditorState::new(tree);
+        let mut state = EditorState::new_with_default_theme(tree);
         state.mark_dirty();
         let theme = theme::get_builtin_theme("default-dark").unwrap();
 
@@ -249,7 +249,7 @@ mod tests {
         let backend = TestBackend::new(80, 3);
         let mut terminal = Terminal::new(backend).unwrap();
         let tree = JsonTree::new(JsonNode::new(JsonValue::Null));
-        let mut state = EditorState::new(tree);
+        let mut state = EditorState::new_with_default_theme(tree);
         state.set_filename("clean.json".to_string());
         // Don't mark as dirty
         let theme = theme::get_builtin_theme("default-dark").unwrap();
@@ -280,7 +280,7 @@ mod tests {
         let theme = theme::get_builtin_theme("default-dark").unwrap();
 
         // Test NORMAL mode
-        let state = EditorState::new(tree);
+        let state = EditorState::new_with_default_theme(tree);
         terminal
             .draw(|f| {
                 render_status_line(f, f.area(), &state, &theme.colors);
@@ -314,7 +314,7 @@ mod tests {
             ))])),
         )])));
 
-        let mut state = EditorState::new(tree);
+        let mut state = EditorState::new_with_default_theme(tree);
         state.set_filename("test.json".to_string());
 
         // Execute JSONPath search
@@ -361,7 +361,7 @@ mod tests {
             ))])),
         )])));
 
-        let mut state = EditorState::new(tree);
+        let mut state = EditorState::new_with_default_theme(tree);
         state.set_filename("test.json".to_string());
 
         // Navigate to users[0].name
@@ -397,7 +397,7 @@ mod tests {
         // Create empty object - cursor will be at root since there are no children
         let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![])));
 
-        let mut state = EditorState::new(tree);
+        let mut state = EditorState::new_with_default_theme(tree);
         state.set_filename("test.json".to_string());
 
         let theme = theme::get_builtin_theme("default-dark").unwrap();
@@ -446,7 +446,7 @@ mod tests {
             )])),
         )])));
 
-        let mut state = EditorState::new(tree);
+        let mut state = EditorState::new_with_default_theme(tree);
         state.set_filename("test.json".to_string());
 
         // Navigate to top-level "users" key (first move_down)
@@ -488,7 +488,7 @@ mod tests {
             ))])),
         )])));
 
-        let mut state = EditorState::new(tree);
+        let mut state = EditorState::new_with_default_theme(tree);
         state.set_filename("test.json".to_string());
 
         // Navigate to users[0].name (has a path)

@@ -25,7 +25,7 @@
 //!
 //! // Create an editor state with an empty object
 //! let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![])));
-//! let mut state = EditorState::new(tree);
+//! let mut state = EditorState::new_with_default_theme(tree);
 //!
 //! // Starts in Normal mode, not dirty
 //! assert_eq!(state.mode(), &EditorMode::Normal);
@@ -54,6 +54,39 @@ pub enum SearchType {
     Text,
     /// JSONPath structural search (:path or :jp)
     JsonPath(String), // Store the query string for display
+}
+
+/// State for the interactive theme picker popup.
+#[derive(Debug, Clone)]
+pub struct ThemePickerState {
+    /// List of available theme names
+    pub themes: Vec<String>,
+    /// Index of currently selected theme
+    pub selected_index: usize,
+    /// Theme that was active when picker opened (for cancel)
+    pub original_theme: String,
+    /// Currently applied theme (for UI label)
+    pub current_theme: String,
+}
+
+impl ThemePickerState {
+    /// Creates a new theme picker state.
+    ///
+    /// Initializes with the list of available themes and sets the selected
+    /// index to the current theme if found, otherwise defaults to 0.
+    pub fn new(current_theme: String) -> Self {
+        let themes = crate::theme::list_builtin_themes();
+
+        // Find index of current theme
+        let selected_index = themes.iter().position(|t| t == &current_theme).unwrap_or(0);
+
+        Self {
+            themes,
+            selected_index,
+            original_theme: current_theme.clone(),
+            current_theme,
+        }
+    }
 }
 
 /// Parses a string into a JsonValue, detecting type automatically.
@@ -111,7 +144,7 @@ pub fn parse_scalar_value_for_test(input: &str) -> JsonValue {
 /// use jsonquill::document::tree::JsonTree;
 ///
 /// let tree = JsonTree::new(JsonNode::new(JsonValue::Null));
-/// let mut state = EditorState::new(tree);
+/// let mut state = EditorState::new_with_default_theme(tree);
 ///
 /// // Check initial state
 /// assert_eq!(state.mode(), &EditorMode::Normal);
@@ -163,6 +196,8 @@ pub struct EditorState {
     help_scroll: usize,
     pending_theme: Option<String>,
     current_theme: String,
+    show_theme_picker: bool,
+    theme_picker_state: Option<ThemePickerState>,
     // Old clipboard fields - TODO: remove after register migration
     // clipboard: Option<JsonNode>,
     // clipboard_key: Option<String>,
@@ -216,12 +251,12 @@ impl EditorState {
     /// use jsonquill::document::tree::JsonTree;
     ///
     /// let tree = JsonTree::new(JsonNode::new(JsonValue::Array(vec![])));
-    /// let state = EditorState::new(tree);
+    /// let state = EditorState::new_with_default_theme(tree);
     ///
     /// assert!(!state.is_dirty());
     /// assert_eq!(state.filename(), None);
     /// ```
-    pub fn new(tree: JsonTree) -> Self {
+    pub fn new(tree: JsonTree, initial_theme_name: String) -> Self {
         let mut tree_view = TreeViewState::new();
         // Expand all nodes by default for regular JSON files
         // JSONL files start collapsed to show previews
@@ -256,7 +291,9 @@ impl EditorState {
             show_help: false,
             help_scroll: 0,
             pending_theme: None,
-            current_theme: "default-dark".to_string(),
+            current_theme: initial_theme_name,
+            show_theme_picker: false,
+            theme_picker_state: None,
             // Old clipboard init - TODO: remove after register migration
             // clipboard: None,
             // clipboard_key: None,
@@ -292,6 +329,14 @@ impl EditorState {
         }
     }
 
+    /// Creates a new editor state with a default theme (for tests).
+    ///
+    /// This is a convenience method for tests that don't care about the theme.
+    #[doc(hidden)]
+    pub fn new_with_default_theme(tree: JsonTree) -> Self {
+        Self::new(tree, "default-dark".to_string())
+    }
+
     /// Returns a reference to the JSON tree.
     ///
     /// # Examples
@@ -302,7 +347,7 @@ impl EditorState {
     /// use jsonquill::document::tree::JsonTree;
     ///
     /// let tree = JsonTree::new(JsonNode::new(JsonValue::Null));
-    /// let state = EditorState::new(tree);
+    /// let state = EditorState::new_with_default_theme(tree);
     ///
     /// let tree_ref = state.tree();
     /// // Use tree_ref for read-only operations
@@ -323,7 +368,7 @@ impl EditorState {
     /// # use jsonquill::document::tree::JsonTree;
     /// # use jsonquill::editor::state::EditorState;
     /// # let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![])));
-    /// # let mut state = EditorState::new(tree);
+    /// # let mut state = EditorState::new_with_default_theme(tree);
     /// // Modify the tree
     /// let tree = state.tree_mut();
     /// // ... make modifications ...
@@ -346,7 +391,7 @@ impl EditorState {
     /// use jsonquill::document::tree::JsonTree;
     ///
     /// let tree = JsonTree::new(JsonNode::new(JsonValue::Null));
-    /// let state = EditorState::new(tree);
+    /// let state = EditorState::new_with_default_theme(tree);
     ///
     /// assert_eq!(state.mode(), &EditorMode::Normal);
     /// ```
@@ -369,7 +414,7 @@ impl EditorState {
     /// use jsonquill::document::tree::JsonTree;
     ///
     /// let tree = JsonTree::new(JsonNode::new(JsonValue::Null));
-    /// let mut state = EditorState::new(tree);
+    /// let mut state = EditorState::new_with_default_theme(tree);
     ///
     /// state.set_mode(EditorMode::Insert);
     /// assert_eq!(state.mode(), &EditorMode::Insert);
@@ -391,7 +436,7 @@ impl EditorState {
     /// use jsonquill::document::tree::JsonTree;
     ///
     /// let tree = JsonTree::new(JsonNode::new(JsonValue::Null));
-    /// let state = EditorState::new(tree);
+    /// let state = EditorState::new_with_default_theme(tree);
     ///
     /// let cursor = state.cursor();
     /// assert_eq!(cursor.path(), &[] as &[usize]);
@@ -412,7 +457,7 @@ impl EditorState {
     /// use jsonquill::document::tree::JsonTree;
     ///
     /// let tree = JsonTree::new(JsonNode::new(JsonValue::Null));
-    /// let mut state = EditorState::new(tree);
+    /// let mut state = EditorState::new_with_default_theme(tree);
     ///
     /// state.cursor_mut().push(0);
     /// assert_eq!(state.cursor().path(), &[0]);
@@ -431,7 +476,7 @@ impl EditorState {
     /// use jsonquill::document::tree::JsonTree;
     ///
     /// let tree = JsonTree::new(JsonNode::new(JsonValue::Null));
-    /// let state = EditorState::new(tree);
+    /// let state = EditorState::new_with_default_theme(tree);
     ///
     /// assert!(!state.is_dirty());
     /// ```
@@ -451,7 +496,7 @@ impl EditorState {
     /// use jsonquill::document::tree::JsonTree;
     ///
     /// let tree = JsonTree::new(JsonNode::new(JsonValue::Null));
-    /// let mut state = EditorState::new(tree);
+    /// let mut state = EditorState::new_with_default_theme(tree);
     ///
     /// state.mark_dirty();
     /// assert!(state.is_dirty());
@@ -472,7 +517,7 @@ impl EditorState {
     /// use jsonquill::document::tree::JsonTree;
     ///
     /// let tree = JsonTree::new(JsonNode::new(JsonValue::Null));
-    /// let mut state = EditorState::new(tree);
+    /// let mut state = EditorState::new_with_default_theme(tree);
     ///
     /// state.mark_dirty();
     /// assert!(state.is_dirty());
@@ -494,7 +539,7 @@ impl EditorState {
     /// use jsonquill::document::tree::JsonTree;
     ///
     /// let tree = JsonTree::new(JsonNode::new(JsonValue::Null));
-    /// let state = EditorState::new(tree);
+    /// let state = EditorState::new_with_default_theme(tree);
     ///
     /// assert_eq!(state.filename(), None);
     /// ```
@@ -516,7 +561,7 @@ impl EditorState {
     /// use jsonquill::document::tree::JsonTree;
     ///
     /// let tree = JsonTree::new(JsonNode::new(JsonValue::Null));
-    /// let mut state = EditorState::new(tree);
+    /// let mut state = EditorState::new_with_default_theme(tree);
     ///
     /// state.set_filename("config.json".to_string());
     /// assert_eq!(state.filename(), Some("config.json"));
@@ -535,7 +580,7 @@ impl EditorState {
     /// use jsonquill::document::tree::JsonTree;
     ///
     /// let tree = JsonTree::new(JsonNode::new(JsonValue::Null));
-    /// let state = EditorState::new(tree);
+    /// let state = EditorState::new_with_default_theme(tree);
     ///
     /// let tree_view = state.tree_view();
     /// assert_eq!(tree_view.lines().len(), 0);
@@ -559,7 +604,7 @@ impl EditorState {
     /// let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![
     ///     ("key".to_string(), JsonNode::new(JsonValue::Null)),
     /// ])));
-    /// let mut state = EditorState::new(tree);
+    /// let mut state = EditorState::new_with_default_theme(tree);
     ///
     /// state.tree_view_mut().toggle_expand(&[0]);
     /// assert!(state.tree_view().is_expanded(&[0]));
@@ -581,7 +626,7 @@ impl EditorState {
     /// use jsonquill::editor::state::EditorState;
     ///
     /// let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![])));
-    /// let mut state = EditorState::new(tree);
+    /// let mut state = EditorState::new_with_default_theme(tree);
     ///
     /// // After modifying the tree:
     /// // let tree = state.tree_mut();
@@ -698,7 +743,7 @@ impl EditorState {
     ///     ("a".to_string(), JsonNode::new(JsonValue::Number(1.0))),
     ///     ("b".to_string(), JsonNode::new(JsonValue::Number(2.0))),
     /// ])));
-    /// let mut state = EditorState::new(tree);
+    /// let mut state = EditorState::new_with_default_theme(tree);
     ///
     /// // Initially at first line [0]
     /// assert_eq!(state.cursor().path(), &[0]);
@@ -747,7 +792,7 @@ impl EditorState {
     ///     ("a".to_string(), JsonNode::new(JsonValue::Number(1.0))),
     ///     ("b".to_string(), JsonNode::new(JsonValue::Number(2.0))),
     /// ])));
-    /// let mut state = EditorState::new(tree);
+    /// let mut state = EditorState::new_with_default_theme(tree);
     ///
     /// // Move to second line
     /// state.move_cursor_down();
@@ -796,7 +841,7 @@ impl EditorState {
     ///         ("name".to_string(), JsonNode::new(JsonValue::String("Alice".to_string()))),
     ///     ]))),
     /// ])));
-    /// let mut state = EditorState::new(tree);
+    /// let mut state = EditorState::new_with_default_theme(tree);
     ///
     /// // Initially expanded (auto-expansion is default) - 2 lines
     /// assert_eq!(state.tree_view().lines().len(), 2);
@@ -1130,7 +1175,7 @@ impl EditorState {
     ///     ("b".to_string(), JsonNode::new(JsonValue::Number(2.0))),
     ///     ("c".to_string(), JsonNode::new(JsonValue::Number(3.0))),
     /// ])));
-    /// let mut state = EditorState::new(tree);
+    /// let mut state = EditorState::new_with_default_theme(tree);
     ///
     /// // Initially at first sibling [0]
     /// assert_eq!(state.cursor().path(), &[0]);
@@ -1185,7 +1230,7 @@ impl EditorState {
     ///     ("b".to_string(), JsonNode::new(JsonValue::Number(2.0))),
     ///     ("c".to_string(), JsonNode::new(JsonValue::Number(3.0))),
     /// ])));
-    /// let mut state = EditorState::new(tree);
+    /// let mut state = EditorState::new_with_default_theme(tree);
     ///
     /// // Move to middle sibling
     /// state.cursor_mut().set_path(vec![1]);
@@ -1231,7 +1276,7 @@ impl EditorState {
     ///     ("b".to_string(), JsonNode::new(JsonValue::Number(2.0))),
     ///     ("c".to_string(), JsonNode::new(JsonValue::Number(3.0))),
     /// ])));
-    /// let mut state = EditorState::new(tree);
+    /// let mut state = EditorState::new_with_default_theme(tree);
     ///
     /// // Initially at first sibling [0]
     /// assert_eq!(state.cursor().path(), &[0]);
@@ -1297,7 +1342,7 @@ impl EditorState {
     ///     ("b".to_string(), JsonNode::new(JsonValue::Number(2.0))),
     ///     ("c".to_string(), JsonNode::new(JsonValue::Number(3.0))),
     /// ])));
-    /// let mut state = EditorState::new(tree);
+    /// let mut state = EditorState::new_with_default_theme(tree);
     ///
     /// // Move to last sibling first
     /// state.cursor_mut().set_path(vec![2]);
@@ -1588,6 +1633,95 @@ impl EditorState {
         self.help_scroll = self.help_scroll.saturating_sub(1);
     }
 
+    /// Returns whether the theme picker is currently visible.
+    pub fn show_theme_picker(&self) -> bool {
+        self.show_theme_picker
+    }
+
+    /// Returns a reference to the theme picker state, if active.
+    pub fn theme_picker_state(&self) -> Option<&ThemePickerState> {
+        self.theme_picker_state.as_ref()
+    }
+
+    /// Opens the interactive theme picker popup.
+    ///
+    /// Initializes the picker with the current theme and list of available themes.
+    /// Clears any existing message to avoid visual clutter.
+    pub fn open_theme_picker(&mut self) {
+        let current = self.current_theme.clone();
+        self.theme_picker_state = Some(ThemePickerState::new(current));
+        self.show_theme_picker = true;
+        self.clear_message();
+    }
+
+    /// Moves the theme picker selection to the previous theme.
+    ///
+    /// Applies the theme immediately for live preview.
+    pub fn theme_picker_previous(&mut self) {
+        if let Some(picker) = &mut self.theme_picker_state {
+            if picker.selected_index > 0 {
+                picker.selected_index -= 1;
+                let theme = picker.themes[picker.selected_index].clone();
+                self.preview_theme(&theme);
+            }
+        }
+    }
+
+    /// Moves the theme picker selection to the next theme.
+    ///
+    /// Applies the theme immediately for live preview.
+    pub fn theme_picker_next(&mut self) {
+        if let Some(picker) = &mut self.theme_picker_state {
+            if picker.selected_index < picker.themes.len() - 1 {
+                picker.selected_index += 1;
+                let theme = picker.themes[picker.selected_index].clone();
+                self.preview_theme(&theme);
+            }
+        }
+    }
+
+    /// Applies the currently selected theme in the picker.
+    ///
+    /// Helper method that previews a theme by requesting a theme change
+    /// and updating the picker's current_theme field.
+    fn preview_theme(&mut self, theme_name: &str) {
+        self.request_theme_change(theme_name.to_string());
+        if let Some(picker) = &mut self.theme_picker_state {
+            picker.current_theme = theme_name.to_string();
+        }
+    }
+
+    /// Applies the selected theme and closes the picker.
+    ///
+    /// The theme has already been applied via live preview, so this just
+    /// updates the state and closes the picker.
+    pub fn theme_picker_apply(&mut self) {
+        if let Some(picker) = &self.theme_picker_state {
+            // Theme already applied via preview
+            self.current_theme = picker.current_theme.clone();
+        }
+        self.theme_picker_state = None;
+        self.show_theme_picker = false;
+    }
+
+    /// Cancels theme selection and reverts to the original theme.
+    ///
+    /// Closes the picker and restores the theme that was active when
+    /// the picker was opened.
+    pub fn theme_picker_cancel(&mut self) {
+        let original_theme = self
+            .theme_picker_state
+            .as_ref()
+            .map(|p| p.original_theme.clone());
+
+        if let Some(theme) = original_theme {
+            self.request_theme_change(theme);
+        }
+
+        self.theme_picker_state = None;
+        self.show_theme_picker = false;
+    }
+
     /// Returns the pending theme name if there is one, consuming it.
     pub fn take_pending_theme(&mut self) -> Option<String> {
         self.pending_theme.take()
@@ -1811,7 +1945,7 @@ impl EditorState {
     ///     "key".to_string(),
     ///     JsonNode::new(JsonValue::String("value".to_string())),
     /// )])));
-    /// let mut state = EditorState::new(tree);
+    /// let mut state = EditorState::new_with_default_theme(tree);
     /// // Cursor starts at first visible line ("key")
     /// assert_eq!(state.get_current_path(), "key");
     ///
@@ -3396,7 +3530,7 @@ mod tests {
             ))])),
         )])));
 
-        let mut state = EditorState::new(tree);
+        let mut state = EditorState::new_with_default_theme(tree);
 
         // Cursor starts at first visible line (the "users" key)
         assert_eq!(state.get_current_path(), "users");
@@ -3428,7 +3562,7 @@ mod tests {
             )])),
         ])));
 
-        let mut state = EditorState::new(tree);
+        let mut state = EditorState::new_with_default_theme(tree);
 
         // JSONL starts collapsed, cursor at first line
         assert_eq!(state.get_current_path(), "[0]");
@@ -3455,7 +3589,7 @@ mod tests {
     #[test]
     fn test_editor_state_has_registers() {
         let tree = JsonTree::new(JsonNode::new(JsonValue::Null));
-        let state = EditorState::new(tree);
+        let state = EditorState::new_with_default_theme(tree);
 
         // Should start with empty registers
         assert!(state.get_unnamed_register().is_empty());
@@ -3470,7 +3604,7 @@ mod tests {
             JsonNode::new(JsonValue::String("value".to_string())),
         )])));
 
-        let mut state = EditorState::new(tree);
+        let mut state = EditorState::new_with_default_theme(tree);
         // Cursor starts at first visible line (the "key" field at path [0])
 
         // Yank to register 'a'
@@ -3489,7 +3623,7 @@ mod tests {
             JsonValue::String("existing".to_string()),
         )])));
 
-        let mut state = EditorState::new(tree);
+        let mut state = EditorState::new_with_default_theme(tree);
 
         // Expand the array to see its contents
         state.toggle_expand_at_cursor();
@@ -3515,7 +3649,7 @@ mod tests {
             JsonValue::String("existing".to_string()),
         )])));
 
-        let mut state = EditorState::new(tree);
+        let mut state = EditorState::new_with_default_theme(tree);
 
         // Expand the array to see its contents
         state.toggle_expand_at_cursor();
@@ -3542,7 +3676,7 @@ mod tests {
             JsonNode::new(JsonValue::Number(2.0)),
         ])));
 
-        let mut state = EditorState::new(tree);
+        let mut state = EditorState::new_with_default_theme(tree);
 
         // Expand array to see elements
         state.toggle_expand_at_cursor();

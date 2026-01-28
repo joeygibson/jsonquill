@@ -13,7 +13,7 @@ fn test_full_edit_workflow() {
         ),
         ("age".to_string(), JsonNode::new(JsonValue::Number(30.0))),
     ])));
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
 
     // Start editing first field (name)
     state.cursor_mut().set_path(vec![0]);
@@ -46,7 +46,7 @@ fn test_full_delete_workflow() {
         ("b".to_string(), JsonNode::new(JsonValue::Number(2.0))),
         ("c".to_string(), JsonNode::new(JsonValue::Number(3.0))),
     ])));
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
 
     // Delete middle element
     state.cursor_mut().set_path(vec![1]);
@@ -63,7 +63,7 @@ fn test_full_yank_paste_workflow() {
         JsonNode::new(JsonValue::Number(1.0)),
         JsonNode::new(JsonValue::Number(2.0)),
     ])));
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
 
     // Yank first element
     state.cursor_mut().set_path(vec![0]);
@@ -83,7 +83,7 @@ fn test_edit_cancel_workflow() {
         "name".to_string(),
         JsonNode::new(JsonValue::String("Alice".to_string())),
     )])));
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
 
     // Start editing
     state.cursor_mut().set_path(vec![0]);
@@ -109,7 +109,7 @@ fn test_edit_cancel_workflow() {
 #[test]
 fn test_count_accumulation() {
     let tree = JsonTree::new(JsonNode::new(JsonValue::Null));
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
 
     // Initially no count
     assert_eq!(state.pending_count(), None);
@@ -140,7 +140,7 @@ fn test_count_with_delete() {
         JsonNode::new(JsonValue::Number(4.0)),
         JsonNode::new(JsonValue::Number(5.0)),
     ])));
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
 
     // Cursor starts at root, move to first element
     state.move_cursor_down();
@@ -176,7 +176,7 @@ fn test_count_with_yank() {
         ("b".to_string(), JsonNode::new(JsonValue::Number(2.0))),
         ("c".to_string(), JsonNode::new(JsonValue::Number(3.0))),
     ])));
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
 
     // Move to first node
     state.move_cursor_down();
@@ -208,7 +208,7 @@ fn test_count_with_movement_down() {
         JsonNode::new(JsonValue::Number(4.0)),
         JsonNode::new(JsonValue::Number(5.0)),
     ])));
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
 
     // Cursor starts at first element [0]
     assert_eq!(state.cursor().path(), &[0]);
@@ -235,7 +235,7 @@ fn test_count_with_movement_up() {
         JsonNode::new(JsonValue::Number(4.0)),
         JsonNode::new(JsonValue::Number(5.0)),
     ])));
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
 
     // Move to last element
     state.jump_to_bottom();
@@ -263,7 +263,7 @@ fn test_jump_to_line() {
         JsonNode::new(JsonValue::Number(4.0)),
         JsonNode::new(JsonValue::Number(5.0)),
     ])));
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
 
     // Jump to line 3 (1-based, so element at index 2)
     state.jump_to_line(3);
@@ -293,7 +293,7 @@ fn test_cursor_position() {
         JsonNode::new(JsonValue::Number(2.0)),
         JsonNode::new(JsonValue::Number(3.0)),
     ])));
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
 
     // Cursor starts at first line (0-indexed element 0 = 1-indexed line 1)
     let (row, col) = state.cursor_position();
@@ -326,7 +326,7 @@ fn test_add_string_to_array() {
         JsonNode::new(JsonValue::Number(1.0)),
         JsonNode::new(JsonValue::Number(2.0)),
     ])));
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
 
     // Move cursor to first element
     state.cursor_mut().set_path(vec![0]);
@@ -367,7 +367,7 @@ fn test_add_number_to_array() {
     let tree = JsonTree::new(JsonNode::new(JsonValue::Array(vec![JsonNode::new(
         JsonValue::Number(1.0),
     )])));
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
 
     state.cursor_mut().set_path(vec![0]);
     state.start_add_operation();
@@ -397,7 +397,7 @@ fn test_add_field_to_object() {
         "name".to_string(),
         JsonNode::new(JsonValue::String("Alice".to_string())),
     )])));
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
 
     state.cursor_mut().set_path(vec![0]);
     state.start_add_operation();
@@ -440,7 +440,7 @@ fn test_add_with_empty_key_fails() {
         "name".to_string(),
         JsonNode::new(JsonValue::String("Alice".to_string())),
     )])));
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
 
     state.cursor_mut().set_path(vec![0]);
     state.start_add_operation();
@@ -473,7 +473,7 @@ fn test_cancel_add_during_value_entry() {
     let tree = JsonTree::new(JsonNode::new(JsonValue::Array(vec![JsonNode::new(
         JsonValue::Number(1.0),
     )])));
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
 
     state.cursor_mut().set_path(vec![0]);
     state.start_add_operation();
@@ -505,7 +505,7 @@ fn test_add_boolean_to_array() {
     let tree = JsonTree::new(JsonNode::new(JsonValue::Array(vec![JsonNode::new(
         JsonValue::Number(1.0),
     )])));
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
 
     state.cursor_mut().set_path(vec![0]);
     state.start_add_operation();
@@ -533,7 +533,7 @@ fn test_add_null_to_array() {
     let tree = JsonTree::new(JsonNode::new(JsonValue::Array(vec![JsonNode::new(
         JsonValue::Number(1.0),
     )])));
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
 
     state.cursor_mut().set_path(vec![0]);
     state.start_add_operation();
@@ -558,7 +558,7 @@ fn test_add_creates_undo_checkpoint() {
     let tree = JsonTree::new(JsonNode::new(JsonValue::Array(vec![JsonNode::new(
         JsonValue::Number(1.0),
     )])));
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
 
     state.cursor_mut().set_path(vec![0]);
     state.start_add_operation();
@@ -590,7 +590,7 @@ fn test_cursor_moves_to_new_node() {
         JsonNode::new(JsonValue::Number(1.0)),
         JsonNode::new(JsonValue::Number(2.0)),
     ])));
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
 
     // Start at first element
     state.cursor_mut().set_path(vec![0]);
@@ -613,7 +613,7 @@ fn test_add_to_root_scalar_fails() {
     use jsonquill::editor::state::{EditorState, MessageLevel};
 
     let tree = JsonTree::new(JsonNode::new(JsonValue::Number(42.0)));
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
 
     // Cursor is at root
     state.start_add_operation();
@@ -652,7 +652,7 @@ fn test_add_field_preserves_sibling_expansion_state() {
             JsonNode::new(JsonValue::Object(inner2)),
         ),
     ])));
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
 
     // Expand both nested objects
     if !state.tree_view().is_expanded(&[0]) {
@@ -725,7 +725,7 @@ fn test_add_field_preserves_child_expansion_state() {
         "company".to_string(),
         JsonNode::new(JsonValue::Object(company)),
     )])));
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
 
     // Expand the nested structure:
     // [0] = company object
@@ -823,7 +823,7 @@ fn test_add_field_with_detailed_expansion_tracking() {
         "company".to_string(),
         JsonNode::new(JsonValue::Object(company)),
     )])));
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
 
     // EditorState::new() auto-expands all nodes, so they should already be expanded
     println!("Initial expansion state (should all be true):");
@@ -910,7 +910,7 @@ fn test_add_object_with_o() {
     let tree = JsonTree::new(JsonNode::new(JsonValue::Array(vec![JsonNode::new(
         JsonValue::Number(1.0),
     )])));
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
 
     // Move to first element
     state.cursor_mut().set_path(vec![0]);
@@ -939,7 +939,7 @@ fn test_add_array_with_capital_a() {
     let tree = JsonTree::new(JsonNode::new(JsonValue::Array(vec![JsonNode::new(
         JsonValue::Number(1.0),
     )])));
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
 
     state.cursor_mut().set_path(vec![0]);
 
@@ -967,7 +967,7 @@ fn test_add_container_to_object_requires_key() {
         "name".to_string(),
         JsonNode::new(JsonValue::String("Alice".to_string())),
     )])));
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
 
     state.cursor_mut().set_path(vec![0]);
 
@@ -1005,7 +1005,7 @@ fn test_add_to_empty_array_with_a() {
 
     // Create empty array
     let tree = JsonTree::new(JsonNode::new(JsonValue::Array(vec![])));
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
 
     // Cursor is at root (the array itself)
     assert_eq!(state.cursor().path(), &[] as &[usize]);
@@ -1038,7 +1038,7 @@ fn test_add_to_empty_container_created_with_capital_a() {
     let tree = JsonTree::new(JsonNode::new(JsonValue::Array(vec![JsonNode::new(
         JsonValue::Number(1.0),
     )])));
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
 
     state.cursor_mut().set_path(vec![0]);
 
@@ -1076,7 +1076,7 @@ fn test_rename_object_key() {
         "oldName".to_string(),
         JsonNode::new(JsonValue::String("value".to_string())),
     )])));
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
 
     state.cursor_mut().set_path(vec![0]);
 
@@ -1116,7 +1116,7 @@ fn test_rename_array_element_fails() {
     let tree = JsonTree::new(JsonNode::new(JsonValue::Array(vec![JsonNode::new(
         JsonValue::Number(1.0),
     )])));
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
 
     state.cursor_mut().set_path(vec![0]);
 
@@ -1145,7 +1145,7 @@ fn test_rename_duplicate_key_fails() {
         ("first".to_string(), JsonNode::new(JsonValue::Number(1.0))),
         ("second".to_string(), JsonNode::new(JsonValue::Number(2.0))),
     ])));
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
 
     // Try to rename "first" to "second" (which already exists)
     state.cursor_mut().set_path(vec![0]);
@@ -1172,7 +1172,7 @@ fn test_rename_cancel() {
         "original".to_string(),
         JsonNode::new(JsonValue::Number(1.0)),
     )])));
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
 
     state.cursor_mut().set_path(vec![0]);
     state.start_rename_operation();
@@ -1205,7 +1205,7 @@ fn test_rename_creates_undo_checkpoint() {
         "before".to_string(),
         JsonNode::new(JsonValue::Number(1.0)),
     )])));
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
 
     state.cursor_mut().set_path(vec![0]);
     state.start_rename_operation();
@@ -1292,7 +1292,7 @@ fn test_add_object_after_scalar_preserves_nested_sibling_expansion() {
         "company".to_string(),
         JsonNode::new(JsonValue::Object(company)),
     )])));
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
 
     // Verify deep nesting is expanded
     assert!(state.tree_view().is_expanded(&[0])); // company
@@ -1357,7 +1357,7 @@ fn test_expand_all_expands_entire_subtree() {
             JsonNode::new(JsonValue::String("value".to_string())),
         ),
     ])));
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
 
     // Collapse all first
     state.cursor_mut().set_path(vec![0]);
@@ -1400,7 +1400,7 @@ fn test_collapse_all_collapses_entire_subtree() {
             JsonNode::new(JsonValue::String("value".to_string())),
         ),
     ])));
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
 
     // Everything starts expanded
     assert!(state.tree_view().is_expanded(&[0]));

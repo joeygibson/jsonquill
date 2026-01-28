@@ -9,7 +9,7 @@ fn test_named_register_yank_paste() {
         JsonNode::new(JsonValue::Number(2.0)),
     ])));
 
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
     state.cursor_mut().set_path(vec![0]);
 
     // Yank to register 'a'
@@ -32,7 +32,7 @@ fn test_append_mode() {
         JsonNode::new(JsonValue::Number(2.0)),
     ])));
 
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
     state.cursor_mut().set_path(vec![0]);
 
     // Yank first node to 'a'
@@ -59,7 +59,7 @@ fn test_delete_history() {
         JsonNode::new(JsonValue::Number(3.0)),
     ])));
 
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
     state.cursor_mut().set_path(vec![0]);
 
     // Delete three nodes
@@ -79,7 +79,7 @@ fn test_yank_register_zero() {
         JsonValue::Number(1.0),
     )])));
 
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
     state.cursor_mut().set_path(vec![0]);
 
     // Yank
@@ -100,7 +100,7 @@ fn test_named_register_lowercase_uppercase() {
         JsonNode::new(JsonValue::Number(2.0)),
     ])));
 
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
     state.cursor_mut().set_path(vec![0]);
 
     // Yank to lowercase 'a'
@@ -127,7 +127,7 @@ fn test_unnamed_register_sync() {
         JsonValue::Number(42.0),
     )])));
 
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
     state.cursor_mut().set_path(vec![0]);
 
     // Yank without specifying a register (goes to unnamed)
@@ -147,7 +147,7 @@ fn test_delete_history_overflow() {
 
     let tree = JsonTree::new(JsonNode::new(JsonValue::Array(nodes)));
 
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
     state.cursor_mut().set_path(vec![0]);
 
     // Delete 10 nodes (more than history can hold)
@@ -172,7 +172,7 @@ fn test_multiple_named_registers() {
         JsonNode::new(JsonValue::Number(3.0)),
     ])));
 
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
     state.cursor_mut().set_path(vec![0]);
 
     // Yank to register 'a'
@@ -206,7 +206,7 @@ fn test_yank_count_to_named_register() {
         JsonNode::new(JsonValue::Number(3.0)),
     ])));
 
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
     state.cursor_mut().set_path(vec![0]);
 
     // Yank 2 nodes to register 'a'
@@ -227,7 +227,7 @@ fn test_paste_from_numbered_register() {
         JsonNode::new(JsonValue::Number(3.0)),
     ])));
 
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
     state.cursor_mut().set_path(vec![0]);
 
     // Delete first node (goes to "1)
@@ -251,7 +251,7 @@ fn test_register_isolation() {
         JsonNode::new(JsonValue::Number(3.0)),
     ])));
 
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
     state.cursor_mut().set_path(vec![0]);
 
     // Yank to register 'a'
@@ -275,7 +275,7 @@ fn test_register_isolation() {
 #[test]
 fn test_empty_register_get() {
     let tree = JsonTree::new(JsonNode::new(JsonValue::Null));
-    let state = EditorState::new(tree);
+    let state = EditorState::new_with_default_theme(tree);
 
     // Getting from non-existent named register should return None
     assert!(state.registers().get_named('z').is_none());
@@ -290,7 +290,7 @@ fn test_append_to_nonexistent_register() {
         JsonValue::Number(1.0),
     )])));
 
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
     state.cursor_mut().set_path(vec![0]);
 
     // Append to non-existent register 'z' (should create it)
@@ -306,7 +306,7 @@ fn test_append_to_nonexistent_register() {
 #[test]
 fn test_register_pending_state() {
     let tree = JsonTree::new(JsonNode::new(JsonValue::Null));
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
 
     // Initially no pending register
     assert!(state.get_pending_register().is_none());
@@ -323,7 +323,7 @@ fn test_register_pending_state() {
 #[test]
 fn test_append_mode_state() {
     let tree = JsonTree::new(JsonNode::new(JsonValue::Null));
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
 
     // Initially not in append mode
     assert!(!state.get_append_mode());
@@ -347,7 +347,7 @@ fn test_register_content_with_object_keys() {
         ("age".to_string(), JsonNode::new(JsonValue::Number(30.0))),
     ])));
 
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
     state.cursor_mut().set_path(vec![0]);
 
     // Yank object property to register 'a'

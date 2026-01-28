@@ -124,7 +124,7 @@ impl InputHandler {
     ///
     /// let mut handler = InputHandler::new();
     /// let tree = JsonTree::new(JsonNode::new(JsonValue::Null));
-    /// let mut state = EditorState::new(tree);
+    /// let mut state = EditorState::new_with_default_theme(tree);
     /// let event = Event::Key(Key::Char('q'));
     /// let should_quit = handler.handle_event(event, &mut state).unwrap();
     /// assert!(should_quit);
@@ -392,6 +392,32 @@ impl InputHandler {
                         return Ok(false);
                     }
                     _ => return Ok(false),
+                }
+            }
+
+            // If theme picker is shown, handle navigation and selection
+            if state.show_theme_picker() {
+                match key {
+                    Key::Up | Key::Char('k') => {
+                        state.theme_picker_previous();
+                        return Ok(false);
+                    }
+                    Key::Down | Key::Char('j') => {
+                        state.theme_picker_next();
+                        return Ok(false);
+                    }
+                    Key::Char('\n') => {
+                        state.theme_picker_apply();
+                        return Ok(false);
+                    }
+                    Key::Esc | Key::Char('q') => {
+                        state.theme_picker_cancel();
+                        return Ok(false);
+                    }
+                    _ => {
+                        // Ignore other keys when theme picker is shown
+                        return Ok(false);
+                    }
                 }
             }
 
@@ -1018,13 +1044,7 @@ impl InputHandler {
 
         // Handle :theme command
         if command == "theme" {
-            use crate::theme::list_builtin_themes;
-            let themes = list_builtin_themes();
-            let theme_list = themes.join(", ");
-            state.set_message(
-                format!("Available themes: {}", theme_list),
-                MessageLevel::Info,
-            );
+            state.open_theme_picker();
             return Ok(false);
         }
 
@@ -1381,7 +1401,7 @@ mod tests {
     fn test_quit_event() {
         let mut handler = InputHandler::new();
         let tree = JsonTree::new(JsonNode::new(JsonValue::Null));
-        let mut state = EditorState::new(tree);
+        let mut state = EditorState::new_with_default_theme(tree);
         let event = Event::Key(Key::Char('q'));
 
         let should_quit = handler.handle_event(event, &mut state).unwrap();
@@ -1392,7 +1412,7 @@ mod tests {
     fn test_quit_blocked_when_dirty() {
         let mut handler = InputHandler::new();
         let tree = JsonTree::new(JsonNode::new(JsonValue::Null));
-        let mut state = EditorState::new(tree);
+        let mut state = EditorState::new_with_default_theme(tree);
 
         // Mark the file as dirty
         state.mark_dirty();
@@ -1415,7 +1435,7 @@ mod tests {
     fn test_enter_insert_mode() {
         let mut handler = InputHandler::new();
         let tree = JsonTree::new(JsonNode::new(JsonValue::Null));
-        let mut state = EditorState::new(tree);
+        let mut state = EditorState::new_with_default_theme(tree);
         assert_eq!(*state.mode(), EditorMode::Normal);
 
         let event = Event::Key(Key::Char('e'));
@@ -1429,7 +1449,7 @@ mod tests {
     fn test_enter_command_mode() {
         let mut handler = InputHandler::new();
         let tree = JsonTree::new(JsonNode::new(JsonValue::Null));
-        let mut state = EditorState::new(tree);
+        let mut state = EditorState::new_with_default_theme(tree);
 
         let event = Event::Key(Key::Char(':'));
         handler.handle_event(event, &mut state).unwrap();
@@ -1441,7 +1461,7 @@ mod tests {
     fn test_exit_mode() {
         let mut handler = InputHandler::new();
         let tree = JsonTree::new(JsonNode::new(JsonValue::Null));
-        let mut state = EditorState::new(tree);
+        let mut state = EditorState::new_with_default_theme(tree);
         state.set_mode(EditorMode::Insert);
 
         let event = Event::Key(Key::Esc);
@@ -1454,7 +1474,7 @@ mod tests {
     fn test_movement_keys_dont_quit() {
         let mut handler = InputHandler::new();
         let tree = JsonTree::new(JsonNode::new(JsonValue::Null));
-        let mut state = EditorState::new(tree);
+        let mut state = EditorState::new_with_default_theme(tree);
 
         let event = Event::Key(Key::Char('j'));
         let should_quit = handler.handle_event(event, &mut state).unwrap();
@@ -1469,7 +1489,7 @@ mod tests {
 
         let mut handler = InputHandler::new();
         let tree = JsonTree::new(JsonNode::new(JsonValue::Number(42.0)));
-        let mut state = EditorState::new(tree);
+        let mut state = EditorState::new_with_default_theme(tree);
 
         // Create a temporary directory
         let temp_dir = TempDir::new().unwrap();
@@ -1510,7 +1530,7 @@ mod tests {
 
         let mut handler = InputHandler::new();
         let tree = JsonTree::new(JsonNode::new(JsonValue::String("test".to_string())));
-        let mut state = EditorState::new(tree);
+        let mut state = EditorState::new_with_default_theme(tree);
 
         // Create a temporary directory
         let temp_dir = TempDir::new().unwrap();

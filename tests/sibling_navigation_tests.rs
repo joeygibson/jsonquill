@@ -9,7 +9,7 @@ fn test_next_sibling_in_object() {
         ("b".to_string(), JsonNode::new(JsonValue::Number(2.0))),
         ("c".to_string(), JsonNode::new(JsonValue::Number(3.0))),
     ])));
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
 
     // Initially at first sibling [0]
     assert_eq!(state.cursor().path(), &[0]);
@@ -34,7 +34,7 @@ fn test_previous_sibling_in_object() {
         ("b".to_string(), JsonNode::new(JsonValue::Number(2.0))),
         ("c".to_string(), JsonNode::new(JsonValue::Number(3.0))),
     ])));
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
 
     // Move to last sibling first
     state.cursor_mut().set_path(vec![2]);
@@ -59,7 +59,7 @@ fn test_next_sibling_in_array() {
         JsonNode::new(JsonValue::Number(20.0)),
         JsonNode::new(JsonValue::Number(30.0)),
     ])));
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
 
     // Initially at first element [0]
     assert_eq!(state.cursor().path(), &[0]);
@@ -84,7 +84,7 @@ fn test_previous_sibling_in_array() {
         JsonNode::new(JsonValue::Number(20.0)),
         JsonNode::new(JsonValue::Number(30.0)),
     ])));
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
 
     // Move to last element first
     state.cursor_mut().set_path(vec![2]);
@@ -108,7 +108,7 @@ fn test_sibling_navigation_at_root() {
         "key".to_string(),
         JsonNode::new(JsonValue::String("value".to_string())),
     )])));
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
 
     // Move to root
     state.cursor_mut().set_path(vec![]);
@@ -135,7 +135,7 @@ fn test_sibling_navigation_in_nested_structure() {
         ),
         ("count".to_string(), JsonNode::new(JsonValue::Number(3.0))),
     ])));
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
 
     // Navigate to first array element [0, 0] (Alice)
     state.cursor_mut().set_path(vec![0, 0]);

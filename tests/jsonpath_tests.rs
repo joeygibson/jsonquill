@@ -22,7 +22,7 @@ fn test_jsonpath_search_single_match() {
         ])),
     )])));
 
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
 
     // Execute JSONPath search for $.users[0].name
     state.execute_jsonpath_search("$.users[0].name");
@@ -71,7 +71,7 @@ fn test_jsonpath_search_multiple_matches() {
         ])),
     )])));
 
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
 
     // Execute JSONPath search for $.items[*].price (all prices)
     state.execute_jsonpath_search("$.items[*].price");
@@ -114,7 +114,7 @@ fn test_jsonpath_search_no_matches() {
         JsonNode::new(JsonValue::String("bar".to_string())),
     )])));
 
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
 
     // Execute JSONPath search for non-existent path
     state.execute_jsonpath_search("$.baz");
@@ -143,7 +143,7 @@ fn test_jsonpath_search_invalid_query() {
         JsonNode::new(JsonValue::String("bar".to_string())),
     )])));
 
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
 
     // Execute invalid JSONPath search
     state.execute_jsonpath_search("$[invalid");
@@ -169,7 +169,7 @@ fn test_clear_search_resets_type() {
         JsonNode::new(JsonValue::String("bar".to_string())),
     )])));
 
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
 
     // Execute JSONPath search
     state.execute_jsonpath_search("$.foo");
@@ -200,7 +200,7 @@ fn test_clear_search_results() {
         ("age".to_string(), JsonNode::new(JsonValue::Number(30.0))),
     ])));
 
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
     state.rebuild_tree_view();
 
     // Execute a search to populate results

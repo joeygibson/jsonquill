@@ -7,6 +7,7 @@ pub mod help_overlay;
 pub mod layout;
 pub mod message_area;
 pub mod status_line;
+pub mod theme_picker;
 pub mod tree_view;
 
 use anyhow::Result;
@@ -40,7 +41,7 @@ use crate::theme::Theme;
 /// let theme = get_builtin_theme("default-dark").unwrap();
 /// let ui = UI::new(theme);
 /// let tree = JsonTree::new(JsonNode::new(JsonValue::Null));
-/// let state = EditorState::new(tree);
+/// let state = EditorState::new_with_default_theme(tree);
 /// let backend = TermionBackend::new(io::stdout().into_raw_mode().unwrap());
 /// let mut terminal = Terminal::new(backend).unwrap();
 /// // ui.render(&mut terminal, &state).unwrap();
@@ -119,7 +120,7 @@ impl UI {
     /// let theme = get_builtin_theme("default-dark").unwrap();
     /// let ui = UI::new(theme);
     /// let tree = JsonTree::new(JsonNode::new(JsonValue::Null));
-    /// let mut state = EditorState::new(tree);
+    /// let mut state = EditorState::new_with_default_theme(tree);
     /// let backend = TermionBackend::new(io::stdout().into_raw_mode().unwrap());
     /// let mut terminal = Terminal::new(backend).unwrap();
     /// ui.render(&mut terminal, &mut state).unwrap();
@@ -196,6 +197,13 @@ impl UI {
             if state.show_help() {
                 help_overlay::render_help_overlay(f, &self.theme.colors, state.help_scroll());
             }
+
+            // Theme picker overlay (rendered on top if visible)
+            if state.show_theme_picker() {
+                if let Some(picker_state) = state.theme_picker_state() {
+                    theme_picker::render_theme_picker(f, picker_state, &self.theme.colors);
+                }
+            }
         })?;
 
         Ok(())
@@ -235,7 +243,7 @@ mod tests {
         let mut terminal = Terminal::new(backend).unwrap();
 
         let tree = JsonTree::new(JsonNode::new(JsonValue::Null));
-        let mut state = EditorState::new(tree);
+        let mut state = EditorState::new_with_default_theme(tree);
         let result = ui.render(&mut terminal, &mut state);
 
         assert!(result.is_ok());
@@ -255,7 +263,7 @@ mod tests {
         let mut terminal = Terminal::new(backend).unwrap();
 
         let tree = JsonTree::new(JsonNode::new(JsonValue::Null));
-        let mut state = EditorState::new(tree);
+        let mut state = EditorState::new_with_default_theme(tree);
         state.set_filename("test.json".to_string());
         state.mark_dirty();
 

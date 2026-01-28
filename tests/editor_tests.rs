@@ -12,7 +12,7 @@ fn test_mode_starts_normal() {
 #[test]
 fn test_editor_state_creation() {
     let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![])));
-    let state = EditorState::new(tree);
+    let state = EditorState::new_with_default_theme(tree);
 
     assert_eq!(state.mode(), &EditorMode::Normal);
     assert!(!state.is_dirty());
@@ -21,7 +21,7 @@ fn test_editor_state_creation() {
 #[test]
 fn test_editor_state_set_dirty() {
     let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![])));
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
 
     state.mark_dirty();
     assert!(state.is_dirty());
@@ -30,7 +30,7 @@ fn test_editor_state_set_dirty() {
 #[test]
 fn test_editor_state_clear_dirty() {
     let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![])));
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
 
     state.mark_dirty();
     assert!(state.is_dirty());
@@ -42,7 +42,7 @@ fn test_editor_state_clear_dirty() {
 #[test]
 fn test_editor_state_mode_transitions() {
     let tree = JsonTree::new(JsonNode::new(JsonValue::Null));
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
 
     // Start in Normal mode
     assert_eq!(state.mode(), &EditorMode::Normal);
@@ -63,7 +63,7 @@ fn test_editor_state_mode_transitions() {
 #[test]
 fn test_editor_state_filename() {
     let tree = JsonTree::new(JsonNode::new(JsonValue::Null));
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
 
     // Initially no filename
     assert_eq!(state.filename(), None);
@@ -80,7 +80,7 @@ fn test_editor_state_filename() {
 #[test]
 fn test_editor_state_cursor_access() {
     let tree = JsonTree::new(JsonNode::new(JsonValue::Array(vec![])));
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
 
     // Initial cursor is at root
     assert_eq!(state.cursor().path(), &[] as &[usize]);
@@ -99,7 +99,7 @@ fn test_editor_state_cursor_access() {
 #[test]
 fn test_editor_state_tree_access() {
     let tree = JsonTree::new(JsonNode::new(JsonValue::String("test".to_string())));
-    let state = EditorState::new(tree);
+    let state = EditorState::new_with_default_theme(tree);
 
     // Access tree through immutable reference
     let tree_ref = state.tree();
@@ -110,7 +110,7 @@ fn test_editor_state_tree_access() {
 #[test]
 fn test_editor_state_tree_mut_access() {
     let tree = JsonTree::new(JsonNode::new(JsonValue::String("initial".to_string())));
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
 
     // Access tree through mutable reference
     let _tree_mut = state.tree_mut();
@@ -329,7 +329,7 @@ fn test_tree_view_initialized() {
         JsonNode::new(JsonValue::String("value".to_string())),
     )])));
 
-    let state = EditorState::new(tree);
+    let state = EditorState::new_with_default_theme(tree);
 
     // Verify tree view is initialized
     assert_eq!(state.tree_view().lines().len(), 1);
@@ -349,7 +349,7 @@ fn test_tree_view_mut_toggle() {
         )])),
     )])));
 
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
 
     // Initially expanded (auto-expansion is default)
     assert_eq!(state.tree_view().lines().len(), 2);
@@ -370,7 +370,7 @@ fn test_rebuild_tree_view() {
     use jsonquill::document::tree::JsonTree;
 
     let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![])));
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
 
     // Empty tree
     assert_eq!(state.tree_view().lines().len(), 0);
@@ -389,7 +389,7 @@ fn test_move_cursor_down_in_empty_tree() {
     use jsonquill::document::tree::JsonTree;
 
     let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![])));
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
 
     // Moving down in empty tree should do nothing
     state.move_cursor_down();
@@ -402,7 +402,7 @@ fn test_move_cursor_up_in_empty_tree() {
     use jsonquill::document::tree::JsonTree;
 
     let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![])));
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
 
     // Moving up in empty tree should do nothing
     state.move_cursor_up();
@@ -421,7 +421,7 @@ fn test_move_cursor_down_basic() {
         ("c".to_string(), JsonNode::new(JsonValue::Number(3.0))),
     ])));
 
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
 
     // Initially at [0] (first element "a")
     assert_eq!(state.cursor().path(), &[0]);
@@ -450,7 +450,7 @@ fn test_move_cursor_up_basic() {
         ("c".to_string(), JsonNode::new(JsonValue::Number(3.0))),
     ])));
 
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
 
     // Start at [2]
     state.cursor_mut().set_path(vec![2]);
@@ -479,7 +479,7 @@ fn test_move_cursor_with_invalid_position() {
         ("b".to_string(), JsonNode::new(JsonValue::Number(2.0))),
     ])));
 
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
 
     // Set cursor to invalid position
     state.cursor_mut().set_path(vec![99, 99]);
@@ -510,7 +510,7 @@ fn test_toggle_expand_at_cursor_expandable() {
         )])),
     )])));
 
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
 
     // Initially expanded (auto-expansion is default) - 2 lines visible
     assert_eq!(state.tree_view().lines().len(), 2);
@@ -542,7 +542,7 @@ fn test_toggle_expand_at_cursor_non_expandable() {
         ("age".to_string(), JsonNode::new(JsonValue::Number(30.0))),
     ])));
 
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
 
     // At [0] which is a string (not expandable)
     let initial_lines = state.tree_view().lines().len();
@@ -577,7 +577,7 @@ fn test_navigation_with_nested_expanded_tree() {
         ("count".to_string(), JsonNode::new(JsonValue::Number(42.0))),
     ])));
 
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
 
     // Initially with auto-expansion: 4 lines visible ([0]=user, [0,0]=name, [0,1]=email, [1]=count)
     assert_eq!(state.tree_view().lines().len(), 4);
@@ -621,7 +621,7 @@ fn test_navigation_with_array() {
         JsonNode::new(JsonValue::Number(3.0)),
     ])));
 
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
 
     // Start at [0]
     assert_eq!(state.cursor().path(), &[0]);
@@ -644,7 +644,7 @@ fn test_edit_buffer_starts_empty() {
     use jsonquill::document::tree::JsonTree;
 
     let tree = JsonTree::new(JsonNode::new(JsonValue::String("test".to_string())));
-    let state = EditorState::new(tree);
+    let state = EditorState::new_with_default_theme(tree);
 
     assert_eq!(state.edit_buffer(), None);
 }
@@ -658,7 +658,7 @@ fn test_start_editing_string_value() {
         "name".to_string(),
         JsonNode::new(JsonValue::String("Alice".to_string())),
     )])));
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
 
     // Move cursor to first element
     state.cursor_mut().set_path(vec![0]);
@@ -679,7 +679,7 @@ fn test_start_editing_number_value() {
         "count".to_string(),
         JsonNode::new(JsonValue::Number(42.0)),
     )])));
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
 
     state.cursor_mut().set_path(vec![0]);
     state.start_editing();
@@ -696,7 +696,7 @@ fn test_start_editing_boolean_value() {
         "active".to_string(),
         JsonNode::new(JsonValue::Boolean(true)),
     )])));
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
 
     state.cursor_mut().set_path(vec![0]);
     state.start_editing();
@@ -713,7 +713,7 @@ fn test_start_editing_null_value() {
         "data".to_string(),
         JsonNode::new(JsonValue::Null),
     )])));
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
 
     state.cursor_mut().set_path(vec![0]);
     state.start_editing();
@@ -730,7 +730,7 @@ fn test_cancel_editing() {
         "name".to_string(),
         JsonNode::new(JsonValue::String("Alice".to_string())),
     )])));
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
 
     state.cursor_mut().set_path(vec![0]);
     state.start_editing();
@@ -751,7 +751,7 @@ fn test_commit_editing_string() {
         "name".to_string(),
         JsonNode::new(JsonValue::String("Alice".to_string())),
     )])));
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
 
     state.cursor_mut().set_path(vec![0]);
     state.start_editing();
@@ -785,7 +785,7 @@ fn test_commit_editing_number() {
         "count".to_string(),
         JsonNode::new(JsonValue::Number(42.0)),
     )])));
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
 
     state.cursor_mut().set_path(vec![0]);
     state.start_editing();
@@ -815,7 +815,7 @@ fn test_commit_editing_boolean() {
         "active".to_string(),
         JsonNode::new(JsonValue::Boolean(true)),
     )])));
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
 
     state.cursor_mut().set_path(vec![0]);
     state.start_editing();
@@ -845,7 +845,7 @@ fn test_commit_editing_null() {
         "data".to_string(),
         JsonNode::new(JsonValue::String("old".to_string())),
     )])));
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
 
     state.cursor_mut().set_path(vec![0]);
     state.start_editing();
@@ -872,7 +872,7 @@ fn test_commit_editing_invalid_number() {
         "count".to_string(),
         JsonNode::new(JsonValue::Number(42.0)),
     )])));
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
 
     state.cursor_mut().set_path(vec![0]);
     state.start_editing();
@@ -895,7 +895,7 @@ fn test_commit_editing_invalid_boolean() {
         "active".to_string(),
         JsonNode::new(JsonValue::Boolean(true)),
     )])));
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
 
     state.cursor_mut().set_path(vec![0]);
     state.start_editing();
@@ -924,7 +924,7 @@ fn test_delete_node_at_cursor() {
         ("b".to_string(), JsonNode::new(JsonValue::Number(2.0))),
         ("c".to_string(), JsonNode::new(JsonValue::Number(3.0))),
     ])));
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
 
     // Move to second element
     state.cursor_mut().set_path(vec![1]);
@@ -950,7 +950,7 @@ fn test_delete_last_node_moves_cursor() {
         ("a".to_string(), JsonNode::new(JsonValue::Number(1.0))),
         ("b".to_string(), JsonNode::new(JsonValue::Number(2.0))),
     ])));
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
 
     // Move to last element
     state.cursor_mut().set_path(vec![1]);
@@ -969,7 +969,7 @@ fn test_delete_root_fails() {
     use jsonquill::document::tree::JsonTree;
 
     let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![])));
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
 
     // Cursor at root (empty path after tree_view initialization with no children)
     // Since there are no lines, cursor will be at []
@@ -990,7 +990,7 @@ fn test_paste_node_in_object() {
         ("a".to_string(), JsonNode::new(JsonValue::Number(1.0))),
         ("c".to_string(), JsonNode::new(JsonValue::Number(3.0))),
     ])));
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
 
     // Yank first element
     state.cursor_mut().set_path(vec![0]);
@@ -1015,7 +1015,7 @@ fn test_paste_node_in_array() {
         JsonNode::new(JsonValue::Number(10.0)),
         JsonNode::new(JsonValue::Number(30.0)),
     ])));
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
 
     // Yank first element
     state.cursor_mut().set_path(vec![0]);
@@ -1038,7 +1038,7 @@ fn test_paste_without_clipboard_fails() {
         "a".to_string(),
         JsonNode::new(JsonValue::Number(1.0)),
     )])));
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
 
     // Try to paste without yanking first
     let result = state.paste_node_at_cursor();
@@ -1056,7 +1056,7 @@ fn test_checkpoint_captures_state() {
         ("a".to_string(), JsonNode::new(JsonValue::Number(1.0))),
         ("b".to_string(), JsonNode::new(JsonValue::Number(2.0))),
     ])));
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
 
     // Delete first node
     state.cursor_mut().set_path(vec![0]);
@@ -1083,7 +1083,7 @@ fn test_edit_cursor_starts_at_end() {
     use jsonquill::document::tree::JsonTree;
 
     let tree = JsonTree::new(JsonNode::new(JsonValue::String("hello".to_string())));
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
 
     state.cursor_mut().set_path(vec![]);
     state.start_editing();
@@ -1097,7 +1097,7 @@ fn test_edit_cursor_left_right() {
     use jsonquill::document::tree::JsonTree;
 
     let tree = JsonTree::new(JsonNode::new(JsonValue::String("test".to_string())));
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
 
     state.cursor_mut().set_path(vec![]);
     state.start_editing();
@@ -1130,7 +1130,7 @@ fn test_edit_cursor_home_end() {
     use jsonquill::document::tree::JsonTree;
 
     let tree = JsonTree::new(JsonNode::new(JsonValue::String("hello world".to_string())));
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
 
     state.cursor_mut().set_path(vec![]);
     state.start_editing();
@@ -1153,7 +1153,7 @@ fn test_edit_insert_at_cursor() {
     use jsonquill::document::tree::JsonTree;
 
     let tree = JsonTree::new(JsonNode::new(JsonValue::String("test".to_string())));
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
 
     state.cursor_mut().set_path(vec![]);
     state.start_editing();
@@ -1174,7 +1174,7 @@ fn test_edit_backspace_at_cursor() {
     use jsonquill::document::tree::JsonTree;
 
     let tree = JsonTree::new(JsonNode::new(JsonValue::String("hello".to_string())));
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
 
     state.cursor_mut().set_path(vec![]);
     state.start_editing();
@@ -1199,7 +1199,7 @@ fn test_edit_delete_at_cursor() {
     use jsonquill::document::tree::JsonTree;
 
     let tree = JsonTree::new(JsonNode::new(JsonValue::String("hello".to_string())));
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
 
     state.cursor_mut().set_path(vec![]);
     state.start_editing();
@@ -1228,7 +1228,7 @@ fn test_edit_kill_to_end() {
     use jsonquill::document::tree::JsonTree;
 
     let tree = JsonTree::new(JsonNode::new(JsonValue::String("hello world".to_string())));
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
 
     state.cursor_mut().set_path(vec![]);
     state.start_editing();
@@ -1263,7 +1263,7 @@ fn test_add_mode_stage_default() {
     use jsonquill::editor::state::{AddModeStage, EditorState};
 
     let tree = JsonTree::new(JsonNode::new(JsonValue::Null));
-    let state = EditorState::new(tree);
+    let state = EditorState::new_with_default_theme(tree);
 
     assert!(matches!(state.add_mode_stage(), &AddModeStage::None));
 }
@@ -1275,7 +1275,7 @@ fn test_add_key_buffer_operations() {
     use jsonquill::editor::state::EditorState;
 
     let tree = JsonTree::new(JsonNode::new(JsonValue::Null));
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
 
     // Initially empty
     assert_eq!(state.add_key_buffer(), "");
@@ -1374,7 +1374,7 @@ fn test_start_add_in_array() {
         JsonNode::new(JsonValue::Number(1.0)),
         JsonNode::new(JsonValue::Number(2.0)),
     ])));
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
 
     // Move cursor to first element
     state.cursor_mut().set_path(vec![0]);
@@ -1404,7 +1404,7 @@ fn test_start_add_in_object() {
         "name".to_string(),
         JsonNode::new(JsonValue::String("Alice".to_string())),
     )])));
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
 
     // Move cursor to first field
     state.cursor_mut().set_path(vec![0]);
@@ -1426,7 +1426,7 @@ fn test_start_add_in_root_array() {
     use jsonquill::editor::state::{AddModeStage, EditorState};
 
     let tree = JsonTree::new(JsonNode::new(JsonValue::Array(vec![])));
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
 
     // Cursor is at root (empty path because array is empty)
     state.cursor_mut().set_path(vec![]);
@@ -1453,7 +1453,7 @@ fn test_start_add_in_root_object() {
     use jsonquill::editor::state::{AddModeStage, EditorState};
 
     let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![])));
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
 
     // Cursor is at root (empty path because object is empty)
     state.cursor_mut().set_path(vec![]);
@@ -1480,7 +1480,7 @@ fn test_add_array_to_empty_object_should_add_inside() {
         "president".to_string(),
         JsonNode::new(JsonValue::Object(vec![])),
     )])));
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
 
     // Cursor at "president" object (path [0])
     state.cursor_mut().set_path(vec![0]);
@@ -1553,7 +1553,7 @@ fn test_start_add_at_root_scalar_fails() {
     use jsonquill::editor::state::{AddModeStage, EditorState, MessageLevel};
 
     let tree = JsonTree::new(JsonNode::new(JsonValue::Number(42.0)));
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
 
     // Cursor is at root (empty path)
 

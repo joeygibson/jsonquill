@@ -14,7 +14,7 @@ fn test_undo_after_delete() {
             JsonNode::new(JsonValue::String("value2".to_string())),
         ),
     ])));
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
 
     // Delete first node
     state.cursor_mut().set_path(vec![0]);
@@ -38,7 +38,7 @@ fn test_redo_after_undo() {
         "key".to_string(),
         JsonNode::new(JsonValue::String("value".to_string())),
     )])));
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
 
     // Delete and undo
     state.cursor_mut().set_path(vec![0]);
@@ -58,7 +58,7 @@ fn test_branching_after_undo() {
         ("a".to_string(), JsonNode::new(JsonValue::Number(1.0))),
         ("b".to_string(), JsonNode::new(JsonValue::Number(2.0))),
     ])));
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
 
     // Delete first node
     state.cursor_mut().set_path(vec![0]);
@@ -91,7 +91,7 @@ fn test_branching_after_undo() {
 #[test]
 fn test_undo_at_start_returns_false() {
     let tree = JsonTree::new(JsonNode::new(JsonValue::Null));
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
 
     // No changes made, cannot undo
     assert!(!state.undo());
@@ -100,7 +100,7 @@ fn test_undo_at_start_returns_false() {
 #[test]
 fn test_redo_at_end_returns_false() {
     let tree = JsonTree::new(JsonNode::new(JsonValue::Null));
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
 
     // No redo available
     assert!(!state.redo());
@@ -111,7 +111,7 @@ fn test_undo_after_paste() {
     let tree = JsonTree::new(JsonNode::new(JsonValue::Array(vec![JsonNode::new(
         JsonValue::Number(1.0),
     )])));
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
 
     // Yank and paste
     state.cursor_mut().set_path(vec![0]);
@@ -133,7 +133,7 @@ fn test_undo_after_paste() {
 #[test]
 fn test_undo_after_edit() {
     let tree = JsonTree::new(JsonNode::new(JsonValue::String("old".to_string())));
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
 
     // Start editing
     state.cursor_mut().set_path(vec![]);

@@ -59,7 +59,7 @@ fn create_bookstore() -> JsonTree {
 #[test]
 fn test_jsonpath_wildcard_search() {
     let tree = create_bookstore();
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
 
     // Search for all book authors using wildcard
     state.execute_jsonpath_search("$.store.book[*].author");
@@ -77,7 +77,7 @@ fn test_jsonpath_wildcard_search() {
 #[test]
 fn test_jsonpath_recursive_descent() {
     let tree = create_bookstore();
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
 
     // Find all price fields anywhere in the document
     state.execute_jsonpath_search("$..price");
@@ -98,7 +98,7 @@ fn test_jsonpath_array_slicing() {
             JsonNode::new(JsonValue::Number(4.0)),
         ])),
     )])));
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
 
     // Get first 3 items using slice [0:3]
     state.execute_jsonpath_search("$.items[0:3]");
@@ -125,7 +125,7 @@ fn test_jsonpath_multiple_properties() {
             ("age".to_string(), JsonNode::new(JsonValue::Number(30.0))),
         ])),
     )])));
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
 
     // Select multiple properties
     state.execute_jsonpath_search("$.user['name','email']");
@@ -143,7 +143,7 @@ fn test_jsonpath_negative_array_index() {
             JsonNode::new(JsonValue::Number(3.0)),
         ])),
     )])));
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
 
     // Access last element with [-1]
     state.execute_jsonpath_search("$.items[-1]");
@@ -155,7 +155,7 @@ fn test_jsonpath_negative_array_index() {
 #[test]
 fn test_jsonpath_navigation_through_results() {
     let tree = create_bookstore();
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
 
     // Search for all prices
     state.execute_jsonpath_search("$..price");
@@ -183,7 +183,7 @@ fn test_jsonpath_navigation_through_results() {
 #[test]
 fn test_jsonpath_switch_to_text_search() {
     let tree = create_bookstore();
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
 
     // Start with JSONPath search
     state.execute_jsonpath_search("$..author");
@@ -204,7 +204,7 @@ fn test_jsonpath_switch_to_text_search() {
 #[test]
 fn test_jsonpath_switch_from_text_search() {
     let tree = create_bookstore();
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
 
     // Start with text search
     state.clear_search_buffer();
@@ -226,7 +226,7 @@ fn test_jsonpath_switch_from_text_search() {
 #[test]
 fn test_jsonpath_invalid_query_error() {
     let tree = create_bookstore();
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
 
     // Invalid query - missing $
     state.execute_jsonpath_search("store.book");
@@ -245,7 +245,7 @@ fn test_jsonpath_invalid_query_error() {
 #[test]
 fn test_jsonpath_no_matches() {
     let tree = create_bookstore();
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
 
     // Search for non-existent field
     state.execute_jsonpath_search("$.store.magazine");
@@ -260,7 +260,7 @@ fn test_jsonpath_no_matches() {
 #[test]
 fn test_jsonpath_bracket_notation() {
     let tree = create_bookstore();
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
 
     // Use bracket notation for property access
     state.execute_jsonpath_search("$['store']['book'][0]['author']");
@@ -272,7 +272,7 @@ fn test_jsonpath_bracket_notation() {
 #[test]
 fn test_jsonpath_preserves_cursor_on_error() {
     let tree = create_bookstore();
-    let mut state = EditorState::new(tree);
+    let mut state = EditorState::new_with_default_theme(tree);
 
     // Set cursor to a specific position
     state.cursor_mut().set_path(vec![0, 0, 1]);
