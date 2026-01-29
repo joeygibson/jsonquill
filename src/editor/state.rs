@@ -384,7 +384,11 @@ impl EditorState {
     ///
     /// This is used when reloading from disk or opening a new file.
     /// It clears the undo history, resets the cursor to root, and rebuilds the view.
+    /// The expansion state of nodes is preserved across the reload.
     pub fn reload_tree(&mut self, tree: JsonTree) {
+        // Preserve expansion state before reloading
+        let expanded_paths = self.tree_view.get_expanded_paths();
+
         self.tree = tree;
         self.cursor.set_path(vec![]);
         self.dirty = false;
@@ -396,6 +400,8 @@ impl EditorState {
         };
         self.undo_tree = super::undo::UndoTree::new(initial_snapshot, 50);
 
+        // Restore expansion state and rebuild view
+        self.tree_view.restore_expanded_paths(expanded_paths);
         self.rebuild_tree_view();
         self.clear_message();
     }
