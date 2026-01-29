@@ -288,9 +288,9 @@ Type `:` to enter command mode, then:
 | `:q` | Quit | Warns if there are unsaved changes |
 | `:q!` | Force quit | Quit without saving changes |
 | `:wq` | Save and quit | Also: `:x` or `ZZ` |
+| `:e <filename>` | Load a different file | Warns if there are unsaved changes |
 | `:e!` | Reload current file | Discard in-memory changes and reload from disk |
 | `:e! <filename>` | Force load a different file | Discard changes and load new file |
-| `:e <filename>` | Load a different file | Warns if there are unsaved changes |
 | `:undo` | Undo last change | Same as `u` in NORMAL mode |
 | `:redo` | Redo last undone change | Same as `Ctrl-r` in NORMAL mode |
 | `:help` | Show help overlay | Same as `F1` in NORMAL mode |

@@ -295,9 +295,9 @@ Tab         - Autocomplete theme names (:theme <Tab>) and settings (:set <Tab>)
 :q!         - Force quit without saving
 :wq / :x    - Save and quit
 :wq <file>  - Save to new file and quit
+:e <file>   - Load a different file (warns if dirty)
 :e!         - Reload current file from disk, discarding changes
 :e! <file>  - Load a different file, discarding changes
-:e <file>   - Load a different file (warns if dirty)
 :theme      - List available themes
 :theme <name> - Switch to theme
 :set          - Show current settings

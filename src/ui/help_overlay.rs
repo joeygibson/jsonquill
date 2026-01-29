@@ -315,16 +315,16 @@ pub fn render_help_overlay(f: &mut Frame, colors: &ThemeColors, scroll: usize) {
             Span::raw("Save and quit"),
         ]),
         Line::from(vec![
+            Span::styled("  :e <file>     ", Style::default().fg(colors.number)),
+            Span::raw("Load a different file (warns if dirty)"),
+        ]),
+        Line::from(vec![
             Span::styled("  :e!           ", Style::default().fg(colors.number)),
             Span::raw("Reload current file, discarding changes"),
         ]),
         Line::from(vec![
             Span::styled("  :e! <file>    ", Style::default().fg(colors.number)),
             Span::raw("Load a different file, discarding changes"),
-        ]),
-        Line::from(vec![
-            Span::styled("  :e <file>     ", Style::default().fg(colors.number)),
-            Span::raw("Load a different file (warns if dirty)"),
         ]),
         Line::from(vec![
             Span::styled("  :theme        ", Style::default().fg(colors.number)),
