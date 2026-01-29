@@ -43,7 +43,7 @@ pub fn render_theme_picker(f: &mut Frame, state: &ThemePickerState, colors: &The
 
     for (idx, theme) in state.themes.iter().enumerate() {
         let is_selected = idx == state.selected_index;
-        let is_current = theme == &state.current_theme;
+        let is_current = theme == &state.original_theme;
 
         // Build line components
         let cursor = if is_selected { "> " } else { "  " };
