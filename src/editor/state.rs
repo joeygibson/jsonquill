@@ -212,6 +212,7 @@ pub struct EditorState {
     show_line_numbers: bool,
     relative_line_numbers: bool,
     enable_mouse: bool,
+    create_backup: bool,
     edit_buffer: Option<String>,
     edit_cursor: usize,
     cursor_visible: bool,
@@ -308,6 +309,7 @@ impl EditorState {
             show_line_numbers: true,
             relative_line_numbers: false,
             enable_mouse: true,
+            create_backup: false,
             edit_buffer: None,
             edit_cursor: 0,
             cursor_visible: true,
@@ -1619,6 +1621,8 @@ impl EditorState {
                 "nornu",
                 "mouse",
                 "nomouse",
+                "create_backup",
+                "nocreate_backup",
                 "save",
             ];
             return settings
@@ -2554,19 +2558,33 @@ impl EditorState {
         self.enable_mouse = enable;
     }
 
-    /// Saves current settings to the config file.
-    pub fn save_config(&self) -> anyhow::Result<()> {
+    /// Returns whether backup files should be created before saving.
+    pub fn create_backup(&self) -> bool {
+        self.create_backup
+    }
+
+    /// Sets whether backup files should be created before saving.
+    pub fn set_create_backup(&mut self, enable: bool) {
+        self.create_backup = enable;
+    }
+
+    /// Returns a Config object with the current editor settings.
+    pub fn to_config(&self) -> crate::config::Config {
         use crate::config::Config;
 
-        let config = Config {
+        Config {
             theme: self.current_theme.clone(),
             show_line_numbers: self.show_line_numbers,
             relative_line_numbers: self.relative_line_numbers,
             enable_mouse: self.enable_mouse,
+            create_backup: self.create_backup,
             ..Config::default()
-        };
+        }
+    }
 
-        config.save()
+    /// Saves current settings to the config file.
+    pub fn save_config(&self) -> anyhow::Result<()> {
+        self.to_config().save()
     }
 
     /// Returns the current edit buffer content, if editing.

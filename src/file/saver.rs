@@ -71,7 +71,12 @@ pub fn save_json_file<P: AsRef<Path>>(path: P, tree: &JsonTree, config: &Config)
 
     // Create backup if requested and file exists
     if config.create_backup && path.exists() {
-        let backup_path = path.with_extension("jsonquill.bak");
+        let mut backup_path = path.to_path_buf();
+        let original_name = backup_path
+            .file_name()
+            .and_then(|n| n.to_str())
+            .ok_or_else(|| anyhow::anyhow!("Invalid file name"))?;
+        backup_path.set_file_name(format!("{}.bak", original_name));
         fs::copy(path, backup_path).context("Failed to create backup")?;
     }
 
@@ -113,7 +118,12 @@ fn save_jsonl<P: AsRef<Path>>(path: P, tree: &JsonTree, config: &Config) -> Resu
 
     // Create backup if requested and file exists
     if config.create_backup && path.exists() {
-        let backup_path = path.with_extension("jsonquill.bak");
+        let mut backup_path = path.to_path_buf();
+        let original_name = backup_path
+            .file_name()
+            .and_then(|n| n.to_str())
+            .ok_or_else(|| anyhow::anyhow!("Invalid file name"))?;
+        backup_path.set_file_name(format!("{}.bak", original_name));
         fs::copy(path, backup_path).context("Failed to create backup")?;
     }
 

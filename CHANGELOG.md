@@ -5,6 +5,21 @@ All notable changes to jsonquill will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- add :set create_backup and :set nocreate_backup commands
+- add tab completion for create_backup settings
+
+### Changed
+
+- align descriptions in help screen Commands section for better readability
+
+### Fixed
+
+- fix backup file extension from .jsonquill.bak to .bak (now creates file.json.bak)
+
 ## [0.9.0] - 2026-01-29
 
 ### Added

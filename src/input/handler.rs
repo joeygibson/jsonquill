@@ -1,7 +1,6 @@
 //! Input event handler for polling and processing keyboard events.
 
 use super::keys::{map_key_event, InputEvent};
-use crate::config::Config;
 use crate::editor::mode::EditorMode;
 use crate::editor::state::EditorState;
 use anyhow::{Context, Result};
@@ -823,7 +822,7 @@ impl InputHandler {
                         // Save the file
                         if let Some(filename) = state.filename() {
                             use crate::file::saver::save_json_file;
-                            match save_json_file(filename, state.tree(), &Config::default()) {
+                            match save_json_file(filename, state.tree(), &state.to_config()) {
                                 Ok(_) => {
                                     state.clear_dirty();
                                     return Ok(true); // Quit after saving
@@ -1085,6 +1084,11 @@ impl InputHandler {
             } else {
                 settings.push("nomouse");
             }
+            if state.create_backup() {
+                settings.push("create_backup");
+            } else {
+                settings.push("nocreate_backup");
+            }
             state.set_message(
                 format!("Settings: {}", settings.join(", ")),
                 MessageLevel::Info,
@@ -1142,6 +1146,10 @@ impl InputHandler {
                         let value = if state.enable_mouse() { "on" } else { "off" };
                         state.set_message(format!("mouse is {}", value), MessageLevel::Info);
                     }
+                    "create_backup" => {
+                        let value = if state.create_backup() { "on" } else { "off" };
+                        state.set_message(format!("create_backup is {}", value), MessageLevel::Info);
+                    }
                     _ => {
                         state.set_message(
                             format!("Unknown setting: {}", setting_name),
@@ -1183,6 +1191,14 @@ impl InputHandler {
                 "nomouse" => {
                     state.set_enable_mouse(false);
                     state.set_message("Mouse support disabled".to_string(), MessageLevel::Info);
+                }
+                "create_backup" => {
+                    state.set_create_backup(true);
+                    state.set_message("Backup file creation enabled".to_string(), MessageLevel::Info);
+                }
+                "nocreate_backup" => {
+                    state.set_create_backup(false);
+                    state.set_message("Backup file creation disabled".to_string(), MessageLevel::Info);
                 }
                 _ => {
                     state.set_message(format!("Unknown setting: {}", setting), MessageLevel::Error);
@@ -1355,7 +1371,7 @@ impl InputHandler {
                     return Ok(false);
                 }
 
-                match save_json_file(&filename, state.tree(), &Config::default()) {
+                match save_json_file(&filename, state.tree(), &state.to_config()) {
                     Ok(_) => {
                         state.set_filename(filename.clone());
                         state.clear_dirty();
@@ -1369,7 +1385,7 @@ impl InputHandler {
             }
             "w" => {
                 if let Some(filename) = state.filename().map(|s| s.to_string()) {
-                    match save_json_file(&filename, state.tree(), &Config::default()) {
+                    match save_json_file(&filename, state.tree(), &state.to_config()) {
                         Ok(_) => {
                             state.clear_dirty();
                             state.set_message(
@@ -1407,7 +1423,7 @@ impl InputHandler {
                     return Ok(false);
                 }
 
-                match save_json_file(&filename, state.tree(), &Config::default()) {
+                match save_json_file(&filename, state.tree(), &state.to_config()) {
                     Ok(_) => {
                         state.set_filename(filename);
                         state.clear_dirty();
@@ -1421,7 +1437,7 @@ impl InputHandler {
             }
             "wq" | "x" => {
                 if let Some(filename) = state.filename().map(|s| s.to_string()) {
-                    match save_json_file(&filename, state.tree(), &Config::default()) {
+                    match save_json_file(&filename, state.tree(), &state.to_config()) {
                         Ok(_) => {
                             state.clear_dirty();
                             Ok(true)

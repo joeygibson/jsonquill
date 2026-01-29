@@ -124,6 +124,7 @@ fn main() -> Result<()> {
     state.set_show_line_numbers(config.show_line_numbers);
     state.set_relative_line_numbers(config.relative_line_numbers);
     state.set_enable_mouse(config.enable_mouse);
+    state.set_create_backup(config.create_backup);
 
     // Main event loop
     let result = run_event_loop(&mut terminal, &mut ui, &mut input_handler, &mut state);

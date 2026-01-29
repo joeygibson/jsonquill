@@ -307,6 +307,8 @@ Tab         - Autocomplete theme names (:theme <Tab>) and settings (:set <Tab>)
 :set norelativenumber (or :set nornu) - Disable relative line numbers
 :set mouse    - Enable mouse scrolling
 :set nomouse  - Disable mouse scrolling
+:set create_backup - Enable backup file creation (.bak)
+:set nocreate_backup - Disable backup file creation
 :set save     - Save settings to config file
 :undo         - Undo last change
 :redo         - Redo last undone change
@@ -415,7 +417,7 @@ auto_save = false
 # JSON validation strictness: "strict", "permissive", or "none" (default: "strict")
 validation_mode = "strict"
 
-# Create .bak files before saving (default: false)
+# Create backup files (e.g., file.json.bak) before saving (default: false)
 create_backup = false
 
 # Maximum number of undo operations (default: 50)

@@ -37,7 +37,7 @@ JSONQuill prioritizes data integrity with multiple safety mechanisms:
 
 - **JSON Validation Before Save**: Every file save re-parses the generated JSON to verify it's valid before writing to disk. If serialization produces invalid JSON (indicating a bug), the save fails with a clear error message instead of corrupting your data.
 - **Atomic Writes**: Files are written to a temporary file first, then atomically renamed to the target path, ensuring your original file is never left in a partially written state.
-- **Optional Backups**: Enable `create_backup: true` in your config to automatically create `.jsonquill.bak` files before saving.
+- **Optional Backups**: Enable `create_backup: true` in your config to automatically create `.bak` files before saving (e.g., `file.json.bak`).
 - **Format Preservation**: Unmodified nodes retain their exact original formatting, reducing the risk of unintended changes.
 
 ## Platform Support
@@ -301,6 +301,8 @@ Type `:` to enter command mode, then:
 | `:set norelativenumber` (or `:set nornu`) | Disable relative line numbers | Show absolute line numbers |
 | `:set mouse` | Enable mouse scrolling | Enable mouse/trackpad scrolling |
 | `:set nomouse` | Disable mouse scrolling | Disable mouse/trackpad scrolling |
+| `:set create_backup` | Enable backup file creation | Create `.bak` files before saving |
+| `:set nocreate_backup` | Disable backup file creation | Don't create backup files |
 | `:set save` | Save settings to config | Write current settings to `~/.config/jsonquill/config.toml` |
 | `:path <query>` | JSONPath structural search | e.g., `:path $.store.book[*].author` |
 | `:jp <query>` | Short alias for `:path` | e.g., `:jp $..price` |
@@ -382,7 +384,7 @@ auto_save = false
 # JSON validation strictness: "strict", "permissive", or "none" (default: "strict")
 validation_mode = "strict"
 
-# Create .bak files before saving (default: false)
+# Create backup files (e.g., file.json.bak) before saving (default: false)
 create_backup = false
 
 # Maximum number of undo operations (default: 50)

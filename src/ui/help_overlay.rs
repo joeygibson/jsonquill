@@ -299,75 +299,83 @@ pub fn render_help_overlay(f: &mut Frame, colors: &ThemeColors, scroll: usize) {
             Style::default().fg(colors.key).add_modifier(Modifier::BOLD),
         )]),
         Line::from(vec![
-            Span::styled("  :w            ", Style::default().fg(colors.number)),
+            Span::styled("  :w                    ", Style::default().fg(colors.number)),
             Span::raw("Write (save) file"),
         ]),
         Line::from(vec![
-            Span::styled("  :q            ", Style::default().fg(colors.number)),
+            Span::styled("  :q                    ", Style::default().fg(colors.number)),
             Span::raw("Quit (warns if unsaved)"),
         ]),
         Line::from(vec![
-            Span::styled("  :q!           ", Style::default().fg(colors.number)),
+            Span::styled("  :q!                   ", Style::default().fg(colors.number)),
             Span::raw("Quit without saving"),
         ]),
         Line::from(vec![
-            Span::styled("  :wq / :x / ZZ ", Style::default().fg(colors.number)),
+            Span::styled("  :wq / :x / ZZ         ", Style::default().fg(colors.number)),
             Span::raw("Save and quit"),
         ]),
         Line::from(vec![
-            Span::styled("  :e <file>     ", Style::default().fg(colors.number)),
+            Span::styled("  :e <file>             ", Style::default().fg(colors.number)),
             Span::raw("Load a different file (warns if dirty)"),
         ]),
         Line::from(vec![
-            Span::styled("  :e!           ", Style::default().fg(colors.number)),
+            Span::styled("  :e!                   ", Style::default().fg(colors.number)),
             Span::raw("Reload current file, discarding changes"),
         ]),
         Line::from(vec![
-            Span::styled("  :e! <file>    ", Style::default().fg(colors.number)),
+            Span::styled("  :e! <file>            ", Style::default().fg(colors.number)),
             Span::raw("Load a different file, discarding changes"),
         ]),
         Line::from(vec![
-            Span::styled("  :theme        ", Style::default().fg(colors.number)),
+            Span::styled("  :theme                ", Style::default().fg(colors.number)),
             Span::raw("List/change themes"),
         ]),
         Line::from(vec![
-            Span::styled("  :set          ", Style::default().fg(colors.number)),
+            Span::styled("  :set                  ", Style::default().fg(colors.number)),
             Span::raw("Show settings"),
         ]),
         Line::from(vec![
-            Span::styled("  :set number   ", Style::default().fg(colors.number)),
+            Span::styled("  :set number           ", Style::default().fg(colors.number)),
             Span::raw("Enable line numbers"),
         ]),
         Line::from(vec![
-            Span::styled("  :set nonumber ", Style::default().fg(colors.number)),
+            Span::styled("  :set nonumber         ", Style::default().fg(colors.number)),
             Span::raw("Disable line numbers"),
         ]),
         Line::from(vec![
-            Span::styled("  :set rnu      ", Style::default().fg(colors.number)),
+            Span::styled("  :set rnu              ", Style::default().fg(colors.number)),
             Span::raw("Enable relative line numbers"),
         ]),
         Line::from(vec![
-            Span::styled("  :set nornu    ", Style::default().fg(colors.number)),
+            Span::styled("  :set nornu            ", Style::default().fg(colors.number)),
             Span::raw("Disable relative line numbers"),
         ]),
         Line::from(vec![
-            Span::styled("  :set mouse    ", Style::default().fg(colors.number)),
+            Span::styled("  :set mouse            ", Style::default().fg(colors.number)),
             Span::raw("Enable mouse scrolling"),
         ]),
         Line::from(vec![
-            Span::styled("  :set nomouse  ", Style::default().fg(colors.number)),
+            Span::styled("  :set nomouse          ", Style::default().fg(colors.number)),
             Span::raw("Disable mouse scrolling"),
         ]),
         Line::from(vec![
-            Span::styled("  :set save     ", Style::default().fg(colors.number)),
+            Span::styled("  :set create_backup    ", Style::default().fg(colors.number)),
+            Span::raw("Enable backup file creation (.bak)"),
+        ]),
+        Line::from(vec![
+            Span::styled("  :set nocreate_backup  ", Style::default().fg(colors.number)),
+            Span::raw("Disable backup file creation"),
+        ]),
+        Line::from(vec![
+            Span::styled("  :set save             ", Style::default().fg(colors.number)),
             Span::raw("Save settings to config file"),
         ]),
         Line::from(vec![
-            Span::styled("  :undo         ", Style::default().fg(colors.number)),
+            Span::styled("  :undo                 ", Style::default().fg(colors.number)),
             Span::raw("Undo last change"),
         ]),
         Line::from(vec![
-            Span::styled("  :redo         ", Style::default().fg(colors.number)),
+            Span::styled("  :redo                 ", Style::default().fg(colors.number)),
             Span::raw("Redo last undone change"),
         ]),
         Line::from(""),

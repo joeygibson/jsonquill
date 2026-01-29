@@ -213,7 +213,9 @@ fn test_save_creates_backup() {
     .unwrap();
 
     // Check backup exists
-    let backup_path = temp_file.path().with_extension("jsonquill.bak");
+    let mut backup_path = temp_file.path().to_path_buf();
+    let original_name = backup_path.file_name().unwrap().to_str().unwrap();
+    backup_path.set_file_name(format!("{}.bak", original_name));
     assert!(backup_path.exists());
 
     // Verify backup contains old content
@@ -233,7 +235,9 @@ fn test_save_without_backup_no_backup_file() {
     let temp_file = NamedTempFile::new().unwrap();
     save_json_file(temp_file.path(), &tree, &Config::default()).unwrap();
 
-    let backup_path = temp_file.path().with_extension("jsonquill.bak");
+    let mut backup_path = temp_file.path().to_path_buf();
+    let original_name = backup_path.file_name().unwrap().to_str().unwrap();
+    backup_path.set_file_name(format!("{}.bak", original_name));
     assert!(!backup_path.exists());
 }
 
