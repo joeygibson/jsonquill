@@ -346,6 +346,10 @@ impl InputHandler {
                     }
                     Key::Backspace => {
                         state.pop_from_command_buffer();
+                        // Exit command mode if buffer is now empty
+                        if state.command_buffer().is_empty() {
+                            state.set_mode(EditorMode::Normal);
+                        }
                         return Ok(false);
                     }
                     Key::Esc => {
