@@ -15,6 +15,7 @@ pub fn render_edit_prompt(
     cursor_pos: usize,
     cursor_visible: bool,
     colors: &ThemeColors,
+    prompt: &str,
 ) {
     let cursor_pos = cursor_pos.min(buffer.len());
 
@@ -29,7 +30,7 @@ pub fn render_edit_prompt(
     // Build the line with cursor highlighting the character at cursor position
     let mut spans = vec![
         Span::styled(
-            "Edit: ",
+            prompt,
             Style::default()
                 .fg(colors.foreground)
                 .bg(colors.background)

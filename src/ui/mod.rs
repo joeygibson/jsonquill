@@ -180,6 +180,15 @@ impl UI {
                 f.render_widget(key_paragraph, chunks[2]);
             } else if let Some(buffer) = state.edit_buffer() {
                 // Render edit prompt if in insert mode with active buffer
+                // If we're in AwaitingValue stage with a key, show the key as the prompt
+                let prompt = if matches!(state.add_mode_stage(), AddModeStage::AwaitingValue)
+                    && !state.add_key_buffer().is_empty()
+                {
+                    format!("{}: ", state.add_key_buffer())
+                } else {
+                    "Edit: ".to_string()
+                };
+
                 edit_prompt::render_edit_prompt(
                     f,
                     chunks[2],
@@ -187,6 +196,7 @@ impl UI {
                     state.edit_cursor_position(),
                     state.cursor_visible(),
                     &self.theme.colors,
+                    &prompt,
                 );
             } else {
                 // Message area

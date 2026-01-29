@@ -31,6 +31,17 @@ A terminal-based structural JSON editor with vim-style keybindings.
 
 See [CLAUDE.md](CLAUDE.md) for detailed feature list and developer documentation.
 
+## Data Safety
+
+JSONQuill prioritizes data integrity with multiple safety mechanisms:
+
+- **JSON Validation Before Save**: Every file save re-parses the generated JSON to verify it's valid before writing to disk. If serialization produces invalid JSON (indicating a bug), the save fails with a clear error message instead of corrupting your data.
+- **Atomic Writes**: Files are written to a temporary file first, then atomically renamed to the target path, ensuring your original file is never left in a partially written state.
+- **Optional Backups**: Enable `create_backup: true` in your config to automatically create `.jsonquill.bak` files before saving.
+- **Format Preservation**: Unmodified nodes retain their exact original formatting, reducing the risk of unintended changes.
+
+These safeguards mean you can confidently edit important JSON files knowing that bugs in the editor won't silently corrupt your data.
+
 ## Platform Support
 
 - ✅ **Linux** (x86_64 glibc and musl)
