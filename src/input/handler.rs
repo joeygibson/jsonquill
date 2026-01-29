@@ -5,18 +5,29 @@ use crate::editor::mode::EditorMode;
 use crate::editor::state::EditorState;
 use anyhow::{Context, Result};
 use std::fs::File;
-use std::io::{self};
+use std::io::{self, Stdin};
 use std::time::Duration;
 use termion::event::{Event, Key, MouseButton, MouseEvent};
-use termion::input::TermRead;
+use termion::input::{Events, TermRead};
+
+/// Event source for reading terminal events.
+///
+/// This enum wraps the events iterator to maintain its state across
+/// multiple calls, preventing character loss during rapid input (paste).
+enum EventSource {
+    /// Reading from stdin
+    Stdin(Events<Stdin>),
+    /// Reading from /dev/tty (when stdin was piped)
+    Tty(Events<File>),
+}
 
 /// Handles terminal input events and updates editor state.
 ///
 /// The InputHandler polls for termion events and converts them to
 /// high-level InputEvents, then updates the editor state accordingly.
 pub struct InputHandler {
-    /// File handle for /dev/tty when stdin was piped
-    tty_file: Option<File>,
+    /// Event source iterator (maintains position in input buffer)
+    events: EventSource,
     /// True if waiting for register name after " key
     awaiting_register: bool,
 }
@@ -33,7 +44,7 @@ impl InputHandler {
     /// ```
     pub fn new() -> Self {
         Self {
-            tty_file: None,
+            events: EventSource::Stdin(io::stdin().events()),
             awaiting_register: false,
         }
     }
@@ -48,7 +59,7 @@ impl InputHandler {
             .context("Failed to open /dev/tty for keyboard input")?;
 
         Ok(Self {
-            tty_file: Some(tty_file),
+            events: EventSource::Tty(tty_file.events()),
             awaiting_register: false,
         })
     }
@@ -75,19 +86,18 @@ impl InputHandler {
     /// let event = handler.poll_event(Duration::from_millis(100)).unwrap();
     /// ```
     pub fn poll_event(&mut self, _timeout: Duration) -> Result<Option<Event>> {
-        // Termion's events() iterator blocks until an event is available
-        // We'll use a non-blocking read with a timeout simulation
-        if let Some(tty_file) = &mut self.tty_file {
-            // Read from /dev/tty
-            let mut events = tty_file.events();
-            if let Some(event_result) = events.next() {
-                return Ok(Some(event_result?));
+        // Use the stored events iterator to maintain position in the input buffer.
+        // This prevents character loss during rapid input (paste operations).
+        match &mut self.events {
+            EventSource::Stdin(events) => {
+                if let Some(event_result) = events.next() {
+                    return Ok(Some(event_result?));
+                }
             }
-        } else {
-            // Read from stdin
-            let mut events = io::stdin().events();
-            if let Some(event_result) = events.next() {
-                return Ok(Some(event_result?));
+            EventSource::Tty(events) => {
+                if let Some(event_result) = events.next() {
+                    return Ok(Some(event_result?));
+                }
             }
         }
 

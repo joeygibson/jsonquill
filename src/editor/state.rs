@@ -224,6 +224,7 @@ pub struct EditorState {
     undo_tree: super::undo::UndoTree,
     add_mode_stage: AddModeStage,
     add_key_buffer: String,
+    add_key_cursor: usize,
     add_insertion_point: Option<Vec<usize>>,
     temp_container: Option<JsonNode>, // Temporary storage for container during add operation
     is_renaming_key: bool,
@@ -321,6 +322,7 @@ impl EditorState {
             undo_tree,
             add_mode_stage: AddModeStage::None,
             add_key_buffer: String::new(),
+            add_key_cursor: 0,
             add_insertion_point: None,
             temp_container: None,
             is_renaming_key: false,
@@ -2609,6 +2611,7 @@ impl EditorState {
                     let content = s.clone();
                     self.edit_cursor = content.len();
                     self.edit_buffer = Some(content);
+                    self.reset_cursor_blink();
                 }
                 crate::document::node::JsonValue::Number(n) => {
                     // Pre-populate with current number value
@@ -2619,17 +2622,20 @@ impl EditorState {
                     };
                     self.edit_cursor = num_str.len();
                     self.edit_buffer = Some(num_str);
+                    self.reset_cursor_blink();
                 }
                 crate::document::node::JsonValue::Boolean(b) => {
                     // Pre-populate with current boolean value
                     let content = b.to_string();
                     self.edit_cursor = content.len();
                     self.edit_buffer = Some(content);
+                    self.reset_cursor_blink();
                 }
                 crate::document::node::JsonValue::Null => {
                     // Pre-populate with "null"
                     self.edit_cursor = 4; // "null".len()
                     self.edit_buffer = Some("null".to_string());
+                    self.reset_cursor_blink();
                 }
             }
         }
@@ -2967,21 +2973,31 @@ impl EditorState {
         &self.add_key_buffer
     }
 
-    /// Pushes a character to the add key buffer.
+    /// Returns the current cursor position in the add key buffer.
+    pub fn add_key_cursor_position(&self) -> usize {
+        self.add_key_cursor
+    }
+
+    /// Pushes a character to the add key buffer at cursor position.
     pub fn push_to_add_key_buffer(&mut self, ch: char) {
-        self.add_key_buffer.push(ch);
+        self.add_key_buffer.insert(self.add_key_cursor, ch);
+        self.add_key_cursor += 1;
         self.reset_cursor_blink();
     }
 
-    /// Removes the last character from the add key buffer.
+    /// Removes the character before cursor in the add key buffer (backspace).
     pub fn pop_from_add_key_buffer(&mut self) {
-        self.add_key_buffer.pop();
-        self.reset_cursor_blink();
+        if self.add_key_cursor > 0 {
+            self.add_key_buffer.remove(self.add_key_cursor - 1);
+            self.add_key_cursor -= 1;
+            self.reset_cursor_blink();
+        }
     }
 
-    /// Clears the add key buffer.
+    /// Clears the add key buffer and resets cursor.
     pub fn clear_add_key_buffer(&mut self) {
         self.add_key_buffer.clear();
+        self.add_key_cursor = 0;
     }
 
     /// Starts an add operation at the current cursor position.
@@ -3022,6 +3038,7 @@ impl EditorState {
                             // Object: need key first
                             self.add_mode_stage = AddModeStage::AwaitingKey;
                             self.add_insertion_point = Some(vec![0]); // Insert at position 0
+                            self.reset_cursor_blink();
                         }
                         _ => unreachable!(),
                     }
@@ -3083,6 +3100,7 @@ impl EditorState {
                         let mut insertion_path = current_path.clone();
                         insertion_path.push(insert_index); // Insert at end
                         self.add_insertion_point = Some(insertion_path);
+                        self.reset_cursor_blink();
                         // Stay in Normal mode, wait for key input
                         return;
                     }
@@ -3134,6 +3152,7 @@ impl EditorState {
                 let mut insertion_path = parent_path.to_vec();
                 insertion_path.push(current_index + 1);
                 self.add_insertion_point = Some(insertion_path);
+                self.reset_cursor_blink();
                 // Stay in Normal mode, wait for key input
             }
             _ => {
@@ -3288,6 +3307,7 @@ impl EditorState {
                     // For object containers in object root, we need a key
                     // Store the container temporarily and wait for key
                     self.temp_container = Some(container_node);
+                    self.reset_cursor_blink();
                     return;
                 }
                 JsonValue::Array(_) | JsonValue::JsonlRoot(_) => {
@@ -3388,6 +3408,7 @@ impl EditorState {
                     // For containers in objects, we need a key
                     // Store the container temporarily and wait for key
                     self.temp_container = Some(container_node);
+                    self.reset_cursor_blink();
                     return;
                 }
                 _ => {
@@ -3423,6 +3444,7 @@ impl EditorState {
                 // For containers in objects, we need a key
                 // Store the container temporarily and wait for key
                 self.temp_container = Some(container_node);
+                self.reset_cursor_blink();
             }
             JsonValue::Array(_) | JsonValue::JsonlRoot(_) => {
                 // Insert directly into array/JSONL (no key needed)
