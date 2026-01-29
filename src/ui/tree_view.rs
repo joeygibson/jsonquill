@@ -129,20 +129,6 @@ impl TreeViewState {
         self.expanded_paths.contains(path)
     }
 
-    /// Returns a clone of all currently expanded paths.
-    ///
-    /// This is useful for preserving expansion state across tree reloads.
-    pub fn get_expanded_paths(&self) -> HashSet<Vec<usize>> {
-        self.expanded_paths.clone()
-    }
-
-    /// Restores expansion state from a set of paths.
-    ///
-    /// This is useful for preserving expansion state across tree reloads.
-    pub fn restore_expanded_paths(&mut self, paths: HashSet<Vec<usize>>) {
-        self.expanded_paths = paths;
-    }
-
     /// Expands a specific node and all its descendants.
     ///
     /// This is used when expanding JSONL lines to show the entire tree within the line.

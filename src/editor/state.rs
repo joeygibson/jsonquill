@@ -383,37 +383,25 @@ impl EditorState {
     /// Reloads the editor with a new tree, resetting cursor and state.
     ///
     /// This is used when reloading from disk or opening a new file.
-    /// It clears the undo history and rebuilds the view.
-    /// The expansion state and cursor position are preserved if valid.
+    /// It resets to default expansion state: fully expanded for JSON, collapsed for JSONL.
     pub fn reload_tree(&mut self, tree: JsonTree) {
-        // Preserve expansion state and cursor position before reloading
-        let expanded_paths = self.tree_view.get_expanded_paths();
-        let old_cursor_path = self.cursor.path().to_vec();
-
         self.tree = tree;
         self.dirty = false;
 
-        // Restore expansion state before rebuilding (so rebuild uses it)
-        self.tree_view.restore_expanded_paths(expanded_paths);
-        self.rebuild_tree_view();
+        // Reset to default expansion state:
+        // - Regular JSON files: fully expanded
+        // - JSONL files: fully collapsed
+        self.tree_view = TreeViewState::new();
+        if !matches!(self.tree.root().value(), JsonValue::JsonlRoot(_)) {
+            self.tree_view.expand_all(&self.tree);
+        }
+        self.tree_view.rebuild(&self.tree);
 
-        // Restore cursor position if it's still valid in the new tree AND visible in tree view
-        let cursor_valid = self.tree.get_node(&old_cursor_path).is_some()
-            && self
-                .tree_view
-                .lines()
-                .iter()
-                .any(|line| line.path == old_cursor_path);
-
-        if cursor_valid {
-            self.cursor.set_path(old_cursor_path.clone());
+        // Reset cursor to first visible line
+        if let Some(first_line) = self.tree_view.lines().first() {
+            self.cursor.set_path(first_line.path.clone());
         } else {
-            // Cursor path no longer valid or visible, reset to first visible line
-            if let Some(first_line) = self.tree_view.lines().first() {
-                self.cursor.set_path(first_line.path.clone());
-            } else {
-                self.cursor.set_path(vec![]);
-            }
+            self.cursor.set_path(vec![]);
         }
 
         // Reset undo tree with new initial snapshot
