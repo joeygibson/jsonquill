@@ -121,6 +121,34 @@ pub fn get_builtin_theme(name: &str) -> Option<Theme> {
             name: name.to_string(),
             colors: ThemeColors::one_dark(),
         }),
+        "gruvbox-light" => Some(Theme {
+            name: name.to_string(),
+            colors: ThemeColors::gruvbox_light(),
+        }),
+        "solarized-light" => Some(Theme {
+            name: name.to_string(),
+            colors: ThemeColors::solarized_light(),
+        }),
+        "tokyo-night" => Some(Theme {
+            name: name.to_string(),
+            colors: ThemeColors::tokyo_night(),
+        }),
+        "catppuccin-mocha" => Some(Theme {
+            name: name.to_string(),
+            colors: ThemeColors::catppuccin_mocha(),
+        }),
+        "catppuccin-latte" => Some(Theme {
+            name: name.to_string(),
+            colors: ThemeColors::catppuccin_latte(),
+        }),
+        "github-dark" => Some(Theme {
+            name: name.to_string(),
+            colors: ThemeColors::github_dark(),
+        }),
+        "github-light" => Some(Theme {
+            name: name.to_string(),
+            colors: ThemeColors::github_light(),
+        }),
         _ => None,
     }
 }
@@ -141,14 +169,23 @@ pub fn get_builtin_theme(name: &str) -> Option<Theme> {
 /// assert!(themes.contains(&"default-light".to_string()));
 /// ```
 pub fn list_builtin_themes() -> Vec<String> {
-    vec![
+    let mut themes = vec![
+        "catppuccin-latte".to_string(),
+        "catppuccin-mocha".to_string(),
         "default-dark".to_string(),
         "default-light".to_string(),
-        "gruvbox-dark".to_string(),
-        "nord".to_string(),
         "dracula".to_string(),
-        "solarized-dark".to_string(),
+        "github-dark".to_string(),
+        "github-light".to_string(),
+        "gruvbox-dark".to_string(),
+        "gruvbox-light".to_string(),
         "monokai".to_string(),
+        "nord".to_string(),
         "one-dark".to_string(),
-    ]
+        "solarized-dark".to_string(),
+        "solarized-light".to_string(),
+        "tokyo-night".to_string(),
+    ];
+    themes.sort();
+    themes
 }

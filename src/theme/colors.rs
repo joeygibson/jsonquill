@@ -312,4 +312,186 @@ impl ThemeColors {
             preview: Color::Rgb(92, 99, 112),            // comment
         }
     }
+
+    /// Returns the Gruvbox Light color scheme.
+    ///
+    /// A retro groove color scheme with warm tones on light background.
+    /// Light variant of the Gruvbox theme by morhetz.
+    pub fn gruvbox_light() -> Self {
+        Self {
+            key: Color::Rgb(175, 58, 3),      // dark orange
+            string: Color::Rgb(121, 116, 14), // dark green
+            number: Color::Rgb(143, 63, 113), // dark purple
+            boolean: Color::Rgb(214, 93, 14), // orange
+            null: Color::Rgb(102, 92, 84),    // gray
+
+            background: Color::Rgb(251, 241, 199), // light bg
+            foreground: Color::Rgb(60, 56, 54),    // dark fg
+            cursor: Color::Rgb(175, 58, 3),        // dark orange
+            status_line_bg: Color::Rgb(235, 219, 178), // lighter bg
+            status_line_fg: Color::Rgb(60, 56, 54), // dark fg
+
+            error: Color::Rgb(204, 36, 29),             // red
+            warning: Color::Rgb(215, 153, 33),          // yellow
+            info: Color::Rgb(69, 133, 136),             // aqua
+            search_highlight: Color::Rgb(250, 189, 47), // bright yellow
+            preview: Color::Rgb(102, 92, 84),           // gray
+        }
+    }
+
+    /// Returns the Solarized Light color scheme.
+    ///
+    /// Precision colors for machines and people (light variant).
+    /// Based on the Solarized theme by Ethan Schoonover.
+    pub fn solarized_light() -> Self {
+        Self {
+            key: Color::Rgb(38, 139, 210),    // blue
+            string: Color::Rgb(133, 153, 0),  // green
+            number: Color::Rgb(211, 54, 130), // magenta
+            boolean: Color::Rgb(203, 75, 22), // orange
+            null: Color::Rgb(147, 161, 161),  // base1
+
+            background: Color::Rgb(253, 246, 227),     // base3
+            foreground: Color::Rgb(101, 123, 131),     // base00
+            cursor: Color::Rgb(38, 139, 210),          // blue
+            status_line_bg: Color::Rgb(238, 232, 213), // base2
+            status_line_fg: Color::Rgb(88, 110, 117),  // base01
+
+            error: Color::Rgb(220, 50, 47),            // red
+            warning: Color::Rgb(181, 137, 0),          // yellow
+            info: Color::Rgb(42, 161, 152),            // cyan
+            search_highlight: Color::Rgb(181, 137, 0), // yellow
+            preview: Color::Rgb(147, 161, 161),        // base1
+        }
+    }
+
+    /// Returns the Tokyo Night color scheme.
+    ///
+    /// A clean, dark theme with vibrant purples, blues, and teals.
+    /// Inspired by the colors of Tokyo at night.
+    pub fn tokyo_night() -> Self {
+        Self {
+            key: Color::Rgb(125, 207, 255),     // cyan
+            string: Color::Rgb(158, 206, 106),  // green
+            number: Color::Rgb(255, 158, 100),  // orange
+            boolean: Color::Rgb(187, 154, 247), // purple
+            null: Color::Rgb(86, 95, 137),      // gray
+
+            background: Color::Rgb(26, 27, 38),        // dark bg
+            foreground: Color::Rgb(192, 202, 245),     // light fg
+            cursor: Color::Rgb(125, 207, 255),         // cyan
+            status_line_bg: Color::Rgb(36, 40, 59),    // darker bg
+            status_line_fg: Color::Rgb(192, 202, 245), // light fg
+
+            error: Color::Rgb(247, 118, 142),            // red
+            warning: Color::Rgb(224, 175, 104),          // yellow
+            info: Color::Rgb(125, 207, 255),             // cyan
+            search_highlight: Color::Rgb(224, 175, 104), // yellow
+            preview: Color::Rgb(86, 95, 137),            // gray
+        }
+    }
+
+    /// Returns the Catppuccin Mocha color scheme.
+    ///
+    /// A soothing pastel theme with warm, muted colors (dark variant).
+    /// Based on the Catppuccin theme by Catppuccin.
+    pub fn catppuccin_mocha() -> Self {
+        Self {
+            key: Color::Rgb(137, 180, 250),     // blue
+            string: Color::Rgb(166, 227, 161),  // green
+            number: Color::Rgb(250, 179, 135),  // peach
+            boolean: Color::Rgb(203, 166, 247), // mauve
+            null: Color::Rgb(108, 112, 134),    // surface2
+
+            background: Color::Rgb(30, 30, 46),        // base
+            foreground: Color::Rgb(205, 214, 244),     // text
+            cursor: Color::Rgb(137, 180, 250),         // blue
+            status_line_bg: Color::Rgb(49, 50, 68),    // mantle
+            status_line_fg: Color::Rgb(205, 214, 244), // text
+
+            error: Color::Rgb(243, 139, 168),            // red
+            warning: Color::Rgb(249, 226, 175),          // yellow
+            info: Color::Rgb(137, 220, 235),             // sky
+            search_highlight: Color::Rgb(249, 226, 175), // yellow
+            preview: Color::Rgb(108, 112, 134),          // surface2
+        }
+    }
+
+    /// Returns the Catppuccin Latte color scheme.
+    ///
+    /// A soothing pastel theme with warm, muted colors (light variant).
+    /// Based on the Catppuccin theme by Catppuccin.
+    pub fn catppuccin_latte() -> Self {
+        Self {
+            key: Color::Rgb(30, 102, 245),     // blue
+            string: Color::Rgb(64, 160, 43),   // green
+            number: Color::Rgb(254, 100, 11),  // peach
+            boolean: Color::Rgb(136, 57, 239), // mauve
+            null: Color::Rgb(156, 160, 176),   // surface2
+
+            background: Color::Rgb(239, 241, 245),     // base
+            foreground: Color::Rgb(76, 79, 105),       // text
+            cursor: Color::Rgb(30, 102, 245),          // blue
+            status_line_bg: Color::Rgb(230, 233, 239), // mantle
+            status_line_fg: Color::Rgb(76, 79, 105),   // text
+
+            error: Color::Rgb(210, 15, 57),             // red
+            warning: Color::Rgb(223, 142, 29),          // yellow
+            info: Color::Rgb(4, 165, 229),              // sky
+            search_highlight: Color::Rgb(223, 142, 29), // yellow
+            preview: Color::Rgb(156, 160, 176),         // surface2
+        }
+    }
+
+    /// Returns the GitHub Dark color scheme.
+    ///
+    /// Clean dark theme matching GitHub's interface.
+    /// Based on GitHub's Primer color system.
+    pub fn github_dark() -> Self {
+        Self {
+            key: Color::Rgb(121, 192, 255),     // blue
+            string: Color::Rgb(127, 219, 202),  // cyan
+            number: Color::Rgb(255, 184, 108),  // orange
+            boolean: Color::Rgb(255, 122, 135), // red
+            null: Color::Rgb(110, 118, 129),    // gray
+
+            background: Color::Rgb(13, 17, 23), // canvas default
+            foreground: Color::Rgb(201, 209, 217), // fg default
+            cursor: Color::Rgb(121, 192, 255),  // blue
+            status_line_bg: Color::Rgb(22, 27, 34), // canvas subtle
+            status_line_fg: Color::Rgb(201, 209, 217), // fg default
+
+            error: Color::Rgb(248, 81, 73),             // danger fg
+            warning: Color::Rgb(224, 155, 90),          // severe fg
+            info: Color::Rgb(121, 192, 255),            // accent fg
+            search_highlight: Color::Rgb(224, 155, 90), // severe fg
+            preview: Color::Rgb(110, 118, 129),         // gray
+        }
+    }
+
+    /// Returns the GitHub Light color scheme.
+    ///
+    /// Clean light theme matching GitHub's interface.
+    /// Based on GitHub's Primer color system.
+    pub fn github_light() -> Self {
+        Self {
+            key: Color::Rgb(9, 105, 218),     // blue
+            string: Color::Rgb(26, 127, 100), // green
+            number: Color::Rgb(207, 74, 34),  // orange
+            boolean: Color::Rgb(207, 34, 46), // red
+            null: Color::Rgb(87, 96, 106),    // gray
+
+            background: Color::Rgb(255, 255, 255), // canvas default
+            foreground: Color::Rgb(36, 41, 47),    // fg default
+            cursor: Color::Rgb(9, 105, 218),       // blue
+            status_line_bg: Color::Rgb(246, 248, 250), // canvas subtle
+            status_line_fg: Color::Rgb(36, 41, 47), // fg default
+
+            error: Color::Rgb(207, 34, 46),           // danger fg
+            warning: Color::Rgb(191, 87, 0),          // severe fg
+            info: Color::Rgb(9, 105, 218),            // accent fg
+            search_highlight: Color::Rgb(191, 87, 0), // severe fg
+            preview: Color::Rgb(87, 96, 106),         // gray
+        }
+    }
 }
