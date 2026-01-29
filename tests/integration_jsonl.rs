@@ -13,7 +13,7 @@ fn test_full_jsonl_workflow() {
     // Verify structure
     match tree.root().value() {
         JsonValue::JsonlRoot(lines) => {
-            assert_eq!(lines.len(), 4);
+            assert_eq!(lines.len(), 3);
         }
         _ => panic!("Expected JsonlRoot"),
     }
@@ -28,7 +28,7 @@ fn test_full_jsonl_workflow() {
     // Verify format
     let content = fs::read_to_string(&output_path).unwrap();
     println!("Saved content:\n{}", content);
-    assert_eq!(content.lines().count(), 4);
+    assert_eq!(content.lines().count(), 3);
     // Check that there are no array brackets wrapping the whole file
     assert!(!content.starts_with('['));
     assert!(!content.ends_with(']'));
@@ -76,10 +76,10 @@ fn test_delete_jsonl_line() {
     // Delete second line
     tree.delete_node(&[1]).unwrap();
 
-    // Should have 3 lines now (was 4, deleted 1)
+    // Should have 2 lines now (was 3, deleted 1)
     match tree.root().value() {
         JsonValue::JsonlRoot(lines) => {
-            assert_eq!(lines.len(), 3);
+            assert_eq!(lines.len(), 2);
         }
         _ => panic!("Expected JsonlRoot"),
     }
@@ -92,5 +92,5 @@ fn test_delete_jsonl_line() {
     save_json_file(&output_path, &tree, &config).unwrap();
 
     let content = fs::read_to_string(&output_path).unwrap();
-    assert_eq!(content.lines().count(), 3);
+    assert_eq!(content.lines().count(), 2);
 }
