@@ -90,6 +90,11 @@ pub fn save_json_file<P: AsRef<Path>>(path: P, tree: &JsonTree, config: &Config)
         }
     }
 
+    // Validate the serialized JSON before writing to disk
+    // This catches serialization bugs before they corrupt user data
+    serde_json::from_str::<serde_json::Value>(&json_str)
+        .context("Generated invalid JSON - this is a bug in jsonquill's serialization")?;
+
     // Write to temp file first (atomic save)
     let temp_path = path.with_extension("tmp");
     fs::write(&temp_path, json_str).context("Failed to write temp file")?;
@@ -115,9 +120,14 @@ fn save_jsonl<P: AsRef<Path>>(path: P, tree: &JsonTree, config: &Config) -> Resu
     let mut output = String::new();
 
     if let JsonValue::JsonlRoot(lines) = tree.root().value() {
-        for node in lines {
+        for (i, node) in lines.iter().enumerate() {
             let json_value = node_to_serde_value(node);
             let line = serde_json::to_string(&json_value)?;
+
+            // Validate each line is valid JSON
+            serde_json::from_str::<serde_json::Value>(&line)
+                .with_context(|| format!("Generated invalid JSON at line {} - this is a bug in jsonquill's serialization", i + 1))?;
+
             output.push_str(&line);
             output.push('\n');
         }
