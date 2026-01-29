@@ -5,6 +5,59 @@ All notable changes to jsonquill will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.0] - 2026-01-29
+
+### Added
+
+- add vim-style :e commands for file reloading
+- enable JSONL row additions and improve paste operations
+- show key name in edit prompt and document data safety
+- validate JSON before saving to catch serialization bugs
+- add 7 new themes and sort theme picker alphabetically
+- add interactive theme picker with live preview
+- add Ctrl-f/b, PgUp/PgDn, Home/End navigation keys
+- enable format preservation by default
+- implement format-preserving serialization
+- add preserve_formatting config option
+- implement span tracking during JSON parsing
+- add original_source field to JsonTree
+- add text_span field to NodeMetadata
+- add TextSpan struct for tracking byte ranges
+
+### Changed
+
+- Documentation: reorder :e commands to show non-destructive version first
+- Documentation: update help screen, README, and CLAUDE.md for :e commands
+- Documentation: add interactive theme picker design
+- Documentation: document format preservation feature
+- Documentation: fix outdated comments after text_span migration
+- Documentation: add format preservation design
+- Documentation: add named registers documentation to README
+
+### Fixed
+
+- reset to default expansion state on :e! reload
+- improve :e! to preserve cursor position and fix expansion state
+- preserve tree expansion state when reloading with :e!
+- JSONL integer formatting and root-level add operations
+- show (current) label only on original theme in picker
+- use pattern matching instead of is_some + unwrap
+- preserve tree expansion state when deleting nodes
+- make <count>G jump to line to match vim behavior
+- correct `a` and `o` commands to add containers instead of scalars
+- preserve trailing newline in saved files
+- correct span tracking in parser to prevent corruption
+- correctly propagate inside_modified_container flag in format preservation
+- disable format preservation due to data corruption
+- don't extract spans from modified containers
+- correct escape handling and char indexing in SpanTracker
+
+### Other
+
+- edit readme
+- Testing: add comprehensive document corruption tests
+- style: run cargo fmt
+- Testing: add comprehensive format preservation integration tests
 ## [0.8.0] - 2026-01-27
 
 ### Added
@@ -155,3 +208,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [0.6.0]: https://github.com/yourusername/jsonquill/compare/v0.5.0...v0.6.0
 [0.7.0]: https://github.com/yourusername/jsonquill/compare/v0.6.0...v0.7.0
 [0.8.0]: https://github.com/yourusername/jsonquill/compare/v0.7.0...v0.8.0
+[0.9.0]: https://github.com/yourusername/jsonquill/compare/v0.8.0...v0.9.0
