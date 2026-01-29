@@ -40,8 +40,6 @@ JSONQuill prioritizes data integrity with multiple safety mechanisms:
 - **Optional Backups**: Enable `create_backup: true` in your config to automatically create `.jsonquill.bak` files before saving.
 - **Format Preservation**: Unmodified nodes retain their exact original formatting, reducing the risk of unintended changes.
 
-These safeguards mean you can confidently edit important JSON files knowing that bugs in the editor won't silently corrupt your data.
-
 ## Platform Support
 
 - ✅ **Linux** (x86_64 glibc and musl)
