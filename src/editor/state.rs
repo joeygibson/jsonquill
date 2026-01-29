@@ -383,26 +383,46 @@ impl EditorState {
     /// Reloads the editor with a new tree, resetting cursor and state.
     ///
     /// This is used when reloading from disk or opening a new file.
-    /// It clears the undo history, resets the cursor to root, and rebuilds the view.
-    /// The expansion state of nodes is preserved across the reload.
+    /// It clears the undo history and rebuilds the view.
+    /// The expansion state and cursor position are preserved if valid.
     pub fn reload_tree(&mut self, tree: JsonTree) {
-        // Preserve expansion state before reloading
+        // Preserve expansion state and cursor position before reloading
         let expanded_paths = self.tree_view.get_expanded_paths();
+        let old_cursor_path = self.cursor.path().to_vec();
 
         self.tree = tree;
-        self.cursor.set_path(vec![]);
         self.dirty = false;
+
+        // Restore expansion state before rebuilding (so rebuild uses it)
+        self.tree_view.restore_expanded_paths(expanded_paths);
+        self.rebuild_tree_view();
+
+        // Restore cursor position if it's still valid in the new tree AND visible in tree view
+        let cursor_valid = self.tree.get_node(&old_cursor_path).is_some()
+            && self
+                .tree_view
+                .lines()
+                .iter()
+                .any(|line| line.path == old_cursor_path);
+
+        if cursor_valid {
+            self.cursor.set_path(old_cursor_path.clone());
+        } else {
+            // Cursor path no longer valid or visible, reset to first visible line
+            if let Some(first_line) = self.tree_view.lines().first() {
+                self.cursor.set_path(first_line.path.clone());
+            } else {
+                self.cursor.set_path(vec![]);
+            }
+        }
 
         // Reset undo tree with new initial snapshot
         let initial_snapshot = super::undo::EditorSnapshot {
             tree: self.tree.clone(),
-            cursor_path: vec![],
+            cursor_path: self.cursor.path().to_vec(),
         };
         self.undo_tree = super::undo::UndoTree::new(initial_snapshot, 50);
 
-        // Restore expansion state and rebuild view
-        self.tree_view.restore_expanded_paths(expanded_paths);
-        self.rebuild_tree_view();
         self.clear_message();
     }
 
