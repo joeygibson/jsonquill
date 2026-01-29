@@ -2115,9 +2115,81 @@ impl EditorState {
 
         let current_path = self.cursor.path().to_vec();
 
-        // Determine parent and insert position
+        // Handle root-level paste: insert inside root container
         if current_path.is_empty() {
-            return Err(anyhow!("Cannot paste at root level"));
+            match self.tree.root().value() {
+                JsonValue::Object(_) => {
+                    // For objects, need a key
+                    let base_key = key.unwrap_or_else(|| "pasted".to_string());
+                    let mut key_name = base_key.clone();
+                    let mut counter = 1;
+
+                    // Find unique key
+                    loop {
+                        let test_key = if counter == 1 {
+                            key_name.clone()
+                        } else {
+                            format!("{}{}", base_key, counter)
+                        };
+
+                        let key_exists =
+                            if let JsonValue::Object(entries) = self.tree.root().value() {
+                                entries.iter().any(|(k, _)| k == &test_key)
+                            } else {
+                                false
+                            };
+
+                        if !key_exists {
+                            key_name = test_key;
+                            break;
+                        }
+                        counter += 1;
+                    }
+
+                    // At root level:
+                    // p (after) = paste as first child (index 0)
+                    // P (before) = also paste as first child (index 0, can't go before root)
+                    let insert_index = 0;
+
+                    let insert_path = vec![insert_index];
+                    self.tree
+                        .insert_node_in_object(&insert_path, key_name, node.clone())?;
+
+                    // Expand root if not already expanded
+                    if !self.tree_view().is_expanded(&[]) {
+                        self.tree_view_mut().toggle_expand(&[]);
+                    }
+
+                    self.tree_view_mut()
+                        .update_paths_after_insertion(&insert_path);
+                    self.rebuild_tree_view();
+                    self.cursor.set_path(insert_path);
+                    return Ok(());
+                }
+                JsonValue::Array(_) | JsonValue::JsonlRoot(_) => {
+                    // At root level:
+                    // p (after) = paste as first child (index 0)
+                    // P (before) = also paste as first child (index 0, can't go before root)
+                    let insert_index = 0;
+
+                    let insert_path = vec![insert_index];
+                    self.tree.insert_node_in_array(&insert_path, node.clone())?;
+
+                    // Expand root if not already expanded
+                    if !self.tree_view().is_expanded(&[]) {
+                        self.tree_view_mut().toggle_expand(&[]);
+                    }
+
+                    self.tree_view_mut()
+                        .update_paths_after_insertion(&insert_path);
+                    self.rebuild_tree_view();
+                    self.cursor.set_path(insert_path);
+                    return Ok(());
+                }
+                _ => {
+                    return Err(anyhow!("Cannot paste - root is not a container"));
+                }
+            }
         }
 
         let parent_path = &current_path[..current_path.len() - 1];
@@ -2179,24 +2251,29 @@ impl EditorState {
 
                 self.tree
                     .insert_node_in_object(&insert_path, key_name, node.clone())?;
+
+                // Update tree view and cursor
+                self.tree_view_mut()
+                    .update_paths_after_insertion(&insert_path);
+                self.rebuild_tree_view();
+                self.cursor.set_path(insert_path);
             }
-            JsonValue::Array(_) => {
+            JsonValue::Array(_) | JsonValue::JsonlRoot(_) => {
                 let mut insert_path = parent_path.to_vec();
                 insert_path.push(insert_index);
 
                 self.tree.insert_node_in_array(&insert_path, node.clone())?;
+
+                // Update tree view and cursor
+                self.tree_view_mut()
+                    .update_paths_after_insertion(&insert_path);
+                self.rebuild_tree_view();
+                self.cursor.set_path(insert_path);
             }
             _ => {
                 return Err(anyhow!("Parent is not a container type"));
             }
         }
-
-        self.rebuild_tree_view();
-
-        // Move cursor to newly pasted node
-        let mut new_cursor_path = parent_path.to_vec();
-        new_cursor_path.push(insert_index);
-        self.cursor.set_path(new_cursor_path);
 
         Ok(())
     }
@@ -2872,12 +2949,12 @@ impl EditorState {
         if current_path.is_empty() {
             // Check if root is a container
             match self.tree.root().value() {
-                JsonValue::Object(_) | JsonValue::Array(_) => {
+                JsonValue::Object(_) | JsonValue::Array(_) | JsonValue::JsonlRoot(_) => {
                     // Root is container, we can add to it
                     // Determine which type
                     match self.tree.root().value() {
-                        JsonValue::Array(_) => {
-                            // Array: go straight to value input
+                        JsonValue::Array(_) | JsonValue::JsonlRoot(_) => {
+                            // Array or JSONL: go straight to value input
                             self.add_mode_stage = AddModeStage::AwaitingValue;
                             self.add_insertion_point = Some(vec![0]); // Insert at position 0
 
@@ -2914,8 +2991,8 @@ impl EditorState {
         // If it's a NON-EMPTY container AT root, add inside it (can't add sibling to root)
         if let Some(current_node) = self.tree.get_node(&current_path) {
             match current_node.value() {
-                JsonValue::Array(elements) => {
-                    // If array is empty OR we're at root level, add inside it
+                JsonValue::Array(elements) | JsonValue::JsonlRoot(elements) => {
+                    // If array/JSONL is empty OR we're at root level, add inside it
                     if elements.is_empty() || current_path.is_empty() {
                         let insert_index = elements.len(); // Get length before mutable borrow
 
@@ -2938,7 +3015,7 @@ impl EditorState {
                         self.set_message("-- INSERT --".to_string(), MessageLevel::Info);
                         return;
                     }
-                    // Non-empty array at non-root: fall through to add sibling after
+                    // Non-empty array/JSONL at non-root: fall through to add sibling after
                 }
                 JsonValue::Object(entries) => {
                     // If object is empty OR we're at root level, add inside it
@@ -2984,8 +3061,8 @@ impl EditorState {
 
         // Determine parent type and set up add operation
         match parent.value() {
-            JsonValue::Array(_) => {
-                // Adding to array: insert after current element
+            JsonValue::Array(_) | JsonValue::JsonlRoot(_) => {
+                // Adding to array/JSONL: insert after current element
                 self.add_mode_stage = AddModeStage::AwaitingValue;
                 let mut insertion_path = parent_path.to_vec();
                 insertion_path.push(current_index + 1);
@@ -3161,8 +3238,8 @@ impl EditorState {
                     self.temp_container = Some(container_node);
                     return;
                 }
-                JsonValue::Array(_) => {
-                    // Insert directly into array at position 0
+                JsonValue::Array(_) | JsonValue::JsonlRoot(_) => {
+                    // Insert directly into array/JSONL at position 0
                     let insertion_path = vec![0];
                     match self
                         .tree
@@ -3204,10 +3281,12 @@ impl EditorState {
         // If it's non-empty and not at root, add as sibling (to preserve expansion state)
         if let Some(current_node) = self.tree.get_node(&current_path) {
             match current_node.value() {
-                JsonValue::Array(elements) if elements.is_empty() || current_path.is_empty() => {
+                JsonValue::Array(elements) | JsonValue::JsonlRoot(elements)
+                    if elements.is_empty() || current_path.is_empty() =>
+                {
                     let insert_index = elements.len(); // Get length before mutable borrow
 
-                    // Empty array or root-level array: add inside it
+                    // Empty array/JSONL or root-level array/JSONL: add inside it
                     // Ensure the container is expanded so the new child will be visible
                     if !self.tree_view().is_expanded(&current_path) {
                         self.tree_view_mut().toggle_expand(&current_path);
@@ -3293,8 +3372,8 @@ impl EditorState {
                 // Store the container temporarily and wait for key
                 self.temp_container = Some(container_node);
             }
-            JsonValue::Array(_) => {
-                // Insert directly into array (no key needed)
+            JsonValue::Array(_) | JsonValue::JsonlRoot(_) => {
+                // Insert directly into array/JSONL (no key needed)
                 match self.tree.insert_node_in_array(&path, container_node) {
                     Ok(_) => {
                         self.tree_view_mut().update_paths_after_insertion(&path);
