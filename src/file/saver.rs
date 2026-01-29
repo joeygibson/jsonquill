@@ -121,8 +121,9 @@ fn save_jsonl<P: AsRef<Path>>(path: P, tree: &JsonTree, config: &Config) -> Resu
 
     if let JsonValue::JsonlRoot(lines) = tree.root().value() {
         for (i, node) in lines.iter().enumerate() {
-            let json_value = node_to_serde_value(node);
-            let line = serde_json::to_string(&json_value)?;
+            // JSONL requires compact single-line JSON
+            // Use indent_size=0 to force compact formatting with proper integer handling
+            let line = serialize_node_compact(node);
 
             // Validate each line is valid JSON
             serde_json::from_str::<serde_json::Value>(&line)
@@ -141,28 +142,6 @@ fn save_jsonl<P: AsRef<Path>>(path: P, tree: &JsonTree, config: &Config) -> Resu
     fs::rename(&temp_path, path).context("Failed to rename temp file")?;
 
     Ok(())
-}
-
-/// Converts a JsonNode to serde_json::Value for serialization.
-fn node_to_serde_value(node: &JsonNode) -> serde_json::Value {
-    match node.value() {
-        JsonValue::Null => serde_json::Value::Null,
-        JsonValue::Boolean(b) => serde_json::Value::Bool(*b),
-        JsonValue::Number(n) => serde_json::Number::from_f64(*n)
-            .map(serde_json::Value::Number)
-            .unwrap_or(serde_json::Value::Null),
-        JsonValue::String(s) => serde_json::Value::String(s.clone()),
-        JsonValue::Array(elements) | JsonValue::JsonlRoot(elements) => {
-            serde_json::Value::Array(elements.iter().map(node_to_serde_value).collect())
-        }
-        JsonValue::Object(entries) => {
-            let map = entries
-                .iter()
-                .map(|(k, v)| (k.clone(), node_to_serde_value(v)))
-                .collect();
-            serde_json::Value::Object(map)
-        }
-    }
 }
 
 /// Serializes a node with format preservation for unmodified nodes.
@@ -262,6 +241,49 @@ fn serialize_array_preserving(
     result.push_str(&indent);
     result.push(']');
     result
+}
+
+/// Serializes a JSON node to a compact single-line string.
+///
+/// This is used for JSONL format where each line must be a single-line JSON object.
+/// Numbers are formatted as integers when they have no fractional part.
+fn serialize_node_compact(node: &JsonNode) -> String {
+    match node.value() {
+        JsonValue::Object(entries) => {
+            if entries.is_empty() {
+                return "{}".to_string();
+            }
+            let parts: Vec<String> = entries
+                .iter()
+                .map(|(key, value)| {
+                    format!(
+                        "\"{}\":{}",
+                        escape_json_string(key),
+                        serialize_node_compact(value)
+                    )
+                })
+                .collect();
+            format!("{{{}}}", parts.join(","))
+        }
+        JsonValue::Array(elements) | JsonValue::JsonlRoot(elements) => {
+            if elements.is_empty() {
+                return "[]".to_string();
+            }
+            let parts: Vec<String> = elements.iter().map(serialize_node_compact).collect();
+            format!("[{}]", parts.join(","))
+        }
+        JsonValue::String(s) => format!("\"{}\"", escape_json_string(s)),
+        JsonValue::Number(n) => {
+            // Format numbers cleanly - remove unnecessary decimal points
+            if n.fract() == 0.0 && n.is_finite() {
+                format!("{:.0}", n)
+            } else {
+                n.to_string()
+            }
+        }
+        JsonValue::Boolean(b) => b.to_string(),
+        JsonValue::Null => "null".to_string(),
+    }
 }
 
 /// Recursively serializes a JSON node to a formatted string.

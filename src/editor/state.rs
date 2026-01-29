@@ -2910,12 +2910,15 @@ impl EditorState {
 
         // Check if the current node (not parent) is a container
         // If it's an EMPTY container, add inside it
-        // If it's a NON-EMPTY container, add as sibling after it (to preserve expansion state)
+        // If it's a NON-EMPTY container and NOT at root, add as sibling after it (to preserve expansion state)
+        // If it's a NON-EMPTY container AT root, add inside it (can't add sibling to root)
         if let Some(current_node) = self.tree.get_node(&current_path) {
             match current_node.value() {
                 JsonValue::Array(elements) => {
-                    // Only add inside if array is empty
-                    if elements.is_empty() {
+                    // If array is empty OR we're at root level, add inside it
+                    if elements.is_empty() || current_path.is_empty() {
+                        let insert_index = elements.len(); // Get length before mutable borrow
+
                         // Ensure the container is expanded so the new child will be visible
                         if !self.tree_view().is_expanded(&current_path) {
                             self.tree_view_mut().toggle_expand(&current_path);
@@ -2923,7 +2926,7 @@ impl EditorState {
 
                         self.add_mode_stage = AddModeStage::AwaitingValue;
                         let mut insertion_path = current_path.clone();
-                        insertion_path.push(0); // Insert at position 0 (first child)
+                        insertion_path.push(insert_index); // Insert at end
                         self.add_insertion_point = Some(insertion_path);
 
                         // Enter Insert mode with empty edit buffer
@@ -2935,11 +2938,13 @@ impl EditorState {
                         self.set_message("-- INSERT --".to_string(), MessageLevel::Info);
                         return;
                     }
-                    // Non-empty array: fall through to add sibling after
+                    // Non-empty array at non-root: fall through to add sibling after
                 }
                 JsonValue::Object(entries) => {
-                    // Only add inside if object is empty
-                    if entries.is_empty() {
+                    // If object is empty OR we're at root level, add inside it
+                    if entries.is_empty() || current_path.is_empty() {
+                        let insert_index = entries.len(); // Get length before mutable borrow
+
                         // Ensure the container is expanded so the new child will be visible
                         if !self.tree_view().is_expanded(&current_path) {
                             self.tree_view_mut().toggle_expand(&current_path);
@@ -2947,12 +2952,12 @@ impl EditorState {
 
                         self.add_mode_stage = AddModeStage::AwaitingKey;
                         let mut insertion_path = current_path.clone();
-                        insertion_path.push(0); // Insert at position 0 (first child)
+                        insertion_path.push(insert_index); // Insert at end
                         self.add_insertion_point = Some(insertion_path);
                         // Stay in Normal mode, wait for key input
                         return;
                     }
-                    // Non-empty object: fall through to add sibling after
+                    // Non-empty object at non-root: fall through to add sibling after
                 }
                 _ => {
                     // Current node is a scalar, fall through to add sibling
@@ -3194,19 +3199,22 @@ impl EditorState {
             }
         }
 
-        // Check if the current node (not parent) is an EMPTY container
-        // If it's empty, add inside it (consistent with start_add_operation behavior)
+        // Check if the current node (not parent) is a container
+        // If it's empty OR at root level, add inside it
+        // If it's non-empty and not at root, add as sibling (to preserve expansion state)
         if let Some(current_node) = self.tree.get_node(&current_path) {
             match current_node.value() {
-                JsonValue::Array(elements) if elements.is_empty() => {
-                    // Empty array: add inside it
+                JsonValue::Array(elements) if elements.is_empty() || current_path.is_empty() => {
+                    let insert_index = elements.len(); // Get length before mutable borrow
+
+                    // Empty array or root-level array: add inside it
                     // Ensure the container is expanded so the new child will be visible
                     if !self.tree_view().is_expanded(&current_path) {
                         self.tree_view_mut().toggle_expand(&current_path);
                     }
 
                     let mut insertion_path = current_path.clone();
-                    insertion_path.push(0); // Insert at position 0 (first child)
+                    insertion_path.push(insert_index); // Insert at end
 
                     match self
                         .tree
@@ -3233,8 +3241,10 @@ impl EditorState {
                     }
                     return;
                 }
-                JsonValue::Object(entries) if entries.is_empty() => {
-                    // Empty object: add inside it
+                JsonValue::Object(entries) if entries.is_empty() || current_path.is_empty() => {
+                    let insert_index = entries.len(); // Get length before mutable borrow
+
+                    // Empty object or root-level object: add inside it
                     // Ensure the container is expanded so the new child will be visible
                     if !self.tree_view().is_expanded(&current_path) {
                         self.tree_view_mut().toggle_expand(&current_path);
@@ -3242,7 +3252,7 @@ impl EditorState {
 
                     self.add_mode_stage = AddModeStage::AwaitingKey;
                     let mut insertion_path = current_path.clone();
-                    insertion_path.push(0); // Insert at position 0 (first child)
+                    insertion_path.push(insert_index); // Insert at end
                     self.add_insertion_point = Some(insertion_path);
                     // For containers in objects, we need a key
                     // Store the container temporarily and wait for key
@@ -3250,7 +3260,7 @@ impl EditorState {
                     return;
                 }
                 _ => {
-                    // Non-empty container or scalar: fall through to add sibling
+                    // Non-empty container at non-root or scalar: fall through to add sibling
                 }
             }
         }
