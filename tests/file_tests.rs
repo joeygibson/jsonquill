@@ -402,7 +402,11 @@ fn test_no_corruption_deeply_nested_structure() {
     // Verify the saved JSON is valid by parsing with serde
     let content = std::fs::read_to_string(temp_file.path()).unwrap();
     let parsed: serde_json::Result<serde_json::Value> = serde_json::from_str(&content);
-    assert!(parsed.is_ok(), "Saved JSON should be valid, but got: {}", content);
+    assert!(
+        parsed.is_ok(),
+        "Saved JSON should be valid, but got: {}",
+        content
+    );
 
     // Verify structure integrity by loading and checking
     let loaded = load_json_file(temp_file.path()).unwrap();
@@ -481,17 +485,50 @@ fn test_no_corruption_all_value_types() {
 
     let obj = vec![
         ("null_val".to_string(), JsonNode::new(JsonValue::Null)),
-        ("bool_true".to_string(), JsonNode::new(JsonValue::Boolean(true))),
-        ("bool_false".to_string(), JsonNode::new(JsonValue::Boolean(false))),
-        ("int_positive".to_string(), JsonNode::new(JsonValue::Number(42.0))),
-        ("int_negative".to_string(), JsonNode::new(JsonValue::Number(-17.0))),
-        ("float_val".to_string(), JsonNode::new(JsonValue::Number(3.14159))),
-        ("string_empty".to_string(), JsonNode::new(JsonValue::String("".to_string()))),
-        ("string_simple".to_string(), JsonNode::new(JsonValue::String("hello".to_string()))),
-        ("array_empty".to_string(), JsonNode::new(JsonValue::Array(vec![]))),
-        ("array_vals".to_string(), JsonNode::new(JsonValue::Array(nested_arr))),
-        ("object_empty".to_string(), JsonNode::new(JsonValue::Object(vec![]))),
-        ("object_nested".to_string(), JsonNode::new(JsonValue::Object(nested_obj))),
+        (
+            "bool_true".to_string(),
+            JsonNode::new(JsonValue::Boolean(true)),
+        ),
+        (
+            "bool_false".to_string(),
+            JsonNode::new(JsonValue::Boolean(false)),
+        ),
+        (
+            "int_positive".to_string(),
+            JsonNode::new(JsonValue::Number(42.0)),
+        ),
+        (
+            "int_negative".to_string(),
+            JsonNode::new(JsonValue::Number(-17.0)),
+        ),
+        (
+            "float_val".to_string(),
+            JsonNode::new(JsonValue::Number(3.14159)),
+        ),
+        (
+            "string_empty".to_string(),
+            JsonNode::new(JsonValue::String("".to_string())),
+        ),
+        (
+            "string_simple".to_string(),
+            JsonNode::new(JsonValue::String("hello".to_string())),
+        ),
+        (
+            "array_empty".to_string(),
+            JsonNode::new(JsonValue::Array(vec![])),
+        ),
+        (
+            "array_vals".to_string(),
+            JsonNode::new(JsonValue::Array(nested_arr)),
+        ),
+        (
+            "object_empty".to_string(),
+            JsonNode::new(JsonValue::Object(vec![])),
+        ),
+        (
+            "object_nested".to_string(),
+            JsonNode::new(JsonValue::Object(nested_obj)),
+        ),
     ];
 
     let tree = JsonTree::new(JsonNode::new(JsonValue::Object(obj)));
@@ -503,7 +540,11 @@ fn test_no_corruption_all_value_types() {
     // Verify valid JSON
     let content = std::fs::read_to_string(temp_file.path()).unwrap();
     let parsed: serde_json::Result<serde_json::Value> = serde_json::from_str(&content);
-    assert!(parsed.is_ok(), "Saved JSON should be valid, but got: {}", content);
+    assert!(
+        parsed.is_ok(),
+        "Saved JSON should be valid, but got: {}",
+        content
+    );
 
     // Verify roundtrip
     let loaded = load_json_file(temp_file.path()).unwrap();
@@ -522,11 +563,26 @@ fn test_no_corruption_all_value_types() {
 fn test_no_corruption_unicode_strings() {
     // Test various unicode characters
     let obj = vec![
-        ("emoji".to_string(), JsonNode::new(JsonValue::String("🎉🚀✨".to_string()))),
-        ("chinese".to_string(), JsonNode::new(JsonValue::String("你好世界".to_string()))),
-        ("arabic".to_string(), JsonNode::new(JsonValue::String("مرحبا".to_string()))),
-        ("cyrillic".to_string(), JsonNode::new(JsonValue::String("Привет".to_string()))),
-        ("mixed".to_string(), JsonNode::new(JsonValue::String("Hello 世界 🌍".to_string()))),
+        (
+            "emoji".to_string(),
+            JsonNode::new(JsonValue::String("🎉🚀✨".to_string())),
+        ),
+        (
+            "chinese".to_string(),
+            JsonNode::new(JsonValue::String("你好世界".to_string())),
+        ),
+        (
+            "arabic".to_string(),
+            JsonNode::new(JsonValue::String("مرحبا".to_string())),
+        ),
+        (
+            "cyrillic".to_string(),
+            JsonNode::new(JsonValue::String("Привет".to_string())),
+        ),
+        (
+            "mixed".to_string(),
+            JsonNode::new(JsonValue::String("Hello 世界 🌍".to_string())),
+        ),
     ];
 
     let tree = JsonTree::new(JsonNode::new(JsonValue::Object(obj)));
@@ -566,10 +622,22 @@ fn test_no_corruption_complex_numbers() {
     // Test various number formats
     let obj = vec![
         ("zero".to_string(), JsonNode::new(JsonValue::Number(0.0))),
-        ("negative_zero".to_string(), JsonNode::new(JsonValue::Number(-0.0))),
-        ("large_int".to_string(), JsonNode::new(JsonValue::Number(9007199254740991.0))),
-        ("small_float".to_string(), JsonNode::new(JsonValue::Number(0.000001))),
-        ("negative".to_string(), JsonNode::new(JsonValue::Number(-999.999))),
+        (
+            "negative_zero".to_string(),
+            JsonNode::new(JsonValue::Number(-0.0)),
+        ),
+        (
+            "large_int".to_string(),
+            JsonNode::new(JsonValue::Number(9007199254740991.0)),
+        ),
+        (
+            "small_float".to_string(),
+            JsonNode::new(JsonValue::Number(0.000001)),
+        ),
+        (
+            "negative".to_string(),
+            JsonNode::new(JsonValue::Number(-999.999)),
+        ),
     ];
 
     let tree = JsonTree::new(JsonNode::new(JsonValue::Object(obj)));
@@ -581,7 +649,11 @@ fn test_no_corruption_complex_numbers() {
     // Verify valid JSON
     let content = std::fs::read_to_string(temp_file.path()).unwrap();
     let parsed: serde_json::Result<serde_json::Value> = serde_json::from_str(&content);
-    assert!(parsed.is_ok(), "Saved JSON with complex numbers should be valid, but got: {}", content);
+    assert!(
+        parsed.is_ok(),
+        "Saved JSON with complex numbers should be valid, but got: {}",
+        content
+    );
 
     // Load and verify numbers
     let loaded = load_json_file(temp_file.path()).unwrap();
@@ -641,7 +713,11 @@ fn test_no_corruption_after_single_edit() {
     // Verify valid JSON
     let content = std::fs::read_to_string(temp_file.path()).unwrap();
     let parsed: serde_json::Result<serde_json::Value> = serde_json::from_str(&content);
-    assert!(parsed.is_ok(), "Saved JSON after edit should be valid, but got: {}", content);
+    assert!(
+        parsed.is_ok(),
+        "Saved JSON after edit should be valid, but got: {}",
+        content
+    );
 
     // Verify structure integrity
     let serde_parsed = parsed.unwrap();
@@ -706,7 +782,11 @@ fn test_no_corruption_after_multiple_edits() {
     // Verify valid JSON
     let content = std::fs::read_to_string(temp_file.path()).unwrap();
     let parsed: serde_json::Result<serde_json::Value> = serde_json::from_str(&content);
-    assert!(parsed.is_ok(), "Saved JSON after multiple edits should be valid, but got: {}", content);
+    assert!(
+        parsed.is_ok(),
+        "Saved JSON after multiple edits should be valid, but got: {}",
+        content
+    );
 
     // Verify changes
     let serde_parsed = parsed.unwrap();
@@ -739,7 +819,11 @@ fn test_no_corruption_array_of_objects() {
     // Verify valid JSON
     let content = std::fs::read_to_string(temp_file.path()).unwrap();
     let parsed: serde_json::Result<serde_json::Value> = serde_json::from_str(&content);
-    assert!(parsed.is_ok(), "Saved JSON should be valid, but got: {}", content);
+    assert!(
+        parsed.is_ok(),
+        "Saved JSON should be valid, but got: {}",
+        content
+    );
 
     // Verify structure
     let serde_parsed = parsed.unwrap();
@@ -782,7 +866,11 @@ fn test_no_corruption_mixed_nesting() {
     // Verify valid JSON
     let content = std::fs::read_to_string(temp_file.path()).unwrap();
     let parsed: serde_json::Result<serde_json::Value> = serde_json::from_str(&content);
-    assert!(parsed.is_ok(), "Saved JSON with mixed nesting should be valid, but got: {}", content);
+    assert!(
+        parsed.is_ok(),
+        "Saved JSON with mixed nesting should be valid, but got: {}",
+        content
+    );
 
     // Verify deep structure
     let serde_parsed = parsed.unwrap();
@@ -798,8 +886,14 @@ fn test_no_corruption_large_document() {
     for i in 0..1000 {
         let item = vec![
             ("id".to_string(), JsonNode::new(JsonValue::Number(i as f64))),
-            ("name".to_string(), JsonNode::new(JsonValue::String(format!("Item {}", i)))),
-            ("active".to_string(), JsonNode::new(JsonValue::Boolean(i % 2 == 0))),
+            (
+                "name".to_string(),
+                JsonNode::new(JsonValue::String(format!("Item {}", i))),
+            ),
+            (
+                "active".to_string(),
+                JsonNode::new(JsonValue::Boolean(i % 2 == 0)),
+            ),
         ];
         items.push(JsonNode::new(JsonValue::Object(item)));
     }
@@ -813,7 +907,10 @@ fn test_no_corruption_large_document() {
     // Verify valid JSON
     let content = std::fs::read_to_string(temp_file.path()).unwrap();
     let parsed: serde_json::Result<serde_json::Value> = serde_json::from_str(&content);
-    assert!(parsed.is_ok(), "Large JSON document should be valid after save");
+    assert!(
+        parsed.is_ok(),
+        "Large JSON document should be valid after save"
+    );
 
     // Spot check some values
     let serde_parsed = parsed.unwrap();
