@@ -380,6 +380,26 @@ impl EditorState {
         &mut self.tree
     }
 
+    /// Reloads the editor with a new tree, resetting cursor and state.
+    ///
+    /// This is used when reloading from disk or opening a new file.
+    /// It clears the undo history, resets the cursor to root, and rebuilds the view.
+    pub fn reload_tree(&mut self, tree: JsonTree) {
+        self.tree = tree;
+        self.cursor.set_path(vec![]);
+        self.dirty = false;
+
+        // Reset undo tree with new initial snapshot
+        let initial_snapshot = super::undo::EditorSnapshot {
+            tree: self.tree.clone(),
+            cursor_path: vec![],
+        };
+        self.undo_tree = super::undo::UndoTree::new(initial_snapshot, 50);
+
+        self.rebuild_tree_view();
+        self.clear_message();
+    }
+
     /// Returns a reference to the current editing mode.
     ///
     /// # Examples

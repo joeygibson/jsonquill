@@ -1239,6 +1239,83 @@ impl InputHandler {
         }
 
         match command {
+            "e!" => {
+                // Reload from disk, discarding changes
+                if let Some(filename) = state.filename().map(|s| s.to_string()) {
+                    use crate::file::loader::load_json_file;
+                    match load_json_file(&filename) {
+                        Ok(tree) => {
+                            state.reload_tree(tree);
+                            state.set_message(
+                                format!("\"{}\" reloaded", filename),
+                                MessageLevel::Info,
+                            );
+                        }
+                        Err(e) => {
+                            state.set_message(
+                                format!("Error reloading file: {}", e),
+                                MessageLevel::Error,
+                            );
+                        }
+                    }
+                } else {
+                    state.set_message("No file name".to_string(), MessageLevel::Error);
+                }
+                Ok(false)
+            }
+            cmd if cmd.starts_with("e ") => {
+                // :e filename - load a different file
+                let filename = cmd[2..].trim().to_string();
+                if filename.is_empty() {
+                    state.set_message("No file name specified".to_string(), MessageLevel::Error);
+                    return Ok(false);
+                }
+
+                // Check for unsaved changes
+                if state.is_dirty() {
+                    state.set_message(
+                        "No write since last change (add ! to override)".to_string(),
+                        MessageLevel::Error,
+                    );
+                    return Ok(false);
+                }
+
+                use crate::file::loader::load_json_file;
+                match load_json_file(&filename) {
+                    Ok(tree) => {
+                        state.reload_tree(tree);
+                        state.set_filename(filename.clone());
+                        state.set_message(format!("\"{}\" loaded", filename), MessageLevel::Info);
+                    }
+                    Err(e) => {
+                        state
+                            .set_message(format!("Error loading file: {}", e), MessageLevel::Error);
+                    }
+                }
+                Ok(false)
+            }
+            cmd if cmd.starts_with("e! ") => {
+                // :e! filename - load a different file, discarding changes
+                let filename = cmd[3..].trim().to_string();
+                if filename.is_empty() {
+                    state.set_message("No file name specified".to_string(), MessageLevel::Error);
+                    return Ok(false);
+                }
+
+                use crate::file::loader::load_json_file;
+                match load_json_file(&filename) {
+                    Ok(tree) => {
+                        state.reload_tree(tree);
+                        state.set_filename(filename.clone());
+                        state.set_message(format!("\"{}\" loaded", filename), MessageLevel::Info);
+                    }
+                    Err(e) => {
+                        state
+                            .set_message(format!("Error loading file: {}", e), MessageLevel::Error);
+                    }
+                }
+                Ok(false)
+            }
             "help" => {
                 state.toggle_help();
                 Ok(false)
