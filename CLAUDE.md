@@ -24,12 +24,35 @@ See `~/.claude/instructions.md` for standard Rust/Cargo commands (build, run, te
 
 ## Pre-Commit Checklist
 
-**Project-specific requirement:**
+**CRITICAL: ALWAYS run these checks before committing. Never commit without passing all checks.**
+
+### 1. Code Quality (REQUIRED)
+```bash
+# Format code (REQUIRED - will fail CI if not run)
+cargo fmt
+
+# Verify formatting is correct
+cargo fmt --check
+
+# Run clippy with warnings as errors (REQUIRED - will fail CI)
+cargo clippy -- -D warnings
+
+# Run all tests
+cargo test
+```
+
+### 2. Project-Specific Requirements
 - **Update help screen** (`src/ui/help_overlay.rs`) when adding user-facing features
   - New commands, keybindings, or major features visible to users
   - Help screen should match README.md and CLAUDE.md documentation
 
-**Standard Rust checks:** See `~/.claude/instructions.md` for the pre-commit checklist (cargo fmt, cargo clippy, cargo test).
+### 3. Pre-Commit Command Summary
+**Run this before EVERY commit:**
+```bash
+cargo fmt && cargo clippy -- -D warnings && cargo test
+```
+
+If any of these fail, fix the issues before committing. Do not commit code that doesn't pass all three checks.
 
 ## Version Management
 
