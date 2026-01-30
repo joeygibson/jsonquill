@@ -29,7 +29,38 @@ struct Cli {
     theme: String,
 }
 
+/// Set up a panic hook that restores the terminal before displaying panic information.
+///
+/// This ensures that panics are visible even when the terminal is in raw mode with alternate screen.
+/// Without this, panic messages would be hidden or garbled, making debugging very difficult.
+fn setup_panic_hook() {
+    use std::panic;
+
+    // Take the default panic hook so we can call it after restoration
+    let default_panic = panic::take_hook();
+
+    panic::set_hook(Box::new(move |panic_info| {
+        // Restore terminal to normal state
+        // Use stderr to avoid interfering with stdout pipes
+        use std::io::Write;
+
+        // Exit alternate screen
+        let _ = write!(io::stderr(), "{}", termion::screen::ToMainScreen);
+        // Show cursor
+        let _ = write!(io::stderr(), "{}", termion::cursor::Show);
+        // Ensure output is flushed
+        let _ = io::stderr().flush();
+
+        // Call the default panic handler to print the panic message and backtrace
+        default_panic(panic_info);
+    }));
+}
+
 fn main() -> Result<()> {
+    // Set up panic hook to restore terminal before showing panic info
+    // This ensures panics are visible when terminal is in raw mode
+    setup_panic_hook();
+
     let cli = Cli::parse();
 
     // Load file or create empty document BEFORE terminal setup
