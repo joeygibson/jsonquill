@@ -1,5 +1,5 @@
-use jsonquill::input::keys::{map_key_event, InputEvent};
 use jsonquill::editor::mode::EditorMode;
+use jsonquill::input::keys::{map_key_event, InputEvent};
 use termion::event::{Event, Key};
 
 #[test]

@@ -3860,7 +3860,9 @@ impl EditorState {
 
             // Find indices of anchor and cursor in visible lines
             let anchor_idx = lines.iter().position(|line| &line.path == anchor);
-            let cursor_idx = lines.iter().position(|line| &line.path == self.cursor.path());
+            let cursor_idx = lines
+                .iter()
+                .position(|line| line.path == *self.cursor.path());
 
             if let (Some(a_idx), Some(c_idx)) = (anchor_idx, cursor_idx) {
                 let (start, end) = if a_idx <= c_idx {
@@ -4090,7 +4092,7 @@ impl EditorState {
                     Err(e) => Err(format!("Paste failed: {}", e)),
                 }
             }
-            RepeatableCommand::Add { value, key } => {
+            RepeatableCommand::Add { value: _, key: _ } => {
                 // This is complex - for now, skip it
                 Err("Cannot repeat add operation yet".to_string())
             }
@@ -4102,11 +4104,11 @@ impl EditorState {
                 // TODO: implement
                 Err("Cannot repeat add object operation yet".to_string())
             }
-            RepeatableCommand::Rename { new_key } => {
+            RepeatableCommand::Rename { new_key: _ } => {
                 // TODO: implement
                 Err("Cannot repeat rename operation yet".to_string())
             }
-            RepeatableCommand::ChangeValue { new_value } => {
+            RepeatableCommand::ChangeValue { new_value: _ } => {
                 // TODO: implement
                 Err("Cannot repeat change value operation yet".to_string())
             }

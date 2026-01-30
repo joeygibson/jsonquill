@@ -1,5 +1,5 @@
-use jsonquill::editor::repeat::RepeatableCommand;
 use jsonquill::document::node::JsonValue;
+use jsonquill::editor::repeat::RepeatableCommand;
 
 #[test]
 fn test_repeatable_command_delete() {

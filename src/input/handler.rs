@@ -185,10 +185,7 @@ impl InputHandler {
                     if state.jump_to_mark(c) {
                         state.set_message("".to_string(), MessageLevel::Info);
                     } else {
-                        state.set_message(
-                            format!("Mark {} not set", c),
-                            MessageLevel::Error,
-                        );
+                        state.set_message(format!("Mark {} not set", c), MessageLevel::Error);
                     }
                     return Ok(false);
                 }
@@ -1200,10 +1197,7 @@ impl InputHandler {
                     if state.jump_backward() {
                         state.set_message("".to_string(), MessageLevel::Info);
                     } else {
-                        state.set_message(
-                            "Already at oldest jump".to_string(),
-                            MessageLevel::Info,
-                        );
+                        state.set_message("Already at oldest jump".to_string(), MessageLevel::Info);
                     }
                 }
                 InputEvent::JumpForward => {
@@ -1213,10 +1207,7 @@ impl InputHandler {
                     if state.jump_forward() {
                         state.set_message("".to_string(), MessageLevel::Info);
                     } else {
-                        state.set_message(
-                            "Already at newest jump".to_string(),
-                            MessageLevel::Info,
-                        );
+                        state.set_message("Already at newest jump".to_string(), MessageLevel::Info);
                     }
                 }
                 InputEvent::Repeat => {
