@@ -3736,6 +3736,39 @@ impl EditorState {
         &mut self.jumplist
     }
 
+    /// Records the current cursor position in the jump list.
+    ///
+    /// This should be called before any "big jump" (gg, G, search, marks)
+    /// but not for regular movement commands (j, k, h, l).
+    pub fn record_jump(&mut self) {
+        let cursor = self.cursor.path().to_vec();
+        self.jumplist.record_jump(cursor);
+    }
+
+    /// Jumps backward in the jump list.
+    ///
+    /// Returns true if successful, false if already at oldest jump.
+    pub fn jump_backward(&mut self) -> bool {
+        if let Some(path) = self.jumplist.jump_backward() {
+            self.cursor.set_path(path.clone());
+            true
+        } else {
+            false
+        }
+    }
+
+    /// Jumps forward in the jump list.
+    ///
+    /// Returns true if successful, false if already at newest jump.
+    pub fn jump_forward(&mut self) -> bool {
+        if let Some(path) = self.jumplist.jump_forward() {
+            self.cursor.set_path(path.clone());
+            true
+        } else {
+            false
+        }
+    }
+
     /// Returns a reference to the mark set.
     pub fn marks(&self) -> &MarkSet {
         &self.marks

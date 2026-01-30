@@ -1056,12 +1056,28 @@ impl InputHandler {
                 InputEvent::JumpBackward => {
                     state.clear_pending();
                     state.clear_search_results();
-                    // TODO: implement in Task 7
+                    use crate::editor::state::MessageLevel;
+                    if state.jump_backward() {
+                        state.set_message("".to_string(), MessageLevel::Info);
+                    } else {
+                        state.set_message(
+                            "Already at oldest jump".to_string(),
+                            MessageLevel::Info,
+                        );
+                    }
                 }
                 InputEvent::JumpForward => {
                     state.clear_pending();
                     state.clear_search_results();
-                    // TODO: implement in Task 7
+                    use crate::editor::state::MessageLevel;
+                    if state.jump_forward() {
+                        state.set_message("".to_string(), MessageLevel::Info);
+                    } else {
+                        state.set_message(
+                            "Already at newest jump".to_string(),
+                            MessageLevel::Info,
+                        );
+                    }
                 }
                 InputEvent::Repeat => {
                     state.clear_pending();
