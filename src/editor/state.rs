@@ -3871,10 +3871,27 @@ impl EditorState {
                     (c_idx, a_idx)
                 };
 
-                self.visual_selection = lines[start..=end]
+                // Collect all paths in the visual range
+                let all_paths: Vec<Vec<usize>> = lines[start..=end]
                     .iter()
                     .map(|line| line.path.clone())
                     .collect();
+
+                // Filter out paths that are children of other paths in the selection
+                // A path is a child if it starts with another path in the selection
+                let mut top_level_paths = Vec::new();
+                for path in &all_paths {
+                    let is_child = all_paths.iter().any(|other_path| {
+                        other_path != path
+                            && path.len() > other_path.len()
+                            && path.starts_with(other_path)
+                    });
+                    if !is_child {
+                        top_level_paths.push(path.clone());
+                    }
+                }
+
+                self.visual_selection = top_level_paths;
             }
         }
     }
