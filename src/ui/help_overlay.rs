@@ -250,6 +250,68 @@ pub fn render_help_overlay(f: &mut Frame, colors: &ThemeColors, scroll: usize) {
         ]),
         Line::from(""),
         Line::from(vec![Span::styled(
+            "Visual Mode",
+            Style::default().fg(colors.key).add_modifier(Modifier::BOLD),
+        )]),
+        Line::from(vec![
+            Span::styled("  v             ", Style::default().fg(colors.number)),
+            Span::raw("Enter visual mode (select multiple nodes)"),
+        ]),
+        Line::from(vec![
+            Span::styled("  j/k/h/l       ", Style::default().fg(colors.number)),
+            Span::raw("Expand/shrink selection (in visual mode)"),
+        ]),
+        Line::from(vec![
+            Span::styled("  d             ", Style::default().fg(colors.number)),
+            Span::raw("Delete selection (in visual mode)"),
+        ]),
+        Line::from(vec![
+            Span::styled("  y             ", Style::default().fg(colors.number)),
+            Span::raw("Yank (copy) selection (in visual mode)"),
+        ]),
+        Line::from(vec![
+            Span::styled("  p/P           ", Style::default().fg(colors.number)),
+            Span::raw("Replace selection with clipboard (in visual mode)"),
+        ]),
+        Line::from(vec![
+            Span::styled("  Esc           ", Style::default().fg(colors.number)),
+            Span::raw("Exit visual mode"),
+        ]),
+        Line::from(""),
+        Line::from(vec![Span::styled(
+            "Marks & Jump List",
+            Style::default().fg(colors.key).add_modifier(Modifier::BOLD),
+        )]),
+        Line::from(vec![
+            Span::styled("  m{a-z}        ", Style::default().fg(colors.number)),
+            Span::raw("Set mark at current position"),
+        ]),
+        Line::from(vec![
+            Span::styled("  '{a-z}        ", Style::default().fg(colors.number)),
+            Span::raw("Jump to mark"),
+        ]),
+        Line::from(vec![
+            Span::styled("  Ctrl-o        ", Style::default().fg(colors.number)),
+            Span::raw("Jump backward in jump list"),
+        ]),
+        Line::from(vec![
+            Span::styled("  Ctrl-i        ", Style::default().fg(colors.number)),
+            Span::raw("Jump forward in jump list"),
+        ]),
+        Line::from(vec![Span::raw(
+            "  Jump list records: gg, G, line jumps, search, marks",
+        )]),
+        Line::from(""),
+        Line::from(vec![Span::styled(
+            "Repeat Command",
+            Style::default().fg(colors.key).add_modifier(Modifier::BOLD),
+        )]),
+        Line::from(vec![
+            Span::styled("  .             ", Style::default().fg(colors.number)),
+            Span::raw("Repeat last edit (dd, yy, p, P)"),
+        ]),
+        Line::from(""),
+        Line::from(vec![Span::styled(
             "Search",
             Style::default().fg(colors.key).add_modifier(Modifier::BOLD),
         )]),
