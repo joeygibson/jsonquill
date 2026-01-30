@@ -159,6 +159,46 @@ impl InputHandler {
             return Ok(false);
         }
 
+        // Handle mark setting if waiting for mark name after 'm'
+        if state.pending_mark_set() {
+            state.set_pending_mark_set(false);
+            if let Event::Key(Key::Char(c)) = event {
+                if c.is_ascii_lowercase() {
+                    use crate::editor::state::MessageLevel;
+                    state.set_mark(c);
+                    state.set_message(format!("Mark {} set", c), MessageLevel::Info);
+                    return Ok(false);
+                }
+            }
+            // Invalid mark name or non-character key - cancel mark set
+            use crate::editor::state::MessageLevel;
+            state.set_message("Invalid mark name".to_string(), MessageLevel::Error);
+            return Ok(false);
+        }
+
+        // Handle mark jumping if waiting for mark name after '\''
+        if state.pending_mark_jump() {
+            state.set_pending_mark_jump(false);
+            if let Event::Key(Key::Char(c)) = event {
+                if c.is_ascii_lowercase() {
+                    use crate::editor::state::MessageLevel;
+                    if state.jump_to_mark(c) {
+                        state.set_message("".to_string(), MessageLevel::Info);
+                    } else {
+                        state.set_message(
+                            format!("Mark {} not set", c),
+                            MessageLevel::Error,
+                        );
+                    }
+                    return Ok(false);
+                }
+            }
+            // Invalid mark name or non-character key - cancel mark jump
+            use crate::editor::state::MessageLevel;
+            state.set_message("Invalid mark name".to_string(), MessageLevel::Error);
+            return Ok(false);
+        }
+
         // Handle mouse events if mouse is enabled
         if let Event::Mouse(mouse_event) = event {
             if state.enable_mouse() {
@@ -1053,12 +1093,14 @@ impl InputHandler {
                 InputEvent::MarkSet => {
                     state.clear_pending();
                     state.clear_search_results();
-                    // TODO: implement in Task 9
+                    state.set_pending_mark_set(true);
                 }
                 InputEvent::MarkJump => {
                     state.clear_pending();
                     state.clear_search_results();
-                    // TODO: implement in Task 9
+                    // Record jump before jumping to mark
+                    state.record_jump();
+                    state.set_pending_mark_jump(true);
                 }
                 InputEvent::JumpBackward => {
                     state.clear_pending();

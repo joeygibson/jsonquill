@@ -3799,6 +3799,35 @@ impl EditorState {
         self.pending_mark_jump = pending;
     }
 
+    /// Sets a mark at the current cursor position.
+    ///
+    /// # Arguments
+    ///
+    /// * `name` - The mark name (a-z)
+    pub fn set_mark(&mut self, name: char) {
+        let cursor = self.cursor.path().to_vec();
+        self.marks.set_mark(name, cursor);
+    }
+
+    /// Jumps to a previously set mark.
+    ///
+    /// # Arguments
+    ///
+    /// * `name` - The mark name (a-z)
+    ///
+    /// # Returns
+    ///
+    /// Returns true if the mark exists and the jump was successful,
+    /// false if the mark doesn't exist.
+    pub fn jump_to_mark(&mut self, name: char) -> bool {
+        if let Some(path) = self.marks.get_mark(name) {
+            self.cursor.set_path(path.clone());
+            true
+        } else {
+            false
+        }
+    }
+
     /// Returns the visual mode anchor position.
     pub fn visual_anchor(&self) -> Option<&Vec<usize>> {
         self.visual_anchor.as_ref()
