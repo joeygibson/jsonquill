@@ -2206,6 +2206,78 @@ impl EditorState {
 
         let current_path = self.cursor.path().to_vec();
 
+        // Check if cursor is on an expanded container - if so, paste inside it
+        if !current_path.is_empty() && after {
+            if let Some(current_node) = self.tree.get_node(&current_path) {
+                let is_container = current_node.value().is_container();
+                let is_expanded = self.tree_view().is_expanded(&current_path);
+
+                if is_container && is_expanded {
+                    // Paste inside the expanded container as first child
+                    match current_node.value() {
+                        JsonValue::Object(_) => {
+                            // For objects, need a key
+                            let base_key = key.unwrap_or_else(|| "pasted".to_string());
+                            let mut key_name = base_key.clone();
+                            let mut counter = 1;
+
+                            // Find unique key
+                            loop {
+                                let test_key = if counter == 1 {
+                                    key_name.clone()
+                                } else {
+                                    format!("{}{}", base_key, counter)
+                                };
+
+                                let key_exists =
+                                    if let JsonValue::Object(entries) = current_node.value() {
+                                        entries.iter().any(|(k, _)| k == &test_key)
+                                    } else {
+                                        false
+                                    };
+
+                                if !key_exists {
+                                    key_name = test_key;
+                                    break;
+                                }
+                                counter += 1;
+                            }
+
+                            // Insert at beginning of container (index 0)
+                            let mut insert_path = current_path.clone();
+                            insert_path.push(0);
+
+                            self.tree.insert_node_in_object(
+                                &insert_path,
+                                key_name,
+                                node.clone(),
+                            )?;
+
+                            self.tree_view_mut()
+                                .update_paths_after_insertion(&insert_path);
+                            self.rebuild_tree_view();
+                            self.cursor.set_path(insert_path);
+                            return Ok(());
+                        }
+                        JsonValue::Array(_) | JsonValue::JsonlRoot(_) => {
+                            // Insert at beginning of array (index 0)
+                            let mut insert_path = current_path.clone();
+                            insert_path.push(0);
+
+                            self.tree.insert_node_in_array(&insert_path, node.clone())?;
+
+                            self.tree_view_mut()
+                                .update_paths_after_insertion(&insert_path);
+                            self.rebuild_tree_view();
+                            self.cursor.set_path(insert_path);
+                            return Ok(());
+                        }
+                        _ => {} // Not a container, fall through to sibling paste
+                    }
+                }
+            }
+        }
+
         // Handle root-level paste: insert inside root container
         if current_path.is_empty() {
             match self.tree.root().value() {
@@ -2768,7 +2840,7 @@ impl EditorState {
     pub fn push_to_edit_buffer(&mut self, ch: char) {
         if let Some(ref mut buffer) = self.edit_buffer {
             buffer.insert(self.edit_cursor, ch);
-            self.edit_cursor += 1;
+            self.edit_cursor += ch.len_utf8(); // Advance by byte length, not 1
             self.reset_cursor_blink();
         }
     }
@@ -2777,8 +2849,14 @@ impl EditorState {
     pub fn pop_from_edit_buffer(&mut self) {
         if let Some(ref mut buffer) = self.edit_buffer {
             if self.edit_cursor > 0 {
-                buffer.remove(self.edit_cursor - 1);
-                self.edit_cursor -= 1;
+                // Find the start of the character before cursor (handles multi-byte UTF-8)
+                let char_start = buffer[..self.edit_cursor]
+                    .char_indices()
+                    .next_back()
+                    .map(|(i, _)| i)
+                    .unwrap_or(0);
+                buffer.remove(char_start);
+                self.edit_cursor = char_start;
                 self.reset_cursor_blink();
             }
         }
@@ -2795,9 +2873,17 @@ impl EditorState {
 
     /// Moves the edit cursor left by one character.
     pub fn edit_cursor_left(&mut self) {
-        if self.edit_cursor > 0 {
-            self.edit_cursor -= 1;
-            self.reset_cursor_blink();
+        if let Some(ref buffer) = self.edit_buffer {
+            if self.edit_cursor > 0 {
+                // Find the start of the previous character (handles multi-byte UTF-8)
+                let char_start = buffer[..self.edit_cursor]
+                    .char_indices()
+                    .next_back()
+                    .map(|(i, _)| i)
+                    .unwrap_or(0);
+                self.edit_cursor = char_start;
+                self.reset_cursor_blink();
+            }
         }
     }
 
@@ -2805,7 +2891,13 @@ impl EditorState {
     pub fn edit_cursor_right(&mut self) {
         if let Some(ref buffer) = self.edit_buffer {
             if self.edit_cursor < buffer.len() {
-                self.edit_cursor += 1;
+                // Find the start of the next character (handles multi-byte UTF-8)
+                if let Some((next_pos, _)) = buffer[self.edit_cursor..].char_indices().nth(1) {
+                    self.edit_cursor += next_pos;
+                } else {
+                    // No next character, move to end
+                    self.edit_cursor = buffer.len();
+                }
                 self.reset_cursor_blink();
             }
         }
@@ -3032,15 +3124,21 @@ impl EditorState {
     /// Pushes a character to the add key buffer at cursor position.
     pub fn push_to_add_key_buffer(&mut self, ch: char) {
         self.add_key_buffer.insert(self.add_key_cursor, ch);
-        self.add_key_cursor += 1;
+        self.add_key_cursor += ch.len_utf8(); // Advance by byte length, not 1
         self.reset_cursor_blink();
     }
 
     /// Removes the character before cursor in the add key buffer (backspace).
     pub fn pop_from_add_key_buffer(&mut self) {
         if self.add_key_cursor > 0 {
-            self.add_key_buffer.remove(self.add_key_cursor - 1);
-            self.add_key_cursor -= 1;
+            // Find the start of the character before cursor (handles multi-byte UTF-8)
+            let char_start = self.add_key_buffer[..self.add_key_cursor]
+                .char_indices()
+                .next_back()
+                .map(|(i, _)| i)
+                .unwrap_or(0);
+            self.add_key_buffer.remove(char_start);
+            self.add_key_cursor = char_start;
             self.reset_cursor_blink();
         }
     }
@@ -3088,6 +3186,7 @@ impl EditorState {
                         JsonValue::Object(_) => {
                             // Object: need key first
                             self.add_mode_stage = AddModeStage::AwaitingKey;
+                            self.clear_add_key_buffer(); // Reset buffer and cursor
                             self.add_insertion_point = Some(vec![0]); // Insert at position 0
                             self.reset_cursor_blink();
                         }
@@ -3148,6 +3247,7 @@ impl EditorState {
                         }
 
                         self.add_mode_stage = AddModeStage::AwaitingKey;
+                        self.clear_add_key_buffer(); // Reset buffer and cursor
                         let mut insertion_path = current_path.clone();
                         insertion_path.push(insert_index); // Insert at end
                         self.add_insertion_point = Some(insertion_path);
@@ -3200,6 +3300,7 @@ impl EditorState {
             JsonValue::Object(_) => {
                 // Adding to object: need key first
                 self.add_mode_stage = AddModeStage::AwaitingKey;
+                self.clear_add_key_buffer(); // Reset buffer and cursor
                 let mut insertion_path = parent_path.to_vec();
                 insertion_path.push(current_index + 1);
                 self.add_insertion_point = Some(insertion_path);
@@ -3354,6 +3455,7 @@ impl EditorState {
             match self.tree.root().value() {
                 JsonValue::Object(_) => {
                     self.add_mode_stage = AddModeStage::AwaitingKey;
+                    self.clear_add_key_buffer(); // Reset buffer and cursor
                     self.add_insertion_point = Some(vec![0]);
                     // For object containers in object root, we need a key
                     // Store the container temporarily and wait for key
@@ -3453,6 +3555,7 @@ impl EditorState {
                     }
 
                     self.add_mode_stage = AddModeStage::AwaitingKey;
+                    self.clear_add_key_buffer(); // Reset buffer and cursor
                     let mut insertion_path = current_path.clone();
                     insertion_path.push(insert_index); // Insert at end
                     self.add_insertion_point = Some(insertion_path);
@@ -3491,6 +3594,7 @@ impl EditorState {
         match parent.value() {
             JsonValue::Object(_) => {
                 self.add_mode_stage = AddModeStage::AwaitingKey;
+                self.clear_add_key_buffer(); // Reset buffer and cursor
                 self.add_insertion_point = Some(path);
                 // For containers in objects, we need a key
                 // Store the container temporarily and wait for key
@@ -3826,6 +3930,167 @@ impl EditorState {
         } else {
             false
         }
+    }
+
+    /// Yanks nodes from cursor to mark (motion-to-mark: y'a).
+    ///
+    /// Calculates the range of visible nodes between cursor and mark,
+    /// then yanks all nodes in that range.
+    pub fn yank_to_mark(&mut self, mark_path: &[usize], count: u32) -> anyhow::Result<()> {
+        let range = self.calculate_range_to_mark(mark_path)?;
+        self.yank_nodes_in_range(&range, count)
+    }
+
+    /// Deletes nodes from cursor to mark (motion-to-mark: d'a).
+    ///
+    /// Calculates the range of visible nodes between cursor and mark,
+    /// then deletes all nodes in that range.
+    pub fn delete_to_mark(&mut self, mark_path: &[usize], count: u32) -> anyhow::Result<()> {
+        let range = self.calculate_range_to_mark(mark_path)?;
+        self.delete_nodes_in_range(&range, count)
+    }
+
+    /// Calculates the range of visible node paths between cursor and mark.
+    ///
+    /// Returns a vector of paths for all visible nodes in the range (inclusive).
+    fn calculate_range_to_mark(&self, mark_path: &[usize]) -> anyhow::Result<Vec<Vec<usize>>> {
+        use anyhow::anyhow;
+
+        let cursor_path = self.cursor.path();
+        let lines = self.tree_view.lines();
+
+        // Find cursor and mark positions in visible lines
+        let cursor_idx = lines
+            .iter()
+            .position(|l| l.path == cursor_path)
+            .ok_or_else(|| anyhow!("Cursor position not found in visible lines"))?;
+
+        let mark_idx = lines
+            .iter()
+            .position(|l| l.path.as_slice() == mark_path)
+            .ok_or_else(|| anyhow!("Mark position not found in visible lines"))?;
+
+        // Calculate range (inclusive, handles both directions)
+        let (start_idx, end_idx) = if cursor_idx <= mark_idx {
+            (cursor_idx, mark_idx)
+        } else {
+            (mark_idx, cursor_idx)
+        };
+
+        // Collect all paths in range
+        let range: Vec<Vec<usize>> = lines[start_idx..=end_idx]
+            .iter()
+            .map(|l| l.path.clone())
+            .collect();
+
+        Ok(range)
+    }
+
+    /// Yanks all nodes in the given range.
+    fn yank_nodes_in_range(&mut self, range: &[Vec<usize>], _count: u32) -> anyhow::Result<()> {
+        use crate::document::node::JsonValue;
+        use crate::editor::registers::RegisterContent;
+        use anyhow::anyhow;
+
+        if range.is_empty() {
+            return Err(anyhow!("No nodes in range to yank"));
+        }
+
+        let mut nodes = Vec::new();
+        let mut keys = Vec::new();
+
+        // Collect all nodes in range
+        for path in range {
+            if let Some(node) = self.tree.get_node(path) {
+                nodes.push(node.clone());
+
+                // Get the key if this is an object property
+                let key = if !path.is_empty() {
+                    let parent_path = &path[..path.len() - 1];
+                    let index = path[path.len() - 1];
+                    if let Some(parent) = self.tree.get_node(parent_path) {
+                        if let JsonValue::Object(fields) = parent.value() {
+                            Some(fields[index].0.clone())
+                        } else {
+                            None
+                        }
+                    } else {
+                        None
+                    }
+                } else {
+                    None
+                };
+
+                keys.push(key);
+            }
+        }
+
+        if nodes.is_empty() {
+            return Err(anyhow!("Failed to collect nodes from range"));
+        }
+
+        let content = RegisterContent::new(nodes, keys);
+
+        // Store in register
+        if let Some(reg) = self.pending_register {
+            if self.append_mode {
+                self.registers.append_named(reg, content);
+            } else {
+                self.registers.set_named(reg, content);
+            }
+        } else {
+            // Update unnamed register and sync to system clipboard
+            self.registers.set_unnamed(content.clone());
+
+            // Sync first node to system clipboard
+            if !content.nodes.is_empty() {
+                let json_value = self.node_to_serde_value(content.nodes[0].value());
+                if let Ok(json_str) = serde_json::to_string_pretty(&json_value) {
+                    use arboard::Clipboard;
+                    if let Ok(mut clipboard) = Clipboard::new() {
+                        let _ = clipboard.set_text(json_str);
+                    }
+                }
+            }
+        }
+
+        Ok(())
+    }
+
+    /// Deletes all nodes in the given range.
+    fn delete_nodes_in_range(&mut self, range: &[Vec<usize>], _count: u32) -> anyhow::Result<()> {
+        // First yank to register (like dd does)
+        self.yank_nodes_in_range(range, 1)?;
+
+        // Delete nodes in reverse order to maintain path validity
+        let mut sorted_range = range.to_vec();
+        sorted_range.sort_by(|a, b| b.cmp(a)); // Reverse order
+
+        for path in sorted_range {
+            self.tree.delete_node(&path)?;
+            self.tree_view_mut().update_paths_after_deletion(&path);
+        }
+
+        self.mark_dirty();
+
+        // Move cursor to first node that was deleted (or nearest valid)
+        self.rebuild_tree_view();
+
+        if let Some(first_path) = range.first() {
+            // Try to position cursor at the first deleted position
+            let lines = self.tree_view.lines();
+            if let Some(line_idx) = lines.iter().position(|l| l.path >= *first_path) {
+                self.cursor.set_path(lines[line_idx].path.clone());
+            } else if !lines.is_empty() {
+                // If nothing after, go to last line
+                self.cursor.set_path(lines[lines.len() - 1].path.clone());
+            }
+        }
+
+        // Create undo checkpoint
+        self.checkpoint();
+
+        Ok(())
     }
 
     /// Returns the visual mode anchor position.

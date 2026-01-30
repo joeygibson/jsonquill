@@ -398,6 +398,8 @@ Esc         - Exit visual mode
 Marks & Jump List:
 m{a-z}      - Set mark at current position
 '{a-z}      - Jump to mark
+y'{a-z}     - Yank from cursor to mark (motion-to-mark)
+d'{a-z}     - Delete from cursor to mark (motion-to-mark)
 Ctrl-o      - Jump backward in jump list
 Ctrl-i      - Jump forward in jump list
             - Jump list records: gg, G, line jumps, search, marks

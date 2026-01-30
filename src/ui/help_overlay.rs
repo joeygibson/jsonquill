@@ -291,6 +291,14 @@ pub fn render_help_overlay(f: &mut Frame, colors: &ThemeColors, scroll: usize) {
             Span::raw("Jump to mark"),
         ]),
         Line::from(vec![
+            Span::styled("  y'{a-z}       ", Style::default().fg(colors.number)),
+            Span::raw("Yank from cursor to mark"),
+        ]),
+        Line::from(vec![
+            Span::styled("  d'{a-z}       ", Style::default().fg(colors.number)),
+            Span::raw("Delete from cursor to mark"),
+        ]),
+        Line::from(vec![
             Span::styled("  Ctrl-o        ", Style::default().fg(colors.number)),
             Span::raw("Jump backward in jump list"),
         ]),

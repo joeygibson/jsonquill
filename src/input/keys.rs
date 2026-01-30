@@ -196,7 +196,7 @@ pub fn map_key_event(event: Event, mode: &EditorMode) -> InputEvent {
             Key::Char('w') => InputEvent::NextAtSameOrShallowerDepth,
             Key::Char('b') => InputEvent::PreviousAtSameOrShallowerDepth,
             Key::Char('"') => InputEvent::RegisterSelect,
-            Key::Char('v') => InputEvent::EnterVisualMode,
+            Key::Char('v') | Key::Char('V') => InputEvent::EnterVisualMode,
             Key::Char('m') => InputEvent::MarkSet,
             Key::Char('\'') => InputEvent::MarkJump,
             Key::Char('.') => InputEvent::Repeat,

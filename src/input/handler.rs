@@ -182,6 +182,51 @@ impl InputHandler {
             if let Event::Key(Key::Char(c)) = event {
                 if c.is_ascii_lowercase() {
                     use crate::editor::state::MessageLevel;
+
+                    // Check if this is a motion-to-mark operation (d'a or y'a)
+                    if let Some(cmd) = state.pending_command() {
+                        if cmd == 'd' || cmd == 'y' {
+                            // Get mark position
+                            if let Some(mark_path) = state.marks().get_mark(c).cloned() {
+                                let count = state.get_count();
+
+                                // Execute operation on range from cursor to mark
+                                let result = if cmd == 'd' {
+                                    state.delete_to_mark(&mark_path, count)
+                                } else {
+                                    state.yank_to_mark(&mark_path, count)
+                                };
+
+                                // Clear all pending state after operation
+                                state.clear_pending();
+
+                                match result {
+                                    Ok(_) => {
+                                        let op = if cmd == 'd' { "Deleted" } else { "Yanked" };
+                                        state.set_message(
+                                            format!("{} to mark '{}'", op, c),
+                                            MessageLevel::Info,
+                                        );
+                                    }
+                                    Err(e) => {
+                                        state.set_message(
+                                            format!("Error: {}", e),
+                                            MessageLevel::Error,
+                                        );
+                                    }
+                                }
+                            } else {
+                                state.clear_pending();
+                                state.set_message(
+                                    format!("Mark '{}' not set", c),
+                                    MessageLevel::Error,
+                                );
+                            }
+                            return Ok(false);
+                        }
+                    }
+
+                    // Regular mark jump (no pending d/y)
                     if state.jump_to_mark(c) {
                         state.set_message("".to_string(), MessageLevel::Info);
                     } else {
@@ -1184,10 +1229,15 @@ impl InputHandler {
                     state.set_pending_mark_set(true);
                 }
                 InputEvent::MarkJump => {
-                    state.clear_pending();
+                    // Don't clear pending if it's a motion-to-mark operation (d'a or y'a)
+                    let is_motion_to_mark =
+                        matches!(state.pending_command(), Some('d') | Some('y'));
+                    if !is_motion_to_mark {
+                        state.clear_pending();
+                        // Record jump before jumping to mark (only for regular jumps)
+                        state.record_jump();
+                    }
                     state.clear_search_results();
-                    // Record jump before jumping to mark
-                    state.record_jump();
                     state.set_pending_mark_jump(true);
                 }
                 InputEvent::JumpBackward => {

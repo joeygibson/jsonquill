@@ -612,10 +612,9 @@ pub fn render_tree_view(
             spans.push(Span::styled(format!("{}: ", key), key_style));
         }
 
-        // Value - highlight collapsed previews when cursor is on this line
-        let value_style = if is_cursor && line.expandable {
-            // Collapsed containers on cursor line get same highlight as keys
-            // This makes JSONL cursor navigation very visible
+        // Value - highlight when cursor is on this line
+        let value_style = if is_cursor {
+            // All values on cursor line get same highlight as keys for consistent visibility
             Style::default()
                 .fg(Color::White)
                 .bg(colors.cursor)
@@ -1001,7 +1000,7 @@ mod tests {
     }
 
     #[test]
-    fn test_cursor_highlights_only_key() {
+    fn test_cursor_highlights_entire_line() {
         use ratatui::backend::TestBackend;
         use ratatui::Terminal;
 
@@ -1029,10 +1028,10 @@ mod tests {
 
         // Check cells on the first line
         // Expected layout: "▶ name: \"Alice\""
-        // Only "name:" should be highlighted with white text, not "\"Alice\""
+        // Both "name:" and "\"Alice\"" should be highlighted with cursor background
         let mut found_key_highlight = false;
         let mut found_key_white_text = false;
-        let mut found_value_no_highlight = false;
+        let mut found_value_highlight = false;
 
         for (i, cell) in buffer.content().iter().enumerate() {
             let symbol = cell.symbol();
@@ -1049,9 +1048,9 @@ mod tests {
             }
             // Look for the 'A' in 'Alice'
             if symbol == "A" {
-                // This should be part of the value and should NOT have cursor background
-                if cell.bg == colors.background {
-                    found_value_no_highlight = true;
+                // This should be part of the value and SHOULD have cursor background
+                if cell.bg == colors.cursor {
+                    found_value_highlight = true;
                 }
             }
         }
@@ -1065,8 +1064,8 @@ mod tests {
             "Key 'name:' text should be white for visibility"
         );
         assert!(
-            found_value_no_highlight,
-            "Value '\"Alice\"' should not be highlighted"
+            found_value_highlight,
+            "Value '\"Alice\"' should be highlighted with cursor background"
         );
     }
 
