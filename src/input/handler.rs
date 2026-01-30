@@ -722,7 +722,12 @@ impl InputHandler {
                 InputEvent::ExitMode => {
                     state.clear_pending();
                     state.clear_search_results();
-                    state.set_mode(EditorMode::Normal);
+                    // If exiting from visual mode, use exit_visual_mode() to clear selection
+                    if state.mode() == &EditorMode::Visual {
+                        state.exit_visual_mode();
+                    } else {
+                        state.set_mode(EditorMode::Normal);
+                    }
                 }
                 InputEvent::MoveDown => {
                     let count = state.get_count();
@@ -1088,7 +1093,9 @@ impl InputHandler {
                 InputEvent::EnterVisualMode => {
                     state.clear_pending();
                     state.clear_search_results();
-                    // TODO: implement in Task 10
+                    use crate::editor::state::MessageLevel;
+                    state.enter_visual_mode();
+                    state.set_message("-- VISUAL --".to_string(), MessageLevel::Info);
                 }
                 InputEvent::MarkSet => {
                     state.clear_pending();
