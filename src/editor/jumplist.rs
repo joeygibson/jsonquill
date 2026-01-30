@@ -78,11 +78,13 @@ impl JumpList {
     }
 
     /// Returns the number of jumps stored.
+    #[must_use]
     pub fn len(&self) -> usize {
         self.jumps.len()
     }
 
     /// Returns true if the jump list is empty.
+    #[must_use]
     pub fn is_empty(&self) -> bool {
         self.jumps.is_empty()
     }
