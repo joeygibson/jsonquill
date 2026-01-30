@@ -4030,6 +4030,88 @@ impl EditorState {
     pub fn clear_last_command(&mut self) {
         self.last_command = None;
     }
+
+    /// Repeats the last command.
+    ///
+    /// Returns a success message if successful, error message otherwise.
+    pub fn repeat_last_command(&mut self) -> Result<String, String> {
+        use crate::editor::repeat::RepeatableCommand;
+
+        let cmd = match &self.last_command {
+            Some(cmd) => cmd.clone(),
+            None => return Err("No command to repeat".to_string()),
+        };
+
+        match cmd {
+            RepeatableCommand::Delete { count } => {
+                let mut deleted_count = 0;
+                for _ in 0..count {
+                    if self.delete_node_at_cursor().is_ok() {
+                        deleted_count += 1;
+                    } else {
+                        break;
+                    }
+                }
+                if deleted_count > 0 {
+                    if deleted_count > 1 {
+                        Ok(format!("{} nodes deleted (yanked)", deleted_count))
+                    } else {
+                        Ok("Node deleted (yanked)".to_string())
+                    }
+                } else {
+                    Err("Delete failed".to_string())
+                }
+            }
+            RepeatableCommand::Yank { count } => {
+                if self.yank_nodes(count) {
+                    if count > 1 {
+                        Ok(format!("{} nodes yanked", count))
+                    } else {
+                        Ok("Node yanked".to_string())
+                    }
+                } else {
+                    Err("Nothing to yank".to_string())
+                }
+            }
+            RepeatableCommand::Paste { before } => {
+                let result = if before {
+                    self.paste_node_before_cursor()
+                } else {
+                    self.paste_node_at_cursor()
+                };
+                match result {
+                    Ok(_) => {
+                        if before {
+                            Ok("Node pasted before".to_string())
+                        } else {
+                            Ok("Node pasted after".to_string())
+                        }
+                    }
+                    Err(e) => Err(format!("Paste failed: {}", e)),
+                }
+            }
+            RepeatableCommand::Add { value, key } => {
+                // This is complex - for now, skip it
+                Err("Cannot repeat add operation yet".to_string())
+            }
+            RepeatableCommand::AddArray => {
+                // TODO: implement
+                Err("Cannot repeat add array operation yet".to_string())
+            }
+            RepeatableCommand::AddObject => {
+                // TODO: implement
+                Err("Cannot repeat add object operation yet".to_string())
+            }
+            RepeatableCommand::Rename { new_key } => {
+                // TODO: implement
+                Err("Cannot repeat rename operation yet".to_string())
+            }
+            RepeatableCommand::ChangeValue { new_value } => {
+                // TODO: implement
+                Err("Cannot repeat change value operation yet".to_string())
+            }
+        }
+    }
 }
 
 #[cfg(test)]

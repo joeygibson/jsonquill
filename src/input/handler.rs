@@ -812,6 +812,10 @@ impl InputHandler {
                         state.clear_search_results();
 
                         if state.yank_nodes(count) {
+                            // Record command for repeat
+                            use crate::editor::repeat::RepeatableCommand;
+                            state.set_last_command(RepeatableCommand::Yank { count });
+
                             if count > 1 {
                                 state.set_message(
                                     format!("{} nodes yanked", count),
@@ -889,6 +893,10 @@ impl InputHandler {
                         }
 
                         if !had_error && deleted_count > 0 {
+                            // Record command for repeat
+                            use crate::editor::repeat::RepeatableCommand;
+                            state.set_last_command(RepeatableCommand::Delete { count });
+
                             if deleted_count > 1 {
                                 state.set_message(
                                     format!("{} nodes deleted (yanked)", deleted_count),
@@ -918,6 +926,9 @@ impl InputHandler {
                     }
                     match state.paste_node_at_cursor() {
                         Ok(_) => {
+                            // Record command for repeat
+                            use crate::editor::repeat::RepeatableCommand;
+                            state.set_last_command(RepeatableCommand::Paste { before: false });
                             state.set_message("Node pasted after".to_string(), MessageLevel::Info);
                         }
                         Err(e) => {
@@ -936,6 +947,9 @@ impl InputHandler {
                     }
                     match state.paste_node_before_cursor() {
                         Ok(_) => {
+                            // Record command for repeat
+                            use crate::editor::repeat::RepeatableCommand;
+                            state.set_last_command(RepeatableCommand::Paste { before: true });
                             state.set_message("Node pasted before".to_string(), MessageLevel::Info);
                         }
                         Err(e) => {
@@ -1208,7 +1222,15 @@ impl InputHandler {
                 InputEvent::Repeat => {
                     state.clear_pending();
                     state.clear_search_results();
-                    // TODO: implement in Task 12
+                    use crate::editor::state::MessageLevel;
+                    match state.repeat_last_command() {
+                        Ok(msg) => {
+                            state.set_message(msg, MessageLevel::Info);
+                        }
+                        Err(msg) => {
+                            state.set_message(msg, MessageLevel::Error);
+                        }
+                    }
                 }
                 InputEvent::Unknown => {
                     state.clear_pending();
