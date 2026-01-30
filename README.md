@@ -20,8 +20,11 @@ A terminal-based structural JSON editor with vim-style keybindings.
 - Tree-based navigation with vim keybindings
 - Advanced navigation (sibling jumping, screen positioning, count prefixes)
 - Add, edit, delete operations for JSON values
-- Undo/redo functionality
-- Clipboard operations (yank/paste with path copying)
+- Undo/redo functionality with repeat command
+- Clipboard operations (yank/paste with path copying, smart paste, named registers)
+- Visual mode for bulk operations on multiple nodes
+- Marks and jump list for quick navigation
+- Motion-to-mark operations (yank/delete from cursor to mark)
 - Text and JSONPath structural search (with smart case and key search)
 - Customizable themes and settings
 - Line numbers (absolute and relative)
@@ -180,11 +183,50 @@ jsonquill data.jsonl
 | `yp` | Yank path (dot notation) | Copy path like `.foo[3].bar` to clipboard |
 | `yb` | Yank path (bracket notation) | Copy path like `["foo"][3]["bar"]` to clipboard |
 | `yq` | Yank path (jq style) | Copy path in jq-style notation |
-| `p` | Paste after cursor | Insert yanked content after current node |
+| `p` | Paste after cursor | Insert yanked content after current node<br>**Smart paste**: expanded containers paste inside, collapsed containers paste as sibling |
 | `P` | Paste before cursor | Insert yanked content before current node |
 | `u` | Undo last change | |
 | `Ctrl-r` | Redo last undone change | |
+| `.` | Repeat last edit | Repeats last `dd`, `yy`, `p`, or `P` operation |
 | `ZZ` | Save and quit | Only saves if file has been modified |
+
+### Visual Mode
+
+| Key | Action | Notes |
+|-----|--------|-------|
+| `v` / `V` | Enter visual mode | Select multiple nodes for bulk operations |
+| `j` / `k` / `h` / `l` | Expand/shrink selection | Move selection boundaries in visual mode |
+| `d` | Delete selection | Remove all selected nodes |
+| `y` | Yank (copy) selection | Copy all selected nodes |
+| `p` / `P` | Replace selection | Replace selection with clipboard content |
+| `Esc` | Exit visual mode | Return to NORMAL mode |
+
+### Marks & Jump List
+
+JSONQuill supports vim-style marks and jump list navigation:
+
+| Key | Action | Notes |
+|-----|--------|-------|
+| `m{a-z}` | Set mark | Set a named mark at the current cursor position |
+| `'{a-z}` | Jump to mark | Jump cursor to the previously set mark |
+| `y'{a-z}` | Yank to mark | Yank from cursor to mark (motion-to-mark) |
+| `d'{a-z}` | Delete to mark | Delete from cursor to mark (motion-to-mark) |
+| `Ctrl-o` | Jump backward | Navigate backward in jump history |
+| `Ctrl-i` | Jump forward | Navigate forward in jump history |
+
+**Jump list records:** `gg`, `G`, line jumps (`<count>G`), search (`/`, `?`, `n`), and mark jumps (`'a`-`'z`).
+
+**Examples:**
+```bash
+ma          # Set mark 'a' at current position
+10j         # Move down 10 lines
+'a          # Jump back to mark 'a'
+y'a         # Yank from cursor to mark 'a'
+mb          # Set mark 'b'
+d'b         # Delete from cursor to mark 'b'
+Ctrl-o      # Jump back in jump history
+Ctrl-i      # Jump forward in jump history
+```
 
 ### Named Registers
 
