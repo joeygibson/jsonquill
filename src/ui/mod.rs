@@ -154,6 +154,7 @@ impl UI {
                 state.show_line_numbers(),
                 state.relative_line_numbers(),
                 state.scroll_offset(),
+                state.visual_selection(),
             );
 
             // Status line

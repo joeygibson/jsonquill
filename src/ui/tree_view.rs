@@ -516,7 +516,7 @@ use ratatui::{
 /// tree_view.rebuild(&tree);
 ///
 /// terminal.draw(|f| {
-///     render_tree_view(f, f.area(), &tree_view, &cursor, &colors, true, false, 0);
+///     render_tree_view(f, f.area(), &tree_view, &cursor, &colors, true, false, 0, &[]);
 /// }).unwrap();
 /// ```
 #[allow(clippy::too_many_arguments)]
@@ -529,6 +529,7 @@ pub fn render_tree_view(
     show_line_numbers: bool,
     relative_line_numbers: bool,
     scroll_offset: usize,
+    visual_selection: &[Vec<usize>],
 ) {
     let mut lines_to_render = Vec::new();
     let max_line_num_width = if show_line_numbers {
@@ -554,6 +555,9 @@ pub fn render_tree_view(
         .take(viewport_height)
     {
         let is_cursor = cursor.path() == line.path.as_slice();
+        let is_selected = visual_selection
+            .iter()
+            .any(|selected_path| selected_path == &line.path);
 
         let mut spans = Vec::new();
 
@@ -635,7 +639,21 @@ pub fn render_tree_view(
 
         spans.push(Span::styled(&line.value_preview, value_style));
 
-        lines_to_render.push(Line::from(spans));
+        // Apply visual selection background if this line is selected
+        let final_line = if is_selected {
+            Line::from(
+                spans
+                    .into_iter()
+                    .map(|span| {
+                        Span::styled(span.content, span.style.bg(colors.visual_selection_bg))
+                    })
+                    .collect::<Vec<_>>(),
+            )
+        } else {
+            Line::from(spans)
+        };
+
+        lines_to_render.push(final_line);
     }
 
     let paragraph = Paragraph::new(lines_to_render)
@@ -952,7 +970,7 @@ mod tests {
 
         terminal
             .draw(|f| {
-                render_tree_view(f, f.area(), &state, &cursor, &colors, false, false, 0);
+                render_tree_view(f, f.area(), &state, &cursor, &colors, false, false, 0, &[]);
             })
             .unwrap();
 
@@ -1003,7 +1021,7 @@ mod tests {
 
         terminal
             .draw(|f| {
-                render_tree_view(f, f.area(), &state, &cursor, &colors, false, false, 0);
+                render_tree_view(f, f.area(), &state, &cursor, &colors, false, false, 0, &[]);
             })
             .unwrap();
 
@@ -1073,7 +1091,7 @@ mod tests {
 
         terminal
             .draw(|f| {
-                render_tree_view(f, f.area(), &state, &cursor, &colors, false, false, 0);
+                render_tree_view(f, f.area(), &state, &cursor, &colors, false, false, 0, &[]);
             })
             .unwrap();
 

@@ -63,6 +63,8 @@ pub struct ThemeColors {
     pub search_highlight: Color,
     /// Color for collapsed previews (object/array content when collapsed).
     pub preview: Color,
+    /// Background color for visual mode selection.
+    pub visual_selection_bg: Color,
 }
 
 impl ThemeColors {
@@ -108,11 +110,12 @@ impl ThemeColors {
             status_line_bg: Color::White, // White status bar like jless
             status_line_fg: Color::Black, // Black text on white
 
-            error: Color::Red,               // ANSI 1
-            warning: Color::Yellow,          // ANSI 3
-            info: Color::LightBlue,          // ANSI 12
-            search_highlight: Color::Yellow, // ANSI 3 (jless uses yellow for search)
-            preview: Color::DarkGray,        // ANSI 8 for collapsed previews
+            error: Color::Red,                    // ANSI 1
+            warning: Color::Yellow,               // ANSI 3
+            info: Color::LightBlue,               // ANSI 12
+            search_highlight: Color::Yellow,      // ANSI 3 (jless uses yellow for search)
+            preview: Color::DarkGray,             // ANSI 8 for collapsed previews
+            visual_selection_bg: Color::DarkGray, // ANSI 8 for visual mode selection
         }
     }
 
@@ -155,6 +158,7 @@ impl ThemeColors {
             info: Color::Rgb(1, 132, 188),
             search_highlight: Color::Rgb(220, 220, 220),
             preview: Color::DarkGray, // ANSI 8 for collapsed previews
+            visual_selection_bg: Color::Rgb(220, 220, 220), // Light gray for visual selection
         }
     }
 
@@ -176,11 +180,12 @@ impl ThemeColors {
             status_line_bg: Color::Rgb(60, 56, 54),    // darker bg
             status_line_fg: Color::Rgb(235, 219, 178), // light fg
 
-            error: Color::Rgb(251, 73, 52),             // red
-            warning: Color::Rgb(250, 189, 47),          // yellow
-            info: Color::Rgb(131, 165, 152),            // aqua
-            search_highlight: Color::Rgb(215, 153, 33), // yellow highlight
-            preview: Color::Rgb(146, 131, 116),         // gray
+            error: Color::Rgb(251, 73, 52),              // red
+            warning: Color::Rgb(250, 189, 47),           // yellow
+            info: Color::Rgb(131, 165, 152),             // aqua
+            search_highlight: Color::Rgb(215, 153, 33),  // yellow highlight
+            preview: Color::Rgb(146, 131, 116),          // gray
+            visual_selection_bg: Color::Rgb(60, 56, 54), // darker gray for selection
         }
     }
 
@@ -207,6 +212,7 @@ impl ThemeColors {
             info: Color::Rgb(136, 192, 208),             // frost cyan
             search_highlight: Color::Rgb(235, 203, 139), // aurora yellow
             preview: Color::Rgb(76, 86, 106),            // polar night gray
+            visual_selection_bg: Color::Rgb(59, 66, 82), // polar night for selection
         }
     }
 
@@ -233,6 +239,7 @@ impl ThemeColors {
             info: Color::Rgb(139, 233, 253),             // cyan
             search_highlight: Color::Rgb(255, 121, 198), // pink
             preview: Color::Rgb(98, 114, 164),           // comment
+            visual_selection_bg: Color::Rgb(68, 71, 90), // current line for selection
         }
     }
 
@@ -254,11 +261,12 @@ impl ThemeColors {
             status_line_bg: Color::Rgb(7, 54, 66),     // base02
             status_line_fg: Color::Rgb(147, 161, 161), // base1
 
-            error: Color::Rgb(220, 50, 47),            // red
-            warning: Color::Rgb(203, 75, 22),          // orange
-            info: Color::Rgb(42, 161, 152),            // cyan
-            search_highlight: Color::Rgb(181, 137, 0), // yellow
-            preview: Color::Rgb(88, 110, 117),         // base01
+            error: Color::Rgb(220, 50, 47),             // red
+            warning: Color::Rgb(203, 75, 22),           // orange
+            info: Color::Rgb(42, 161, 152),             // cyan
+            search_highlight: Color::Rgb(181, 137, 0),  // yellow
+            preview: Color::Rgb(88, 110, 117),          // base01
+            visual_selection_bg: Color::Rgb(7, 54, 66), // base02 for selection
         }
     }
 
@@ -284,6 +292,7 @@ impl ThemeColors {
             info: Color::Rgb(102, 217, 239),             // cyan
             search_highlight: Color::Rgb(230, 219, 116), // yellow
             preview: Color::Rgb(117, 113, 94),           // comment
+            visual_selection_bg: Color::Rgb(73, 72, 62), // line highlight for selection
         }
     }
 
@@ -310,6 +319,7 @@ impl ThemeColors {
             info: Color::Rgb(97, 175, 239),              // blue
             search_highlight: Color::Rgb(229, 192, 123), // yellow
             preview: Color::Rgb(92, 99, 112),            // comment
+            visual_selection_bg: Color::Rgb(33, 37, 43), // gutter bg for selection
         }
     }
 
@@ -331,11 +341,12 @@ impl ThemeColors {
             status_line_bg: Color::Rgb(235, 219, 178), // lighter bg
             status_line_fg: Color::Rgb(60, 56, 54), // dark fg
 
-            error: Color::Rgb(204, 36, 29),             // red
-            warning: Color::Rgb(215, 153, 33),          // yellow
-            info: Color::Rgb(69, 133, 136),             // aqua
-            search_highlight: Color::Rgb(250, 189, 47), // bright yellow
-            preview: Color::Rgb(102, 92, 84),           // gray
+            error: Color::Rgb(204, 36, 29),                 // red
+            warning: Color::Rgb(215, 153, 33),              // yellow
+            info: Color::Rgb(69, 133, 136),                 // aqua
+            search_highlight: Color::Rgb(250, 189, 47),     // bright yellow
+            preview: Color::Rgb(102, 92, 84),               // gray
+            visual_selection_bg: Color::Rgb(235, 219, 178), // lighter bg for selection
         }
     }
 
@@ -357,11 +368,12 @@ impl ThemeColors {
             status_line_bg: Color::Rgb(238, 232, 213), // base2
             status_line_fg: Color::Rgb(88, 110, 117),  // base01
 
-            error: Color::Rgb(220, 50, 47),            // red
-            warning: Color::Rgb(181, 137, 0),          // yellow
-            info: Color::Rgb(42, 161, 152),            // cyan
-            search_highlight: Color::Rgb(181, 137, 0), // yellow
-            preview: Color::Rgb(147, 161, 161),        // base1
+            error: Color::Rgb(220, 50, 47),                 // red
+            warning: Color::Rgb(181, 137, 0),               // yellow
+            info: Color::Rgb(42, 161, 152),                 // cyan
+            search_highlight: Color::Rgb(181, 137, 0),      // yellow
+            preview: Color::Rgb(147, 161, 161),             // base1
+            visual_selection_bg: Color::Rgb(238, 232, 213), // base2 for selection
         }
     }
 
@@ -388,6 +400,7 @@ impl ThemeColors {
             info: Color::Rgb(125, 207, 255),             // cyan
             search_highlight: Color::Rgb(224, 175, 104), // yellow
             preview: Color::Rgb(86, 95, 137),            // gray
+            visual_selection_bg: Color::Rgb(36, 40, 59), // darker bg for selection
         }
     }
 
@@ -414,6 +427,7 @@ impl ThemeColors {
             info: Color::Rgb(137, 220, 235),             // sky
             search_highlight: Color::Rgb(249, 226, 175), // yellow
             preview: Color::Rgb(108, 112, 134),          // surface2
+            visual_selection_bg: Color::Rgb(49, 50, 68), // mantle for selection
         }
     }
 
@@ -435,11 +449,12 @@ impl ThemeColors {
             status_line_bg: Color::Rgb(230, 233, 239), // mantle
             status_line_fg: Color::Rgb(76, 79, 105),   // text
 
-            error: Color::Rgb(210, 15, 57),             // red
-            warning: Color::Rgb(223, 142, 29),          // yellow
-            info: Color::Rgb(4, 165, 229),              // sky
-            search_highlight: Color::Rgb(223, 142, 29), // yellow
-            preview: Color::Rgb(156, 160, 176),         // surface2
+            error: Color::Rgb(210, 15, 57),                 // red
+            warning: Color::Rgb(223, 142, 29),              // yellow
+            info: Color::Rgb(4, 165, 229),                  // sky
+            search_highlight: Color::Rgb(223, 142, 29),     // yellow
+            preview: Color::Rgb(156, 160, 176),             // surface2
+            visual_selection_bg: Color::Rgb(230, 233, 239), // mantle for selection
         }
     }
 
@@ -461,11 +476,12 @@ impl ThemeColors {
             status_line_bg: Color::Rgb(22, 27, 34), // canvas subtle
             status_line_fg: Color::Rgb(201, 209, 217), // fg default
 
-            error: Color::Rgb(248, 81, 73),             // danger fg
-            warning: Color::Rgb(224, 155, 90),          // severe fg
-            info: Color::Rgb(121, 192, 255),            // accent fg
-            search_highlight: Color::Rgb(224, 155, 90), // severe fg
-            preview: Color::Rgb(110, 118, 129),         // gray
+            error: Color::Rgb(248, 81, 73),              // danger fg
+            warning: Color::Rgb(224, 155, 90),           // severe fg
+            info: Color::Rgb(121, 192, 255),             // accent fg
+            search_highlight: Color::Rgb(224, 155, 90),  // severe fg
+            preview: Color::Rgb(110, 118, 129),          // gray
+            visual_selection_bg: Color::Rgb(22, 27, 34), // canvas subtle for selection
         }
     }
 
@@ -492,6 +508,7 @@ impl ThemeColors {
             info: Color::Rgb(9, 105, 218),            // accent fg
             search_highlight: Color::Rgb(191, 87, 0), // severe fg
             preview: Color::Rgb(87, 96, 106),         // gray
+            visual_selection_bg: Color::Rgb(246, 248, 250), // canvas subtle for selection
         }
     }
 }
