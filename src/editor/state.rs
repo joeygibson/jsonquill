@@ -41,8 +41,11 @@
 //! ```
 
 use super::cursor::Cursor;
+use super::jumplist::JumpList;
+use super::marks::MarkSet;
 use super::mode::EditorMode;
 use super::registers::RegisterSet;
+use super::repeat::RepeatableCommand;
 use crate::document::node::{JsonNode, JsonValue};
 use crate::document::tree::JsonTree;
 use crate::ui::tree_view::TreeViewState;
@@ -233,6 +236,14 @@ pub struct EditorState {
     completion_candidates: Vec<String>,
     completion_index: usize,
     completion_prefix: String,
+    // Visual mode, marks, jump list, and repeat command state
+    jumplist: JumpList,
+    marks: MarkSet,
+    pending_mark_set: bool,
+    pending_mark_jump: bool,
+    visual_anchor: Option<Vec<usize>>,
+    visual_selection: Vec<Vec<usize>>,
+    last_command: Option<RepeatableCommand>,
 }
 
 impl EditorState {
@@ -330,6 +341,13 @@ impl EditorState {
             completion_candidates: Vec::new(),
             completion_index: 0,
             completion_prefix: String::new(),
+            jumplist: JumpList::new(100),
+            marks: MarkSet::new(),
+            pending_mark_set: false,
+            pending_mark_jump: false,
+            visual_anchor: None,
+            visual_selection: Vec::new(),
+            last_command: None,
         }
     }
 
@@ -3704,6 +3722,112 @@ impl EditorState {
         self.cancel_add_operation();
 
         Ok(())
+    }
+
+    // Visual mode, marks, jump list, and repeat command accessors
+
+    /// Returns a reference to the jump list.
+    pub fn jumplist(&self) -> &JumpList {
+        &self.jumplist
+    }
+
+    /// Returns a mutable reference to the jump list.
+    pub fn jumplist_mut(&mut self) -> &mut JumpList {
+        &mut self.jumplist
+    }
+
+    /// Returns a reference to the mark set.
+    pub fn marks(&self) -> &MarkSet {
+        &self.marks
+    }
+
+    /// Returns a mutable reference to the mark set.
+    pub fn marks_mut(&mut self) -> &mut MarkSet {
+        &mut self.marks
+    }
+
+    /// Returns whether we're waiting for a mark name after 'm'.
+    pub fn pending_mark_set(&self) -> bool {
+        self.pending_mark_set
+    }
+
+    /// Sets the pending mark set state.
+    pub fn set_pending_mark_set(&mut self, pending: bool) {
+        self.pending_mark_set = pending;
+    }
+
+    /// Returns whether we're waiting for a mark name after '\''.
+    pub fn pending_mark_jump(&self) -> bool {
+        self.pending_mark_jump
+    }
+
+    /// Sets the pending mark jump state.
+    pub fn set_pending_mark_jump(&mut self, pending: bool) {
+        self.pending_mark_jump = pending;
+    }
+
+    /// Returns the visual mode anchor position.
+    pub fn visual_anchor(&self) -> Option<&Vec<usize>> {
+        self.visual_anchor.as_ref()
+    }
+
+    /// Returns the visual selection (all selected node paths).
+    pub fn visual_selection(&self) -> &[Vec<usize>] {
+        &self.visual_selection
+    }
+
+    /// Enters visual mode at the current cursor position.
+    pub fn enter_visual_mode(&mut self) {
+        self.visual_anchor = Some(self.cursor.path().to_vec());
+        self.visual_selection = vec![self.cursor.path().to_vec()];
+        self.mode = EditorMode::Visual;
+    }
+
+    /// Exits visual mode and returns to normal mode.
+    pub fn exit_visual_mode(&mut self) {
+        self.visual_anchor = None;
+        self.visual_selection.clear();
+        self.mode = EditorMode::Normal;
+    }
+
+    /// Updates the visual selection based on current cursor position.
+    pub fn update_visual_selection(&mut self) {
+        if let Some(anchor) = &self.visual_anchor {
+            // Calculate selection range based on visible lines
+            let lines = self.tree_view.lines();
+
+            // Find indices of anchor and cursor in visible lines
+            let anchor_idx = lines.iter().position(|line| &line.path == anchor);
+            let cursor_idx = lines.iter().position(|line| &line.path == self.cursor.path());
+
+            if let (Some(a_idx), Some(c_idx)) = (anchor_idx, cursor_idx) {
+                let (start, end) = if a_idx <= c_idx {
+                    (a_idx, c_idx)
+                } else {
+                    (c_idx, a_idx)
+                };
+
+                self.visual_selection = lines[start..=end]
+                    .iter()
+                    .map(|line| line.path.clone())
+                    .collect();
+            }
+        }
+    }
+
+    /// Returns the last repeatable command.
+    pub fn last_command(&self) -> Option<&RepeatableCommand> {
+        self.last_command.as_ref()
+    }
+
+    /// Sets the last repeatable command.
+    pub fn set_last_command(&mut self, cmd: RepeatableCommand) {
+        self.last_command = Some(cmd);
+    }
+
+    /// Clears the last repeatable command.
+    pub fn clear_last_command(&mut self) {
+        self.last_command = None;
     }
 }
 
