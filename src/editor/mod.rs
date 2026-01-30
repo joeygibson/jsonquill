@@ -21,6 +21,7 @@
 //! ```
 
 pub mod cursor;
+pub mod jumplist;
 pub mod mode;
 pub mod registers;
 pub mod state;
