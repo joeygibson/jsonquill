@@ -312,6 +312,7 @@ Tab         - Autocomplete theme names (:theme <Tab>) and settings (:set <Tab>)
 :set save     - Save settings to config file
 :undo         - Undo last change
 :redo         - Redo last undone change
+:format       - Reformat entire document with jq-style indentation
 :help         - Show help overlay
 :path <query> - Search using JSONPath query (e.g., :path $.store.book[*].author)
 :jp <query>   - Short alias for :path

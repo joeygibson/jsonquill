@@ -296,6 +296,90 @@ fn serialize_node_compact(node: &JsonNode) -> String {
     }
 }
 
+/// Serializes a JSON node in jq style (strict multi-line formatting).
+///
+/// This function matches jq's formatting behavior: all objects and arrays
+/// are formatted with multi-line indentation, even if they're small.
+/// No compact single-line formatting is used.
+///
+/// # Arguments
+///
+/// * `node` - The JSON node to serialize
+/// * `indent_size` - Number of spaces per indentation level
+/// * `current_depth` - Current nesting depth (used for recursion)
+///
+/// # Returns
+///
+/// A jq-style formatted JSON string
+pub fn serialize_node_jq_style(
+    node: &JsonNode,
+    indent_size: usize,
+    current_depth: usize,
+) -> String {
+    let indent = " ".repeat(indent_size * current_depth);
+    let next_indent = " ".repeat(indent_size * (current_depth + 1));
+
+    match node.value() {
+        JsonValue::Object(entries) => {
+            if entries.is_empty() {
+                return "{}".to_string();
+            }
+
+            // jq always uses multi-line formatting for objects
+            let mut result = "{\n".to_string();
+            for (i, (key, value)) in entries.iter().enumerate() {
+                result.push_str(&next_indent);
+                result.push_str(&format!("\"{}\": ", escape_json_string(key)));
+                result.push_str(&serialize_node_jq_style(
+                    value,
+                    indent_size,
+                    current_depth + 1,
+                ));
+                if i < entries.len() - 1 {
+                    result.push(',');
+                }
+                result.push('\n');
+            }
+            result.push_str(&indent);
+            result.push('}');
+            result
+        }
+        JsonValue::Array(elements) | JsonValue::JsonlRoot(elements) => {
+            if elements.is_empty() {
+                return "[]".to_string();
+            }
+
+            // jq always uses multi-line formatting for arrays
+            let mut result = "[\n".to_string();
+            for (i, element) in elements.iter().enumerate() {
+                result.push_str(&next_indent);
+                result.push_str(&serialize_node_jq_style(
+                    element,
+                    indent_size,
+                    current_depth + 1,
+                ));
+                if i < elements.len() - 1 {
+                    result.push(',');
+                }
+                result.push('\n');
+            }
+            result.push_str(&indent);
+            result.push(']');
+            result
+        }
+        JsonValue::String(s) => format!("\"{}\"", escape_json_string(s)),
+        JsonValue::Number(n) => {
+            if n.fract() == 0.0 && n.is_finite() {
+                format!("{:.0}", n)
+            } else {
+                n.to_string()
+            }
+        }
+        JsonValue::Boolean(b) => b.to_string(),
+        JsonValue::Null => "null".to_string(),
+    }
+}
+
 /// Recursively serializes a JSON node to a formatted string.
 ///
 /// This function converts a `JsonNode` and all its children into a JSON string
@@ -314,7 +398,7 @@ fn serialize_node_compact(node: &JsonNode) -> String {
 /// # Returns
 ///
 /// A formatted JSON string representing the node
-fn serialize_node(node: &JsonNode, indent_size: usize, current_depth: usize) -> String {
+pub fn serialize_node(node: &JsonNode, indent_size: usize, current_depth: usize) -> String {
     let indent = " ".repeat(indent_size * current_depth);
     let next_indent = " ".repeat(indent_size * (current_depth + 1));
 

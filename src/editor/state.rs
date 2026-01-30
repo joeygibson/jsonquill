@@ -384,6 +384,39 @@ impl EditorState {
         &mut self.tree
     }
 
+    /// Formats the entire document with jq-style indentation.
+    ///
+    /// Serializes the tree to JSON using jq's formatting style (strict multi-line,
+    /// 2-space indentation, trailing newline), then parses it back to create a
+    /// cleanly formatted tree. This removes any irregular formatting and applies
+    /// consistent jq-style indentation throughout.
+    ///
+    /// Marks the document as dirty so the user can save the formatted result.
+    pub fn format_document(&mut self) -> anyhow::Result<()> {
+        use crate::document::parser::parse_json;
+        use crate::file::saver::serialize_node_jq_style;
+
+        // Serialize with jq-style formatting (2-space indent, always multi-line)
+        let indent_size = 2;
+        let mut json_str = serialize_node_jq_style(self.tree.root(), indent_size, 0);
+
+        // jq always ensures a trailing newline
+        if !json_str.ends_with('\n') {
+            json_str.push('\n');
+        }
+
+        // Parse back to create a clean tree
+        let new_tree = parse_json(&json_str)?;
+
+        // Reload with the formatted tree
+        self.reload_tree(new_tree);
+
+        // Mark as dirty so user can save
+        self.mark_dirty();
+
+        Ok(())
+    }
+
     /// Reloads the editor with a new tree, resetting cursor and state.
     ///
     /// This is used when reloading from disk or opening a new file.

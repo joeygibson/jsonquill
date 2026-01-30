@@ -291,6 +291,7 @@ Type `:` to enter command mode, then:
 | `:e! <filename>` | Force load a different file | Discard changes and load new file |
 | `:undo` | Undo last change | Same as `u` in NORMAL mode |
 | `:redo` | Redo last undone change | Same as `Ctrl-r` in NORMAL mode |
+| `:format` | Reformat document | Apply jq-style formatting (2-space indent, multi-line) |
 | `:help` | Show help overlay | Same as `F1` in NORMAL mode |
 | `:theme` | List available themes | Shows all built-in themes |
 | `:theme <name>` | Switch theme | e.g., `:theme default-light` |

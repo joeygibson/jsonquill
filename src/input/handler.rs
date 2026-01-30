@@ -1162,7 +1162,8 @@ impl InputHandler {
                     }
                     "create_backup" => {
                         let value = if state.create_backup() { "on" } else { "off" };
-                        state.set_message(format!("create_backup is {}", value), MessageLevel::Info);
+                        state
+                            .set_message(format!("create_backup is {}", value), MessageLevel::Info);
                     }
                     _ => {
                         state.set_message(
@@ -1208,11 +1209,17 @@ impl InputHandler {
                 }
                 "create_backup" => {
                     state.set_create_backup(true);
-                    state.set_message("Backup file creation enabled".to_string(), MessageLevel::Info);
+                    state.set_message(
+                        "Backup file creation enabled".to_string(),
+                        MessageLevel::Info,
+                    );
                 }
                 "nocreate_backup" => {
                     state.set_create_backup(false);
-                    state.set_message("Backup file creation disabled".to_string(), MessageLevel::Info);
+                    state.set_message(
+                        "Backup file creation disabled".to_string(),
+                        MessageLevel::Info,
+                    );
                 }
                 _ => {
                     state.set_message(format!("Unknown setting: {}", setting), MessageLevel::Error);
@@ -1265,6 +1272,19 @@ impl InputHandler {
             state.set_mode(EditorMode::Search);
             state.set_search_forward(true);
             state.clear_search_buffer();
+            return Ok(false);
+        }
+
+        // Handle :format command
+        if command == "format" {
+            match state.format_document() {
+                Ok(_) => {
+                    state.set_message("Document reformatted".to_string(), MessageLevel::Info);
+                }
+                Err(e) => {
+                    state.set_message(format!("Format failed: {}", e), MessageLevel::Error);
+                }
+            }
             return Ok(false);
         }
 
