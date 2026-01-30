@@ -200,6 +200,10 @@ Implemented modules:
 - ✅ Mouse/trackpad scrolling (3 lines per tick, toggle with `:set mouse`/`:set nomouse`)
 - ✅ Named registers (a-z) with append mode (A-Z) and history (0-9)
 - ✅ Format preservation (whitespace, indentation for unmodified nodes)
+- ✅ Visual mode (`v` to select multiple nodes, `d`/`y`/`p` to operate on selection)
+- ✅ Marks (`m{a-z}` to set, `'{a-z}` to jump)
+- ✅ Jump list (`Ctrl-o`/`Ctrl-i` to navigate through jump history)
+- ✅ Repeat command (`.` to repeat last edit operation)
 - ✅ All tests passing
 
 **Known Issues / TODO:**
@@ -382,6 +386,24 @@ P           - Paste register content before current node
 Undo/Redo:
 u           - Undo last change
 Ctrl-r      - Redo last undone change
+
+Visual Mode:
+v           - Enter visual mode (select multiple nodes)
+j/k/h/l     - Expand/shrink selection (in visual mode)
+d           - Delete selection (in visual mode)
+y           - Yank (copy) selection (in visual mode)
+p/P         - Replace selection with clipboard (in visual mode)
+Esc         - Exit visual mode
+
+Marks & Jump List:
+m{a-z}      - Set mark at current position
+'{a-z}      - Jump to mark
+Ctrl-o      - Jump backward in jump list
+Ctrl-i      - Jump forward in jump list
+            - Jump list records: gg, G, line jumps, search, marks
+
+Repeat Command:
+.           - Repeat last edit (dd, yy, p, P)
 
 Count Prefix:
 1-9         - Start accumulating a count
