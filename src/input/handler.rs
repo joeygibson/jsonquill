@@ -1038,6 +1038,36 @@ impl InputHandler {
                     state.clear_search_results();
                     // These are handled earlier in insert mode, should never reach here
                 }
+                InputEvent::EnterVisualMode => {
+                    state.clear_pending();
+                    state.clear_search_results();
+                    // TODO: implement in Task 10
+                }
+                InputEvent::MarkSet => {
+                    state.clear_pending();
+                    state.clear_search_results();
+                    // TODO: implement in Task 9
+                }
+                InputEvent::MarkJump => {
+                    state.clear_pending();
+                    state.clear_search_results();
+                    // TODO: implement in Task 9
+                }
+                InputEvent::JumpBackward => {
+                    state.clear_pending();
+                    state.clear_search_results();
+                    // TODO: implement in Task 7
+                }
+                InputEvent::JumpForward => {
+                    state.clear_pending();
+                    state.clear_search_results();
+                    // TODO: implement in Task 7
+                }
+                InputEvent::Repeat => {
+                    state.clear_pending();
+                    state.clear_search_results();
+                    // TODO: implement in Task 12
+                }
                 InputEvent::Unknown => {
                     state.clear_pending();
                     state.clear_search_results();

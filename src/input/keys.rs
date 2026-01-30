@@ -93,6 +93,18 @@ pub enum InputEvent {
     MoveToParent,
     /// Register selection prefix (")
     RegisterSelect,
+    /// Enter visual mode (v)
+    EnterVisualMode,
+    /// Set mark (m)
+    MarkSet,
+    /// Jump to mark (')
+    MarkJump,
+    /// Jump backward in jump list (Ctrl-o)
+    JumpBackward,
+    /// Jump forward in jump list (Ctrl-i)
+    JumpForward,
+    /// Repeat last command (.)
+    Repeat,
     /// Insert a character in insert mode
     InsertCharacter(char),
     /// Backspace in insert mode
@@ -145,6 +157,8 @@ pub fn map_key_event(event: Event, mode: &EditorMode) -> InputEvent {
             Key::Ctrl('f') => InputEvent::FullPageDown,
             Key::Ctrl('b') => InputEvent::FullPageUp,
             Key::Ctrl('r') => InputEvent::Redo,
+            Key::Ctrl('o') => InputEvent::JumpBackward,
+            Key::Ctrl('i') => InputEvent::JumpForward,
             // Regular keys
             Key::Char('q') => InputEvent::Quit,
             Key::Char('j') => InputEvent::MoveDown,
@@ -182,6 +196,10 @@ pub fn map_key_event(event: Event, mode: &EditorMode) -> InputEvent {
             Key::Char('w') => InputEvent::NextAtSameOrShallowerDepth,
             Key::Char('b') => InputEvent::PreviousAtSameOrShallowerDepth,
             Key::Char('"') => InputEvent::RegisterSelect,
+            Key::Char('v') => InputEvent::EnterVisualMode,
+            Key::Char('m') => InputEvent::MarkSet,
+            Key::Char('\'') => InputEvent::MarkJump,
+            Key::Char('.') => InputEvent::Repeat,
             Key::Down => InputEvent::MoveDown,
             Key::Up => InputEvent::MoveUp,
             Key::Left => InputEvent::MoveLeft,
