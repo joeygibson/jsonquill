@@ -736,6 +736,10 @@ impl InputHandler {
                     for _ in 0..count {
                         state.move_cursor_down();
                     }
+                    // Update visual selection if in visual mode
+                    if state.mode() == &EditorMode::Visual {
+                        state.update_visual_selection();
+                    }
                 }
                 InputEvent::MoveUp => {
                     let count = state.get_count();
@@ -743,6 +747,10 @@ impl InputHandler {
                     state.clear_search_results();
                     for _ in 0..count {
                         state.move_cursor_up();
+                    }
+                    // Update visual selection if in visual mode
+                    if state.mode() == &EditorMode::Visual {
+                        state.update_visual_selection();
                     }
                 }
                 InputEvent::MoveRight => {
@@ -752,6 +760,10 @@ impl InputHandler {
                     for _ in 0..count {
                         state.toggle_expand_at_cursor();
                     }
+                    // Update visual selection if in visual mode
+                    if state.mode() == &EditorMode::Visual {
+                        state.update_visual_selection();
+                    }
                 }
                 InputEvent::MoveLeft => {
                     let count = state.get_count();
@@ -759,6 +771,10 @@ impl InputHandler {
                     state.clear_search_results();
                     for _ in 0..count {
                         state.toggle_expand_at_cursor();
+                    }
+                    // Update visual selection if in visual mode
+                    if state.mode() == &EditorMode::Visual {
+                        state.update_visual_selection();
                     }
                 }
                 InputEvent::ExpandAll => {
@@ -773,8 +789,24 @@ impl InputHandler {
                 }
                 InputEvent::Yank => {
                     use crate::editor::state::MessageLevel;
-                    // Check if this is the second 'y' press
-                    if state.pending_command() == Some('y') {
+                    // In visual mode, yank selection and exit visual mode
+                    if state.mode() == &EditorMode::Visual {
+                        state.clear_pending();
+                        state.clear_search_results();
+                        let count = state.yank_visual_selection();
+                        if count > 0 {
+                            if count > 1 {
+                                state.set_message(
+                                    format!("{} nodes yanked", count),
+                                    MessageLevel::Info,
+                                );
+                            } else {
+                                state.set_message("Node yanked".to_string(), MessageLevel::Info);
+                            }
+                        }
+                        state.exit_visual_mode();
+                    } else if state.pending_command() == Some('y') {
+                        // Normal mode: second 'y' press (yy)
                         let count = state.get_count();
                         state.clear_pending();
                         state.clear_search_results();
@@ -792,15 +824,43 @@ impl InputHandler {
                             state.set_message("Nothing to yank".to_string(), MessageLevel::Error);
                         }
                     } else {
-                        // First 'y' press - set pending
+                        // Normal mode: first 'y' press - set pending
                         state.clear_message();
                         state.set_pending_command('y');
                     }
                 }
                 InputEvent::Delete => {
                     use crate::editor::state::MessageLevel;
-                    // Check if this is the second 'd' press
-                    if state.pending_command() == Some('d') {
+                    // In visual mode, delete selection and exit visual mode
+                    if state.mode() == &EditorMode::Visual {
+                        state.clear_pending();
+                        state.clear_search_results();
+                        match state.delete_visual_selection() {
+                            Ok(count) => {
+                                if count > 0 {
+                                    if count > 1 {
+                                        state.set_message(
+                                            format!("{} nodes deleted (yanked)", count),
+                                            MessageLevel::Info,
+                                        );
+                                    } else {
+                                        state.set_message(
+                                            "Node deleted (yanked)".to_string(),
+                                            MessageLevel::Info,
+                                        );
+                                    }
+                                }
+                            }
+                            Err(e) => {
+                                state.set_message(
+                                    format!("Delete failed: {}", e),
+                                    MessageLevel::Error,
+                                );
+                            }
+                        }
+                        state.exit_visual_mode();
+                    } else if state.pending_command() == Some('d') {
+                        // Normal mode: second 'd' press (dd)
                         let count = state.get_count();
                         state.clear_pending();
                         state.clear_search_results();
@@ -851,6 +911,11 @@ impl InputHandler {
                     state.clear_pending();
                     state.clear_search_results();
                     use crate::editor::state::MessageLevel;
+                    // In visual mode, delete selection first, then paste
+                    if state.mode() == &EditorMode::Visual {
+                        let _ = state.delete_visual_selection();
+                        state.exit_visual_mode();
+                    }
                     match state.paste_node_at_cursor() {
                         Ok(_) => {
                             state.set_message("Node pasted after".to_string(), MessageLevel::Info);
@@ -864,6 +929,11 @@ impl InputHandler {
                     state.clear_pending();
                     state.clear_search_results();
                     use crate::editor::state::MessageLevel;
+                    // In visual mode, delete selection first, then paste before
+                    if state.mode() == &EditorMode::Visual {
+                        let _ = state.delete_visual_selection();
+                        state.exit_visual_mode();
+                    }
                     match state.paste_node_before_cursor() {
                         Ok(_) => {
                             state.set_message("Node pasted before".to_string(), MessageLevel::Info);

@@ -3877,6 +3877,145 @@ impl EditorState {
         }
     }
 
+    /// Yanks all nodes in the visual selection.
+    ///
+    /// Returns the number of nodes yanked.
+    pub fn yank_visual_selection(&mut self) -> usize {
+        use crate::document::node::JsonValue;
+        use crate::editor::registers::RegisterContent;
+
+        if self.visual_selection.is_empty() {
+            return 0;
+        }
+
+        // Collect all nodes in the selection
+        let mut nodes = Vec::new();
+        let mut keys = Vec::new();
+
+        for path in &self.visual_selection {
+            if let Some(node) = self.tree.get_node(path) {
+                nodes.push(node.clone());
+
+                // Store key if yanking from object
+                let key = if !path.is_empty() {
+                    let parent_path = &path[..path.len() - 1];
+                    let index = path[path.len() - 1];
+                    if let Some(parent) = self.tree.get_node(parent_path) {
+                        if let JsonValue::Object(fields) = parent.value() {
+                            Some(fields[index].0.clone())
+                        } else {
+                            None
+                        }
+                    } else {
+                        None
+                    }
+                } else {
+                    None
+                };
+                keys.push(key);
+            }
+        }
+
+        if nodes.is_empty() {
+            return 0;
+        }
+
+        let count = nodes.len();
+        let content = RegisterContent::new(nodes, keys);
+
+        // Determine target register
+        let target_register = self.pending_register;
+
+        // Update target register
+        if let Some(reg) = target_register {
+            if self.append_mode {
+                self.registers.append_named(reg, content.clone());
+            } else {
+                self.registers.set_named(reg, content.clone());
+            }
+        } else {
+            // Unnamed register
+            self.registers.set_unnamed(content.clone());
+
+            // Sync to system clipboard
+            let clipboard_text = if content.nodes.len() == 1 {
+                // Single node: serialize as-is
+                let json_value = self.node_to_serde_value(content.nodes[0].value());
+                serde_json::to_string_pretty(&json_value).ok()
+            } else {
+                // Multiple nodes: serialize as JSON array
+                let array: Vec<serde_json::Value> = content
+                    .nodes
+                    .iter()
+                    .map(|node| self.node_to_serde_value(node.value()))
+                    .collect();
+                serde_json::to_string_pretty(&array).ok()
+            };
+
+            if let Some(text) = clipboard_text {
+                if let Err(e) = arboard::Clipboard::new().and_then(|mut c| c.set_text(text)) {
+                    eprintln!("Failed to sync to system clipboard: {}", e);
+                }
+            }
+        }
+
+        // Also store in register "0 (yank register)
+        self.registers.update_yank_register(content);
+
+        // Clear pending register and append mode
+        self.pending_register = None;
+        self.append_mode = false;
+
+        count
+    }
+
+    /// Deletes all nodes in the visual selection.
+    ///
+    /// Returns the number of nodes deleted.
+    pub fn delete_visual_selection(&mut self) -> anyhow::Result<usize> {
+        if self.visual_selection.is_empty() {
+            return Ok(0);
+        }
+
+        // First yank the selection
+        let _ = self.yank_visual_selection();
+
+        // Delete nodes in reverse order (from bottom to top) to avoid path invalidation
+        let mut paths = self.visual_selection.clone();
+        paths.sort_by(|a, b| b.cmp(a)); // Sort in reverse order
+
+        let mut deleted_count = 0;
+        for path in paths {
+            if self.tree.delete_node(&path).is_ok() {
+                deleted_count += 1;
+            }
+        }
+
+        // After deletion, move cursor to first deleted position or closest valid node
+        if let Some(first_path) = self.visual_selection.first() {
+            // Try to navigate to the position where the first deleted node was
+            self.cursor.set_path(first_path.clone());
+
+            // If that path is no longer valid, move to a valid position
+            if self.tree.get_node(self.cursor.path()).is_none() {
+                // Move up until we find a valid node
+                while !self.cursor.path().is_empty() {
+                    let mut parent_path = self.cursor.path().to_vec();
+                    parent_path.pop();
+                    if self.tree.get_node(&parent_path).is_some() {
+                        self.cursor.set_path(parent_path);
+                        break;
+                    }
+                    if parent_path.is_empty() {
+                        break;
+                    }
+                }
+            }
+        }
+
+        Ok(deleted_count)
+    }
+
     /// Returns the last repeatable command.
     pub fn last_command(&self) -> Option<&RepeatableCommand> {
         self.last_command.as_ref()
