@@ -657,6 +657,7 @@ impl InputHandler {
                 InputEvent::NextSearchResult => {
                     state.clear_pending();
                     use crate::editor::state::MessageLevel;
+                    state.record_jump();
                     let (success, wrapped) = state.next_search_result();
                     if success {
                         if let Some((current, total)) = state.search_results_info() {
@@ -866,11 +867,13 @@ impl InputHandler {
                         let line_num = state.get_count();
                         state.clear_pending();
                         state.clear_search_results();
+                        state.record_jump();
                         state.jump_to_line(line_num as usize);
                     } else if state.pending_command() == Some('g') {
                         // Second 'g' press (gg) - jump to top
                         state.clear_pending();
                         state.clear_search_results();
+                        state.record_jump();
                         state.jump_to_top();
                     } else {
                         // First 'g' press - set pending
@@ -884,11 +887,13 @@ impl InputHandler {
                         let line_num = state.get_count();
                         state.clear_pending();
                         state.clear_search_results();
+                        state.record_jump();
                         state.jump_to_line(line_num as usize);
                     } else {
                         // No count - jump to bottom
                         state.clear_pending();
                         state.clear_search_results();
+                        state.record_jump();
                         state.jump_to_bottom();
                     }
                 }
@@ -982,6 +987,7 @@ impl InputHandler {
                     state.clear_pending();
                     state.clear_search_results();
                     use crate::editor::state::MessageLevel;
+                    state.record_jump();
                     if state.execute_key_search(true) {
                         if let Some((current, total)) = state.search_results_info() {
                             state.set_message(
@@ -995,6 +1001,7 @@ impl InputHandler {
                     state.clear_pending();
                     state.clear_search_results();
                     use crate::editor::state::MessageLevel;
+                    state.record_jump();
                     if state.execute_key_search(false) {
                         if let Some((current, total)) = state.search_results_info() {
                             state.set_message(
