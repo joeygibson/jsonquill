@@ -5,6 +5,35 @@ All notable changes to jsonquill will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.11.0] - 2026-01-30
+
+### Added
+
+- add motion-to-mark, smart paste, and fix UTF-8/highlighting bugs
+- add visual selection rendering
+- implement repeat command (.)
+- implement visual mode operations (d, y, p, P)
+- implement visual mode entry and exit
+- implement mark set and jump (m and ')
+- record jumps for big navigation commands
+- implement jump list navigation (Ctrl-o/Ctrl-i)
+- add input events for visual mode, marks, jumplist, and repeat
+- add state fields for jumplist, marks, visual mode, and repeat
+- add Visual mode to EditorMode enum
+- add RepeatableCommand enum for '.' key functionality
+- add MarkSet data structure for bookmark management
+- add JumpList data structure for Ctrl-o/Ctrl-i navigation
+
+### Changed
+
+- Documentation: update CLAUDE.md with new features
+- Documentation: update help overlay with new features
+- Documentation: add design for visual mode, marks, jump list, and repeat
+
+### Fixed
+
+- visual selection now excludes children of selected containers
+- add must_use attributes to JumpList query methods
 ## [0.10.0] - 2026-01-29
 
 ### Added
@@ -241,3 +270,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [0.8.0]: https://github.com/yourusername/jsonquill/compare/v0.7.0...v0.8.0
 [0.9.0]: https://github.com/yourusername/jsonquill/compare/v0.8.0...v0.9.0
 [0.10.0]: https://github.com/yourusername/jsonquill/compare/v0.9.0...v0.10.0
+[0.11.0]: https://github.com/yourusername/jsonquill/compare/v0.10.0...v0.11.0
