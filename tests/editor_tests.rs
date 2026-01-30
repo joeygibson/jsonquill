@@ -10,6 +10,18 @@ fn test_mode_starts_normal() {
 }
 
 #[test]
+fn test_visual_mode_display() {
+    let mode = EditorMode::Visual;
+    assert_eq!(format!("{}", mode), "VISUAL");
+}
+
+#[test]
+fn test_visual_mode_equality() {
+    assert_eq!(EditorMode::Visual, EditorMode::Visual);
+    assert_ne!(EditorMode::Visual, EditorMode::Normal);
+}
+
+#[test]
 fn test_editor_state_creation() {
     let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![])));
     let state = EditorState::new_with_default_theme(tree);

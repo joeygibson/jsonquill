@@ -208,6 +208,22 @@ pub fn map_key_event(event: Event, mode: &EditorMode) -> InputEvent {
             Key::Esc => InputEvent::ExitMode,
             _ => InputEvent::Unknown,
         },
+        EditorMode::Visual => match key {
+            Key::Esc => InputEvent::ExitMode,
+            Key::Char('j') => InputEvent::MoveDown,
+            Key::Char('k') => InputEvent::MoveUp,
+            Key::Char('h') => InputEvent::MoveLeft,
+            Key::Char('l') => InputEvent::MoveRight,
+            Key::Char('d') => InputEvent::Delete,
+            Key::Char('y') => InputEvent::Yank,
+            Key::Char('p') => InputEvent::Paste,
+            Key::Char('P') => InputEvent::PasteBefore,
+            Key::Down => InputEvent::MoveDown,
+            Key::Up => InputEvent::MoveUp,
+            Key::Left => InputEvent::MoveLeft,
+            Key::Right => InputEvent::MoveRight,
+            _ => InputEvent::Unknown,
+        },
     }
 }
 
