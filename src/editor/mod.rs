@@ -25,5 +25,6 @@ pub mod jumplist;
 pub mod marks;
 pub mod mode;
 pub mod registers;
+pub mod repeat;
 pub mod state;
 pub mod undo;
