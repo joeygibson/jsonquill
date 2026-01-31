@@ -31,6 +31,7 @@ A terminal-based structural JSON editor with vim-style keybindings.
 - Configuration file support
 - Mouse/trackpad scrolling support
 - **Format Preservation**: Unmodified JSON nodes retain their exact original formatting (whitespace, indentation, newlines) when saved
+- Gzip compression support (transparent `.json.gz` and `.jsonl.gz` handling)
 
 See [CLAUDE.md](CLAUDE.md) for detailed feature list and developer documentation.
 
@@ -107,6 +108,13 @@ echo '{"name": "example", "count": 42}' | jsonquill
 # Fetch and edit JSON from an API
 curl https://api.example.com/data | jsonquill
 curl -s https://jsonplaceholder.typicode.com/users/1 | jsonquill
+
+# Open gzip-compressed JSON files (transparent decompression)
+jsonquill data.json.gz
+jsonquill logs.jsonl.gz
+
+# Pipe compressed data (decompress first)
+curl https://api.example.com/data.json.gz | gunzip | jsonquill
 ```
 
 ### JSONL Support

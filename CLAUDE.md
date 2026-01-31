@@ -526,3 +526,45 @@ cat config.json | jsonquill
 echo '{"test": [1,2,3]}' | jsonquill
 ```
 
+## Gzip Compressed Files
+
+jsonquill transparently handles gzip-compressed JSON files (`.json.gz` and `.jsonl.gz`):
+
+**How it works:**
+1. Files with `.gz` extension are automatically detected and decompressed on load
+2. Editing works identically to uncompressed files
+3. On save (`:w`), files are re-compressed with gzip
+4. Format detection uses the full extension (e.g., `file.json.gz` → JSON, `file.jsonl.gz` → JSONL)
+
+**Requirements:**
+- File must have `.gz` extension for auto-detection
+- Underlying format must be `.json` or `.jsonl` (e.g., `data.json.gz`, `logs.jsonl.gz`)
+- Gzip decompression happens in-memory before JSON parsing
+- Save operations preserve gzip compression
+
+**Examples:**
+```bash
+# Open compressed JSON file
+jsonquill data.json.gz
+
+# Open compressed JSONL file
+jsonquill logs.jsonl.gz
+
+# Pipe compressed data from stdin
+curl https://api.example.com/data.json.gz | gunzip | jsonquill
+
+# Edit and save (automatically re-compresses)
+jsonquill config.json.gz
+# ... make edits ...
+:w  # Saves as config.json.gz (gzip compressed)
+
+# Save compressed file to new location
+:w backup.json.gz  # Saves with gzip compression
+```
+
+**Notes:**
+- Compression level is set to 6 (balance between speed and compression ratio)
+- Original file permissions are preserved when saving
+- Gzip format is compatible with standard tools (`gzip`, `gunzip`, `zcat`)
+- Large compressed files benefit from reduced memory usage during load
+
