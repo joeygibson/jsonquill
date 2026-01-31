@@ -5,6 +5,34 @@ All notable changes to jsonquill will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.12.0] - 2026-01-31
+
+### Added
+
+- gzip compression support complete
+- add gzip compression support to save functions
+- add write_file_atomic with optional compression
+- add gzip auto-detection for stdin input
+- add gzip decompression support to load_json_file
+- add read_gzipped_file helper function
+- add determine_jsonl_format helper function
+
+### Changed
+
+- Documentation: add gzip compression support to documentation
+- Documentation: add gzip compression support design
+- Documentation: add motion-to-mark, smart paste, and visual mode to README
+
+### Fixed
+
+- use compact formatting for JSONL in :format command
+
+### Other
+
+- Testing: add gzip integration tests
+- Testing: add gzip save, format switching, and backup tests
+- Testing: add gzipped JSONL file loading test
+- Testing: add corrupted gzip file error handling test
 ## [0.11.0] - 2026-01-30
 
 ### Added
@@ -271,3 +299,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [0.9.0]: https://github.com/yourusername/jsonquill/compare/v0.8.0...v0.9.0
 [0.10.0]: https://github.com/yourusername/jsonquill/compare/v0.9.0...v0.10.0
 [0.11.0]: https://github.com/yourusername/jsonquill/compare/v0.10.0...v0.11.0
+[0.12.0]: https://github.com/yourusername/jsonquill/compare/v0.11.0...v0.12.0
