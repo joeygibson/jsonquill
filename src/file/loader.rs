@@ -63,7 +63,7 @@ pub fn load_json_file<P: AsRef<Path>>(path: P) -> Result<JsonTree> {
 
     // Parse accordingly
     if is_jsonl {
-        parse_jsonl_content(&content).context("Failed to parse JSONL")
+        parse_jsonl_content(&content)
     } else {
         parse_json(&content).context("Failed to parse JSON")
     }
@@ -150,9 +150,8 @@ pub fn load_json_from_stdin() -> Result<JsonTree> {
     }
 
     // If regular JSON parsing fails, try JSONL format
-    parse_jsonl_content(&content).context(
-        "Failed to parse JSON from stdin: input is neither valid JSON nor valid JSONL",
-    )
+    parse_jsonl_content(&content)
+        .context("Failed to parse JSON from stdin: input is neither valid JSON nor valid JSONL")
 }
 
 /// Loads and parses a JSONL (JSON Lines) file from the filesystem.
@@ -175,8 +174,8 @@ fn determine_jsonl_format<P: AsRef<Path>>(path: P) -> bool {
     let path_str = path.as_ref().to_string_lossy();
 
     // Remove .gz suffix if present
-    let base = if path_str.ends_with(".gz") {
-        &path_str[..path_str.len() - 3]
+    let base = if let Some(stripped) = path_str.strip_suffix(".gz") {
+        stripped
     } else {
         &path_str
     };

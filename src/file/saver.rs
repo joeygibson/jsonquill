@@ -110,6 +110,52 @@ pub fn save_json_file<P: AsRef<Path>>(path: P, tree: &JsonTree, config: &Config)
     Ok(())
 }
 
+/// Writes data to a file atomically, optionally compressing with gzip.
+///
+/// This function writes to a temporary file first, then atomically renames
+/// it to the target path. This ensures the target file is never left in a
+/// partially written state.
+///
+/// # Arguments
+///
+/// * `path` - Target file path
+/// * `data` - Bytes to write
+/// * `compress` - Whether to gzip-compress the data before writing
+///
+/// # Errors
+///
+/// Returns an error if:
+/// - Creating the temp file fails
+/// - Writing or compressing fails
+/// - Renaming the temp file fails
+#[allow(dead_code)]
+fn write_file_atomic<P: AsRef<Path>>(path: P, data: &[u8], compress: bool) -> Result<()> {
+    use flate2::write::GzEncoder;
+    use flate2::Compression;
+    use std::io::Write;
+
+    let path = path.as_ref();
+    let temp_path = path.with_extension("tmp");
+
+    if compress {
+        // Write compressed
+        let file = fs::File::create(&temp_path).context("Failed to create temp file")?;
+        let mut encoder = GzEncoder::new(file, Compression::default());
+        encoder
+            .write_all(data)
+            .context("Failed to write compressed data")?;
+        encoder.finish().context("Failed to finish compression")?;
+    } else {
+        // Write uncompressed
+        fs::write(&temp_path, data).context("Failed to write temp file")?;
+    }
+
+    // Atomic rename
+    fs::rename(&temp_path, path).context("Failed to rename temp file")?;
+
+    Ok(())
+}
+
 /// Saves a JSONL document to a file.
 ///
 /// Each line is saved as a separate JSON object (one per line).
@@ -888,5 +934,39 @@ mod tests {
         assert!(!saved_json.contains("]: n"));
         assert!(!saved_json.contains("n\","));
         assert!(!saved_json.contains("name\","));
+    }
+
+    #[test]
+    fn test_write_file_atomic_uncompressed() {
+        use tempfile::NamedTempFile;
+
+        let temp_file = NamedTempFile::new().unwrap();
+        let target_path = temp_file.path();
+        let data = b"test content";
+
+        write_file_atomic(target_path, data, false).unwrap();
+
+        let written = fs::read_to_string(target_path).unwrap();
+        assert_eq!(written, "test content");
+    }
+
+    #[test]
+    fn test_write_file_atomic_compressed() {
+        use flate2::read::GzDecoder;
+        use std::io::Read;
+        use tempfile::NamedTempFile;
+
+        let temp_file = NamedTempFile::new().unwrap();
+        let target_path = temp_file.path().with_extension("json.gz");
+        let data = b"test content";
+
+        write_file_atomic(&target_path, data, true).unwrap();
+
+        // Decompress and verify
+        let file = fs::File::open(&target_path).unwrap();
+        let mut decoder = GzDecoder::new(file);
+        let mut decompressed = String::new();
+        decoder.read_to_string(&mut decompressed).unwrap();
+        assert_eq!(decompressed, "test content");
     }
 }
