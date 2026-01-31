@@ -328,4 +328,20 @@ null"#;
         let decompressed = read_gzipped_file(&gz_path).unwrap();
         assert_eq!(decompressed, json_content);
     }
+
+    #[test]
+    fn test_read_gzipped_file_corrupted() {
+        use tempfile::NamedTempFile;
+
+        // Create file with .gz extension but invalid gzip data
+        let temp_file = NamedTempFile::new().unwrap();
+        let gz_path = temp_file.path().with_extension("json.gz");
+        fs::write(&gz_path, b"not gzip data").unwrap();
+
+        // Should return error with helpful message
+        let result = read_gzipped_file(&gz_path);
+        assert!(result.is_err());
+        let err_msg = result.unwrap_err().to_string();
+        assert!(err_msg.contains("decompress") || err_msg.contains("corrupted"));
+    }
 }
