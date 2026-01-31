@@ -144,6 +144,26 @@ pub fn load_jsonl_file<P: AsRef<Path>>(path: P) -> Result<JsonTree> {
     parse_jsonl_content(&content)
 }
 
+/// Determines if file is JSONL format based on filename.
+///
+/// Checks for .jsonl or .ndjson extension, handling .gz suffix correctly.
+/// Examples:
+/// - `data.jsonl` → true
+/// - `data.jsonl.gz` → true
+/// - `data.json.gz` → false
+fn determine_jsonl_format<P: AsRef<Path>>(path: P) -> bool {
+    let path_str = path.as_ref().to_string_lossy();
+
+    // Remove .gz suffix if present
+    let base = if path_str.ends_with(".gz") {
+        &path_str[..path_str.len() - 3]
+    } else {
+        &path_str
+    };
+
+    base.ends_with(".jsonl") || base.ends_with(".ndjson")
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -253,5 +273,15 @@ null"#;
     fn test_load_json_file_integration() {
         // Integration tests for file loading are in tests/file_tests.rs
         // This is just a placeholder to document the test structure
+    }
+
+    #[test]
+    fn test_determine_jsonl_format() {
+        assert!(determine_jsonl_format("data.jsonl"));
+        assert!(determine_jsonl_format("data.ndjson"));
+        assert!(determine_jsonl_format("path/to/data.jsonl.gz"));
+        assert!(determine_jsonl_format("path/to/data.ndjson.gz"));
+        assert!(!determine_jsonl_format("data.json"));
+        assert!(!determine_jsonl_format("data.json.gz"));
     }
 }
