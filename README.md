@@ -37,8 +37,6 @@ See [CLAUDE.md](CLAUDE.md) for detailed feature list and developer documentation
 
 ## Data Safety
 
-JSONQuill prioritizes data integrity with multiple safety mechanisms:
-
 - **JSON Validation Before Save**: Every file save re-parses the generated JSON to verify it's valid before writing to disk. If serialization produces invalid JSON (indicating a bug), the save fails with a clear error message instead of corrupting your data.
 - **Atomic Writes**: Files are written to a temporary file first, then atomically renamed to the target path, ensuring your original file is never left in a partially written state.
 - **Optional Backups**: Enable `create_backup: true` in your config to automatically create `.bak` files before saving (e.g., `file.json.bak`).
@@ -65,7 +63,7 @@ JSONQuill is a Rust-based terminal application for viewing and editing JSON file
 
 ## Installation & Usage
 
-### Homebrew (macOS and Linux)
+### Homebrew (macOS)
 
 ```bash
 # Add the tap
