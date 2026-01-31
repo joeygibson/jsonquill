@@ -44,17 +44,29 @@ use std::path::Path;
 pub fn load_json_file<P: AsRef<Path>>(path: P) -> Result<JsonTree> {
     let path_ref = path.as_ref();
 
-    // Check if this is a JSONL file
-    if let Some(ext) = path_ref.extension() {
-        if ext == "jsonl" || ext == "ndjson" {
-            return load_jsonl_file(path_ref);
-        }
+    // Check if file is gzipped
+    let is_gzipped = path_ref
+        .extension()
+        .and_then(|ext| ext.to_str())
+        .map(|ext| ext == "gz")
+        .unwrap_or(false);
+
+    // Read content (decompress if needed)
+    let content = if is_gzipped {
+        read_gzipped_file(path_ref)?
+    } else {
+        fs::read_to_string(path_ref).context("Failed to read file")?
+    };
+
+    // Determine format from filename (before .gz)
+    let is_jsonl = determine_jsonl_format(path_ref);
+
+    // Parse accordingly
+    if is_jsonl {
+        parse_jsonl_content(&content).context("Failed to parse JSONL")
+    } else {
+        parse_json(&content).context("Failed to parse JSON")
     }
-
-    // Regular JSON
-    let content = fs::read_to_string(path_ref).context("Failed to read file")?;
-
-    parse_json(&content).context("Failed to parse JSON")
 }
 
 /// Helper function to parse JSONL content (newline-delimited JSON).
@@ -343,5 +355,34 @@ null"#;
         assert!(result.is_err());
         let err_msg = result.unwrap_err().to_string();
         assert!(err_msg.contains("decompress") || err_msg.contains("corrupted"));
+    }
+
+    #[test]
+    fn test_load_gzipped_json_file() {
+        use flate2::write::GzEncoder;
+        use flate2::Compression;
+        use std::io::Write;
+        use tempfile::NamedTempFile;
+
+        // Create temp file with gzipped JSON
+        let json_content = r#"{"name": "Alice", "age": 30}"#;
+        let temp_file = NamedTempFile::new().unwrap();
+        let gz_path = temp_file.path().with_extension("json.gz");
+
+        // Write compressed content
+        let file = fs::File::create(&gz_path).unwrap();
+        let mut encoder = GzEncoder::new(file, Compression::default());
+        encoder.write_all(json_content.as_bytes()).unwrap();
+        encoder.finish().unwrap();
+
+        // Load and verify
+        let tree = load_json_file(&gz_path).unwrap();
+
+        // Verify structure
+        if let JsonValue::Object(entries) = tree.root().value() {
+            assert_eq!(entries.len(), 2);
+        } else {
+            panic!("Expected object");
+        }
     }
 }
