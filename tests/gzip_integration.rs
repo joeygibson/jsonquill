@@ -86,8 +86,7 @@ fn test_roundtrip_compressed_json() {
 
     // Save as compressed file
     let config = Config::default();
-    save_json_file(&json_gz_path, &original_tree, &config)
-        .expect("Failed to save compressed JSON");
+    save_json_file(&json_gz_path, &original_tree, &config).expect("Failed to save compressed JSON");
 
     // Verify the file was created and is compressed
     assert!(json_gz_path.exists());
