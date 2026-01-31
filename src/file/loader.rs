@@ -72,7 +72,7 @@ pub fn load_json_file<P: AsRef<Path>>(path: P) -> Result<JsonTree> {
 /// Helper function to parse JSONL content (newline-delimited JSON).
 ///
 /// Each line must be a valid JSON value. Blank lines are skipped.
-fn parse_jsonl_content(content: &str) -> Result<JsonTree> {
+pub fn parse_jsonl_content(content: &str) -> Result<JsonTree> {
     use crate::document::node::{JsonNode, JsonValue};
 
     let mut lines = Vec::new();

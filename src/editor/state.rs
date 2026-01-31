@@ -402,29 +402,50 @@ impl EditorState {
         &mut self.tree
     }
 
-    /// Formats the entire document with jq-style indentation.
+    /// Formats the entire document.
     ///
-    /// Serializes the tree to JSON using jq's formatting style (strict multi-line,
-    /// 2-space indentation, trailing newline), then parses it back to create a
-    /// cleanly formatted tree. This removes any irregular formatting and applies
-    /// consistent jq-style indentation throughout.
+    /// For regular JSON: Uses jq-style formatting (strict multi-line, 2-space indentation).
+    /// For JSONL: Uses compact formatting (jq -c equivalent, one JSON object per line).
+    ///
+    /// Serializes the tree, then parses it back to create a cleanly formatted tree.
+    /// This removes any irregular formatting and applies consistent formatting.
     ///
     /// Marks the document as dirty so the user can save the formatted result.
     pub fn format_document(&mut self) -> anyhow::Result<()> {
         use crate::document::parser::parse_json;
-        use crate::file::saver::serialize_node_jq_style;
+        use crate::file::loader::parse_jsonl_content;
+        use crate::file::saver::{serialize_node_compact, serialize_node_jq_style};
 
-        // Serialize with jq-style formatting (2-space indent, always multi-line)
-        let indent_size = 2;
-        let mut json_str = serialize_node_jq_style(self.tree.root(), indent_size, 0);
+        // Check if this is a JSONL document
+        let is_jsonl = matches!(self.tree.root().value(), JsonValue::JsonlRoot(_));
 
-        // jq always ensures a trailing newline
-        if !json_str.ends_with('\n') {
-            json_str.push('\n');
-        }
+        let json_str = if is_jsonl {
+            // JSONL: use compact formatting (jq -c equivalent)
+            if let JsonValue::JsonlRoot(lines) = self.tree.root().value() {
+                let formatted_lines: Vec<String> =
+                    lines.iter().map(serialize_node_compact).collect();
+                format!("{}\n", formatted_lines.join("\n"))
+            } else {
+                unreachable!("checked is_jsonl above");
+            }
+        } else {
+            // Regular JSON: use jq-style multi-line formatting
+            let indent_size = 2;
+            let mut json_str = serialize_node_jq_style(self.tree.root(), indent_size, 0);
+
+            // jq always ensures a trailing newline
+            if !json_str.ends_with('\n') {
+                json_str.push('\n');
+            }
+            json_str
+        };
 
         // Parse back to create a clean tree
-        let new_tree = parse_json(&json_str)?;
+        let new_tree = if is_jsonl {
+            parse_jsonl_content(&json_str)?
+        } else {
+            parse_json(&json_str)?
+        };
 
         // Reload with the formatted tree
         self.reload_tree(new_tree);

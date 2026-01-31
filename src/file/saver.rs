@@ -306,7 +306,7 @@ fn serialize_array_preserving(
 ///
 /// This is used for JSONL format where each line must be a single-line JSON object.
 /// Numbers are formatted as integers when they have no fractional part.
-fn serialize_node_compact(node: &JsonNode) -> String {
+pub fn serialize_node_compact(node: &JsonNode) -> String {
     match node.value() {
         JsonValue::Object(entries) => {
             if entries.is_empty() {
