@@ -385,4 +385,35 @@ null"#;
             panic!("Expected object");
         }
     }
+
+    #[test]
+    fn test_load_gzipped_jsonl_file() {
+        use flate2::write::GzEncoder;
+        use flate2::Compression;
+        use std::io::Write;
+        use tempfile::NamedTempFile;
+
+        // Create temp file with gzipped JSONL
+        let jsonl_content = r#"{"id":1,"name":"Alice"}
+{"id":2,"name":"Bob"}
+{"id":3,"name":"Charlie"}"#;
+        let temp_file = NamedTempFile::new().unwrap();
+        let gz_path = temp_file.path().with_extension("jsonl.gz");
+
+        // Write compressed content
+        let file = fs::File::create(&gz_path).unwrap();
+        let mut encoder = GzEncoder::new(file, Compression::default());
+        encoder.write_all(jsonl_content.as_bytes()).unwrap();
+        encoder.finish().unwrap();
+
+        // Load and verify
+        let tree = load_json_file(&gz_path).unwrap();
+
+        // Verify it's JSONL format
+        if let JsonValue::JsonlRoot(lines) = tree.root().value() {
+            assert_eq!(lines.len(), 3);
+        } else {
+            panic!("Expected JsonlRoot");
+        }
+    }
 }
