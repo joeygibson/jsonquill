@@ -132,19 +132,27 @@ fn parse_jsonl_content(content: &str) -> Result<JsonTree> {
 pub fn load_json_from_stdin() -> Result<JsonTree> {
     use std::io::{self, Read};
 
-    let mut buffer = String::new();
+    let mut buffer = Vec::new();
     io::stdin()
-        .read_to_string(&mut buffer)
+        .read_to_end(&mut buffer)
         .context("Failed to read from stdin")?;
 
+    // Check for gzip magic bytes (0x1f 0x8b)
+    let content = if buffer.starts_with(&[0x1f, 0x8b]) {
+        decompress_gzip_bytes(&buffer)?
+    } else {
+        String::from_utf8(buffer).context("Invalid UTF-8 in stdin")?
+    };
+
     // Try to parse as regular JSON first
-    if let Ok(tree) = parse_json(&buffer) {
+    if let Ok(tree) = parse_json(&content) {
         return Ok(tree);
     }
 
     // If regular JSON parsing fails, try JSONL format
-    parse_jsonl_content(&buffer)
-        .context("Failed to parse JSON from stdin: input is neither valid JSON nor valid JSONL")
+    parse_jsonl_content(&content).context(
+        "Failed to parse JSON from stdin: input is neither valid JSON nor valid JSONL",
+    )
 }
 
 /// Loads and parses a JSONL (JSON Lines) file from the filesystem.
@@ -194,6 +202,25 @@ fn read_gzipped_file<P: AsRef<Path>>(path: P) -> Result<String> {
     decoder
         .read_to_string(&mut content)
         .context("Failed to decompress gzipped file - file may be corrupted")?;
+    Ok(content)
+}
+
+/// Decompresses gzip-encoded bytes to a UTF-8 string.
+///
+/// # Errors
+///
+/// Returns an error if:
+/// - The bytes are not valid gzip format
+/// - The decompressed content is not valid UTF-8
+fn decompress_gzip_bytes(bytes: &[u8]) -> Result<String> {
+    use flate2::read::GzDecoder;
+    use std::io::Read;
+
+    let mut decoder = GzDecoder::new(bytes);
+    let mut content = String::new();
+    decoder
+        .read_to_string(&mut content)
+        .context("Failed to decompress gzipped stdin")?;
     Ok(content)
 }
 
