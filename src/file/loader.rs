@@ -164,6 +164,27 @@ fn determine_jsonl_format<P: AsRef<Path>>(path: P) -> bool {
     base.ends_with(".jsonl") || base.ends_with(".ndjson")
 }
 
+/// Reads and decompresses a gzipped file.
+///
+/// # Errors
+///
+/// Returns an error if:
+/// - The file cannot be opened
+/// - The file is not valid gzip format (corrupted)
+/// - The decompressed content is not valid UTF-8
+fn read_gzipped_file<P: AsRef<Path>>(path: P) -> Result<String> {
+    use flate2::read::GzDecoder;
+    use std::io::Read;
+
+    let file = fs::File::open(path).context("Failed to open gzipped file")?;
+    let mut decoder = GzDecoder::new(file);
+    let mut content = String::new();
+    decoder
+        .read_to_string(&mut content)
+        .context("Failed to decompress gzipped file - file may be corrupted")?;
+    Ok(content)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -283,5 +304,28 @@ null"#;
         assert!(determine_jsonl_format("path/to/data.ndjson.gz"));
         assert!(!determine_jsonl_format("data.json"));
         assert!(!determine_jsonl_format("data.json.gz"));
+    }
+
+    #[test]
+    fn test_read_gzipped_file() {
+        use flate2::write::GzEncoder;
+        use flate2::Compression;
+        use std::io::Write;
+        use tempfile::NamedTempFile;
+
+        // Create temp file with gzipped JSON
+        let json_content = r#"{"test": "value"}"#;
+        let temp_file = NamedTempFile::new().unwrap();
+        let gz_path = temp_file.path().with_extension("json.gz");
+
+        // Write compressed content
+        let file = fs::File::create(&gz_path).unwrap();
+        let mut encoder = GzEncoder::new(file, Compression::default());
+        encoder.write_all(json_content.as_bytes()).unwrap();
+        encoder.finish().unwrap();
+
+        // Test decompression
+        let decompressed = read_gzipped_file(&gz_path).unwrap();
+        assert_eq!(decompressed, json_content);
     }
 }
