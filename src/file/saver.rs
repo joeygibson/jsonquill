@@ -972,4 +972,221 @@ mod tests {
         decoder.read_to_string(&mut decompressed).unwrap();
         assert_eq!(decompressed, "test content");
     }
+
+    // Task 10: Saver gzip tests
+
+    #[test]
+    fn test_save_json_as_gzipped() {
+        use crate::document::parser::parse_json;
+        use flate2::read::GzDecoder;
+        use std::io::Read;
+        use tempfile::NamedTempFile;
+
+        // Create JSON tree
+        let json = r#"{"name": "Alice", "age": 30}"#;
+        let tree = parse_json(json).unwrap();
+        let config = Config::default();
+
+        // Save as .json.gz
+        let temp_file = NamedTempFile::new().unwrap();
+        let gz_path = temp_file.path().with_extension("json.gz");
+        save_json_file(&gz_path, &tree, &config).unwrap();
+
+        // Decompress and verify
+        let file = fs::File::open(&gz_path).unwrap();
+        let mut decoder = GzDecoder::new(file);
+        let mut decompressed = String::new();
+        decoder.read_to_string(&mut decompressed).unwrap();
+
+        // Verify it's valid JSON
+        let parsed: serde_json::Value = serde_json::from_str(&decompressed).unwrap();
+        assert_eq!(parsed["name"], "Alice");
+        assert_eq!(parsed["age"], 30);
+    }
+
+    #[test]
+    fn test_save_jsonl_as_gzipped() {
+        use crate::document::node::JsonValue;
+        use flate2::read::GzDecoder;
+        use std::io::Read;
+        use tempfile::NamedTempFile;
+
+        // Create JSONL tree manually
+        let lines = vec![
+            JsonNode::new(JsonValue::Object(vec![(
+                "id".to_string(),
+                JsonNode::new(JsonValue::Number(1.0)),
+            )])),
+            JsonNode::new(JsonValue::Object(vec![(
+                "id".to_string(),
+                JsonNode::new(JsonValue::Number(2.0)),
+            )])),
+            JsonNode::new(JsonValue::Object(vec![(
+                "id".to_string(),
+                JsonNode::new(JsonValue::Number(3.0)),
+            )])),
+        ];
+        let root = JsonNode::new(JsonValue::JsonlRoot(lines));
+        let tree = JsonTree::new(root);
+        let config = Config::default();
+
+        // Save as .jsonl.gz
+        let temp_file = NamedTempFile::new().unwrap();
+        let gz_path = temp_file.path().with_extension("jsonl.gz");
+        save_json_file(&gz_path, &tree, &config).unwrap();
+
+        // Decompress and verify
+        let file = fs::File::open(&gz_path).unwrap();
+        let mut decoder = GzDecoder::new(file);
+        let mut decompressed = String::new();
+        decoder.read_to_string(&mut decompressed).unwrap();
+
+        // Verify JSONL format (one JSON per line)
+        let lines: Vec<&str> = decompressed.lines().collect();
+        assert_eq!(lines.len(), 3);
+        assert_eq!(
+            serde_json::from_str::<serde_json::Value>(lines[0])
+                .unwrap()
+                .get("id")
+                .unwrap(),
+            1
+        );
+        assert_eq!(
+            serde_json::from_str::<serde_json::Value>(lines[1])
+                .unwrap()
+                .get("id")
+                .unwrap(),
+            2
+        );
+        assert_eq!(
+            serde_json::from_str::<serde_json::Value>(lines[2])
+                .unwrap()
+                .get("id")
+                .unwrap(),
+            3
+        );
+    }
+
+    // Task 11: Format switching tests
+
+    #[test]
+    fn test_format_switching_json_to_gz() {
+        use crate::document::parser::parse_json;
+        use flate2::read::GzDecoder;
+        use std::io::Read;
+        use tempfile::NamedTempFile;
+
+        // Create and save as .json
+        let json = r#"{"test": "value"}"#;
+        let tree = parse_json(json).unwrap();
+        let config = Config::default();
+
+        let temp_file = NamedTempFile::new().unwrap();
+        let json_path = temp_file.path().with_extension("json");
+        save_json_file(&json_path, &tree, &config).unwrap();
+
+        // Verify uncompressed
+        let content = fs::read_to_string(&json_path).unwrap();
+        assert!(content.contains("test"));
+
+        // Save same tree as .json.gz
+        let gz_path = temp_file.path().with_extension("json.gz");
+        save_json_file(&gz_path, &tree, &config).unwrap();
+
+        // Verify compressed
+        let file = fs::File::open(&gz_path).unwrap();
+        let mut decoder = GzDecoder::new(file);
+        let mut decompressed = String::new();
+        decoder.read_to_string(&mut decompressed).unwrap();
+        assert!(decompressed.contains("test"));
+    }
+
+    #[test]
+    fn test_format_switching_gz_to_json() {
+        use crate::document::parser::parse_json;
+        use flate2::read::GzDecoder;
+        use std::io::Read;
+        use tempfile::NamedTempFile;
+
+        // Create and save as .json.gz
+        let json = r#"{"test": "value"}"#;
+        let tree = parse_json(json).unwrap();
+        let config = Config::default();
+
+        let temp_file = NamedTempFile::new().unwrap();
+        let gz_path = temp_file.path().with_extension("json.gz");
+        save_json_file(&gz_path, &tree, &config).unwrap();
+
+        // Verify compressed
+        let file = fs::File::open(&gz_path).unwrap();
+        let mut decoder = GzDecoder::new(file);
+        let mut decompressed = String::new();
+        decoder.read_to_string(&mut decompressed).unwrap();
+        assert!(decompressed.contains("test"));
+
+        // Save same tree as .json (uncompressed)
+        let json_path = temp_file.path().with_extension("json");
+        save_json_file(&json_path, &tree, &config).unwrap();
+
+        // Verify uncompressed
+        let content = fs::read_to_string(&json_path).unwrap();
+        assert!(content.contains("test"));
+
+        // Verify it's NOT gzip (won't start with gzip magic bytes)
+        let raw_bytes = fs::read(&json_path).unwrap();
+        assert_ne!(&raw_bytes[0..2], &[0x1f, 0x8b]); // gzip magic bytes
+    }
+
+    // Task 12: Backup preservation test
+
+    #[test]
+    fn test_backup_preserves_compression() {
+        use crate::document::parser::parse_json;
+        use flate2::read::GzDecoder;
+        use std::io::Read;
+        use tempfile::NamedTempFile;
+
+        // Create initial .json.gz file
+        let json = r#"{"version": 1}"#;
+        let tree = parse_json(json).unwrap();
+        let config = Config::default();
+
+        let temp_file = NamedTempFile::new().unwrap();
+        let gz_path = temp_file.path().with_extension("json.gz");
+        save_json_file(&gz_path, &tree, &config).unwrap();
+
+        // Modify and save with backup enabled
+        let json2 = r#"{"version": 2}"#;
+        let tree2 = parse_json(json2).unwrap();
+        let config_with_backup = Config {
+            create_backup: true,
+            ..Default::default()
+        };
+        save_json_file(&gz_path, &tree2, &config_with_backup).unwrap();
+
+        // Verify backup was created
+        let backup_path = gz_path.with_file_name(format!(
+            "{}.bak",
+            gz_path.file_name().unwrap().to_str().unwrap()
+        ));
+        assert!(backup_path.exists());
+
+        // Verify backup is compressed (can decompress)
+        let file = fs::File::open(&backup_path).unwrap();
+        let mut decoder = GzDecoder::new(file);
+        let mut decompressed = String::new();
+        decoder.read_to_string(&mut decompressed).unwrap();
+
+        // Verify backup contains original version
+        let parsed: serde_json::Value = serde_json::from_str(&decompressed).unwrap();
+        assert_eq!(parsed["version"], 1);
+
+        // Verify new file contains updated version
+        let file2 = fs::File::open(&gz_path).unwrap();
+        let mut decoder2 = GzDecoder::new(file2);
+        let mut decompressed2 = String::new();
+        decoder2.read_to_string(&mut decompressed2).unwrap();
+        let parsed2: serde_json::Value = serde_json::from_str(&decompressed2).unwrap();
+        assert_eq!(parsed2["version"], 2);
+    }
 }
