@@ -511,6 +511,7 @@ dependencies = [
  "arboard",
  "clap",
  "dirs",
+ "flate2",
  "ratatui",
  "serde",
  "serde_json",

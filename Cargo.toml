@@ -20,6 +20,7 @@ toml = "0.8"
 anyhow = "1.0"
 arboard = "3.4"  # for clipboard support
 dirs = "5.0"  # for config directory path
+flate2 = "1.0"  # for gzip compression support
 
 [dev-dependencies]
 tempfile = "3.13"
