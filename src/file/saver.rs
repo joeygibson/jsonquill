@@ -61,23 +61,33 @@ use std::path::Path;
 /// 2. Renames the temporary file to the target path
 ///
 /// This ensures that the target file is never left in a partially written state.
+/// Creates a backup of a file by copying it with a .bak extension.
+fn create_backup<P: AsRef<Path>>(path: P) -> Result<()> {
+    let path = path.as_ref();
+    let mut backup_path = path.to_path_buf();
+    let original_name = backup_path
+        .file_name()
+        .and_then(|n| n.to_str())
+        .ok_or_else(|| anyhow::anyhow!("Invalid file name"))?;
+    backup_path.set_file_name(format!("{}.bak", original_name));
+    fs::copy(path, backup_path).context("Failed to create backup")?;
+    Ok(())
+}
+
 pub fn save_json_file<P: AsRef<Path>>(path: P, tree: &JsonTree, config: &Config) -> Result<()> {
     let path = path.as_ref();
 
+    // Determine if we should compress based on target filename
+    let should_compress = path.to_string_lossy().ends_with(".gz");
+
     // Check if this is a JSONL document
     if matches!(tree.root().value(), JsonValue::JsonlRoot(_)) {
-        return save_jsonl(path, tree, config);
+        return save_jsonl(path, tree, config, should_compress);
     }
 
     // Create backup if requested and file exists
     if config.create_backup && path.exists() {
-        let mut backup_path = path.to_path_buf();
-        let original_name = backup_path
-            .file_name()
-            .and_then(|n| n.to_str())
-            .ok_or_else(|| anyhow::anyhow!("Invalid file name"))?;
-        backup_path.set_file_name(format!("{}.bak", original_name));
-        fs::copy(path, backup_path).context("Failed to create backup")?;
+        create_backup(path)?;
     }
 
     // Serialize with format preservation if original source is available
@@ -100,12 +110,8 @@ pub fn save_json_file<P: AsRef<Path>>(path: P, tree: &JsonTree, config: &Config)
     serde_json::from_str::<serde_json::Value>(&json_str)
         .context("Generated invalid JSON - this is a bug in jsonquill's serialization")?;
 
-    // Write to temp file first (atomic save)
-    let temp_path = path.with_extension("tmp");
-    fs::write(&temp_path, json_str).context("Failed to write temp file")?;
-
-    // Rename temp to target (atomic operation)
-    fs::rename(&temp_path, path).context("Failed to rename temp file")?;
+    // Write atomically (compressed or uncompressed)
+    write_file_atomic(path, json_str.as_bytes(), should_compress)?;
 
     Ok(())
 }
@@ -128,7 +134,6 @@ pub fn save_json_file<P: AsRef<Path>>(path: P, tree: &JsonTree, config: &Config)
 /// - Creating the temp file fails
 /// - Writing or compressing fails
 /// - Renaming the temp file fails
-#[allow(dead_code)]
 fn write_file_atomic<P: AsRef<Path>>(path: P, data: &[u8], compress: bool) -> Result<()> {
     use flate2::write::GzEncoder;
     use flate2::Compression;
@@ -159,18 +164,17 @@ fn write_file_atomic<P: AsRef<Path>>(path: P, data: &[u8], compress: bool) -> Re
 /// Saves a JSONL document to a file.
 ///
 /// Each line is saved as a separate JSON object (one per line).
-fn save_jsonl<P: AsRef<Path>>(path: P, tree: &JsonTree, config: &Config) -> Result<()> {
+fn save_jsonl<P: AsRef<Path>>(
+    path: P,
+    tree: &JsonTree,
+    config: &Config,
+    compress: bool,
+) -> Result<()> {
     let path = path.as_ref();
 
     // Create backup if requested and file exists
     if config.create_backup && path.exists() {
-        let mut backup_path = path.to_path_buf();
-        let original_name = backup_path
-            .file_name()
-            .and_then(|n| n.to_str())
-            .ok_or_else(|| anyhow::anyhow!("Invalid file name"))?;
-        backup_path.set_file_name(format!("{}.bak", original_name));
-        fs::copy(path, backup_path).context("Failed to create backup")?;
+        create_backup(path)?;
     }
 
     let mut output = String::new();
@@ -178,24 +182,23 @@ fn save_jsonl<P: AsRef<Path>>(path: P, tree: &JsonTree, config: &Config) -> Resu
     if let JsonValue::JsonlRoot(lines) = tree.root().value() {
         for (i, node) in lines.iter().enumerate() {
             // JSONL requires compact single-line JSON
-            // Use indent_size=0 to force compact formatting with proper integer handling
             let line = serialize_node_compact(node);
 
             // Validate each line is valid JSON
-            serde_json::from_str::<serde_json::Value>(&line)
-                .with_context(|| format!("Generated invalid JSON at line {} - this is a bug in jsonquill's serialization", i + 1))?;
+            serde_json::from_str::<serde_json::Value>(&line).with_context(|| {
+                format!(
+                    "Generated invalid JSON at line {} - this is a bug in jsonquill's serialization",
+                    i + 1
+                )
+            })?;
 
             output.push_str(&line);
             output.push('\n');
         }
     }
 
-    // Write to temp file first (atomic save)
-    let temp_path = path.with_extension("tmp");
-    fs::write(&temp_path, output).context("Failed to write temp file")?;
-
-    // Rename temp to target (atomic operation)
-    fs::rename(&temp_path, path).context("Failed to rename temp file")?;
+    // Write atomically with optional compression
+    write_file_atomic(path, output.as_bytes(), compress)?;
 
     Ok(())
 }
