@@ -28,8 +28,8 @@ Set Theme {
   }
 
 Set FontSize 12
-Set Width 1024
-Set Height 768
+Set Width 800
+Set Height 600
 Set TypingSpeed 50ms
 Set PlaybackSpeed 0.8
 
