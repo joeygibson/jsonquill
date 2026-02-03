@@ -1,7 +1,7 @@
 # VHS tape for JSONQuill demo
 # This demonstrates the major features of jsonquill
 
-Output assets/demo.mp4
+Output assets/demo.gif
 
 Set Theme {
     "name": "default-dark",

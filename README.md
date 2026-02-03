@@ -11,7 +11,7 @@
 A terminal-based structural JSON editor with vim-style keybindings.
 
 <p align="center">
-  <video src="assets/demo.mp4" width="800" height="600" controls></video>
+  <img src="assets/demo.gif" width="800" height="600" controls/>
 </p>
 
 ## Status
