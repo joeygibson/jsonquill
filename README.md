@@ -10,6 +10,10 @@
 
 A terminal-based structural JSON editor with vim-style keybindings.
 
+<p align="center">
+  <video src="assets/demo.mp4" width="800" height="600" controls></video>
+</p>
+
 ## Status
 
 [![CI](https://github.com/joeygibson/jsonquill/workflows/CI/badge.svg)](https://github.com/joeygibson/jsonquill/actions/workflows/ci.yml)

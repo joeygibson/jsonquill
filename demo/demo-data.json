@@ -1,0 +1,36 @@
+{
+  "store": {
+    "name": "Tech Gadgets Inc",
+    "location": "San Francisco",
+    "inventory": [
+      {
+        "id": 1,
+        "name": "Laptop",
+        "price": 999.99,
+        "inStock": true,
+        "specs": {
+          "cpu": "Intel i7",
+          "ram": "16GB",
+          "storage": "512GB SSD"
+        }
+      },
+      {
+        "id": 2,
+        "name": "Mouse",
+        "price": 29.99,
+        "inStock": true
+      },
+      {
+        "id": 3,
+        "name": "Keyboard",
+        "price": 79.99,
+        "inStock": false
+      }
+    ],
+    "employees": [
+      {"name": "Alice", "role": "Manager"},
+      {"name": "Bob", "role": "Sales"},
+      {"name": "Carol", "role": "Support"}
+    ]
+  }
+}
