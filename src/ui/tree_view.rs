@@ -129,6 +129,16 @@ impl TreeViewState {
         self.expanded_paths.contains(path)
     }
 
+    /// Returns a reference to the set of expanded paths.
+    pub fn expanded_paths(&self) -> &HashSet<Vec<usize>> {
+        &self.expanded_paths
+    }
+
+    /// Sets the expanded paths to the given set.
+    pub fn set_expanded_paths(&mut self, expanded_paths: HashSet<Vec<usize>>) {
+        self.expanded_paths = expanded_paths;
+    }
+
     /// Expands a specific node and all its descendants.
     ///
     /// This is used when expanding JSONL lines to show the entire tree within the line.

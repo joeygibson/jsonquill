@@ -13,15 +13,19 @@
 use crate::document::tree::JsonTree;
 use std::time::SystemTime;
 
+use std::collections::HashSet;
+
 /// Snapshot of editor state at a specific point in time.
 ///
-/// Contains only the state needed to restore the editor to this point:
+/// Contains the state needed to restore the editor to this point:
 /// - The JSON document tree
 /// - The cursor position within the tree
+/// - The expansion state (which nodes are expanded)
 #[derive(Debug, Clone)]
 pub struct EditorSnapshot {
     pub tree: JsonTree,
     pub cursor_path: Vec<usize>,
+    pub expanded_paths: HashSet<Vec<usize>>,
 }
 
 /// A node in the undo tree.
@@ -198,6 +202,7 @@ mod tests {
         let snapshot = EditorSnapshot {
             tree,
             cursor_path: vec![],
+            expanded_paths: HashSet::new(),
         };
 
         let node = UndoNode::new(snapshot, None, 0);
@@ -213,6 +218,7 @@ mod tests {
         let snapshot = EditorSnapshot {
             tree,
             cursor_path: vec![],
+            expanded_paths: HashSet::new(),
         };
 
         let undo_tree = UndoTree::new(snapshot, 50);
@@ -228,6 +234,7 @@ mod tests {
         let snapshot1 = EditorSnapshot {
             tree: tree.clone(),
             cursor_path: vec![],
+            expanded_paths: HashSet::new(),
         };
 
         let mut undo_tree = UndoTree::new(snapshot1, 50);
@@ -236,6 +243,7 @@ mod tests {
         let snapshot2 = EditorSnapshot {
             tree: tree2,
             cursor_path: vec![0],
+            expanded_paths: HashSet::new(),
         };
 
         undo_tree.add_checkpoint(snapshot2);
@@ -254,6 +262,7 @@ mod tests {
         let snapshot1 = EditorSnapshot {
             tree: tree.clone(),
             cursor_path: vec![],
+            expanded_paths: HashSet::new(),
         };
 
         let mut undo_tree = UndoTree::new(snapshot1, 50);
@@ -263,6 +272,7 @@ mod tests {
         let snapshot2 = EditorSnapshot {
             tree: tree2,
             cursor_path: vec![0],
+            expanded_paths: HashSet::new(),
         };
         undo_tree.add_checkpoint(snapshot2);
 
@@ -281,6 +291,7 @@ mod tests {
         let snapshot = EditorSnapshot {
             tree,
             cursor_path: vec![],
+            expanded_paths: HashSet::new(),
         };
 
         let mut undo_tree = UndoTree::new(snapshot, 50);
@@ -297,6 +308,7 @@ mod tests {
         let snapshot1 = EditorSnapshot {
             tree: tree.clone(),
             cursor_path: vec![],
+            expanded_paths: HashSet::new(),
         };
 
         let mut undo_tree = UndoTree::new(snapshot1, 50);
@@ -306,6 +318,7 @@ mod tests {
         let snapshot2 = EditorSnapshot {
             tree: tree2,
             cursor_path: vec![0],
+            expanded_paths: HashSet::new(),
         };
         undo_tree.add_checkpoint(snapshot2);
         undo_tree.undo();
@@ -325,6 +338,7 @@ mod tests {
         let snapshot = EditorSnapshot {
             tree,
             cursor_path: vec![],
+            expanded_paths: HashSet::new(),
         };
 
         let mut undo_tree = UndoTree::new(snapshot, 50);
@@ -340,6 +354,7 @@ mod tests {
         let snapshot1 = EditorSnapshot {
             tree: tree.clone(),
             cursor_path: vec![],
+            expanded_paths: HashSet::new(),
         };
 
         let mut undo_tree = UndoTree::new(snapshot1, 50);
@@ -349,6 +364,7 @@ mod tests {
         let snapshot2 = EditorSnapshot {
             tree: tree2,
             cursor_path: vec![0],
+            expanded_paths: HashSet::new(),
         };
         undo_tree.add_checkpoint(snapshot2);
 
@@ -358,6 +374,7 @@ mod tests {
         let snapshot3 = EditorSnapshot {
             tree: tree3,
             cursor_path: vec![1],
+            expanded_paths: HashSet::new(),
         };
         undo_tree.add_checkpoint(snapshot3);
 

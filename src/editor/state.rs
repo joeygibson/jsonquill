@@ -289,6 +289,7 @@ impl EditorState {
         let initial_snapshot = super::undo::EditorSnapshot {
             tree: tree.clone(),
             cursor_path: cursor.path().to_vec(),
+            expanded_paths: tree_view.expanded_paths().clone(),
         };
         let undo_tree = super::undo::UndoTree::new(initial_snapshot, undo_limit);
 
@@ -484,6 +485,7 @@ impl EditorState {
         let initial_snapshot = super::undo::EditorSnapshot {
             tree: self.tree.clone(),
             cursor_path: self.cursor.path().to_vec(),
+            expanded_paths: self.tree_view.expanded_paths().clone(),
         };
         self.undo_tree = super::undo::UndoTree::new(initial_snapshot, 50);
 
@@ -2166,15 +2168,16 @@ impl EditorState {
             return Err(anyhow!("Nothing to paste"));
         }
 
-        // Create undo checkpoint
-        self.checkpoint();
-
         // Paste each node
         for (node, key) in content.nodes.iter().zip(content.keys.iter()) {
             self.paste_single_node(node.clone(), key.clone(), true)?;
         }
 
         self.mark_dirty();
+
+        // Create undo checkpoint AFTER mutation
+        self.checkpoint();
+
         Ok(())
     }
 
@@ -2200,13 +2203,15 @@ impl EditorState {
             return Err(anyhow!("Nothing to paste"));
         }
 
-        self.checkpoint();
-
         for (node, key) in content.nodes.iter().zip(content.keys.iter()) {
             self.paste_single_node(node.clone(), key.clone(), false)?;
         }
 
         self.mark_dirty();
+
+        // Create undo checkpoint AFTER mutation
+        self.checkpoint();
+
         Ok(())
     }
 
@@ -3086,24 +3091,34 @@ impl EditorState {
     /// Captures the current editor state as an undo checkpoint.
     ///
     /// This is called automatically before mutation operations to enable undo/redo.
-    /// Checkpoints capture both the tree structure and cursor position.
+    /// Checkpoints capture the tree structure, cursor position, and expansion state.
     fn checkpoint(&mut self) {
         let snapshot = super::undo::EditorSnapshot {
             tree: self.tree.clone(),
             cursor_path: self.cursor.path().to_vec(),
+            expanded_paths: self.tree_view.expanded_paths().clone(),
         };
         self.undo_tree.add_checkpoint(snapshot);
     }
 
     /// Undoes the last operation.
     ///
-    /// Restores the editor to the previous checkpoint state, including both
-    /// the tree structure and cursor position. Returns true if undo succeeded,
-    /// false if already at the root state.
+    /// Restores the editor to the previous checkpoint state, including the
+    /// tree structure. The cursor position is only restored if the current
+    /// cursor position becomes invalid after the undo (e.g., points to a
+    /// deleted node). Returns true if undo succeeded, false if already at
+    /// the root state.
     pub fn undo(&mut self) -> bool {
         if let Some(snapshot) = self.undo_tree.undo() {
+            let current_cursor = self.cursor.path().to_vec();
             self.tree = snapshot.tree;
-            self.cursor.set_path(snapshot.cursor_path);
+            self.tree_view.set_expanded_paths(snapshot.expanded_paths);
+
+            // Only restore cursor if current position is now invalid
+            if self.tree.get_node(&current_cursor).is_none() {
+                self.cursor.set_path(snapshot.cursor_path);
+            }
+
             self.rebuild_tree_view();
             true
         } else {
@@ -3118,8 +3133,15 @@ impl EditorState {
     /// if redo succeeded, false if no redo history exists.
     pub fn redo(&mut self) -> bool {
         if let Some(snapshot) = self.undo_tree.redo() {
+            let current_cursor = self.cursor.path().to_vec();
             self.tree = snapshot.tree;
-            self.cursor.set_path(snapshot.cursor_path);
+            self.tree_view.set_expanded_paths(snapshot.expanded_paths);
+
+            // Only restore cursor if current position is now invalid
+            if self.tree.get_node(&current_cursor).is_none() {
+                self.cursor.set_path(snapshot.cursor_path);
+            }
+
             self.rebuild_tree_view();
             true
         } else {
