@@ -86,15 +86,17 @@ impl<'a> Evaluator<'a> {
         idx: isize,
         current_path: &[usize],
     ) -> Vec<(Vec<usize>, &'a JsonNode)> {
-        if let JsonValue::Array(items) = node.value() {
-            let len = items.len() as isize;
-            let normalized_idx = if idx < 0 { len + idx } else { idx };
+        let items = match node.value() {
+            JsonValue::Array(items) | JsonValue::JsonlRoot(items) => items,
+            _ => return vec![],
+        };
+        let len = items.len() as isize;
+        let normalized_idx = if idx < 0 { len + idx } else { idx };
 
-            if normalized_idx >= 0 && (normalized_idx as usize) < items.len() {
-                let mut new_path = current_path.to_vec();
-                new_path.push(normalized_idx as usize);
-                return vec![(new_path, &items[normalized_idx as usize])];
-            }
+        if normalized_idx >= 0 && (normalized_idx as usize) < items.len() {
+            let mut new_path = current_path.to_vec();
+            new_path.push(normalized_idx as usize);
+            return vec![(new_path, &items[normalized_idx as usize])];
         }
         vec![]
     }
@@ -143,7 +145,7 @@ impl<'a> Evaluator<'a> {
         end: Option<isize>,
         current_path: &[usize],
     ) -> Vec<(Vec<usize>, &'a JsonNode)> {
-        if let JsonValue::Array(items) = node.value() {
+        if let JsonValue::Array(items) | JsonValue::JsonlRoot(items) = node.value() {
             let len = items.len() as isize;
 
             // Normalize start
@@ -203,7 +205,7 @@ impl<'a> Evaluator<'a> {
                         child_path.push(idx);
                         walk(child, prop, &child_path, results);
                     }
-                } else if let JsonValue::Array(items) = node.value() {
+                } else if let JsonValue::Array(items) | JsonValue::JsonlRoot(items) = node.value() {
                     for (idx, item) in items.iter().enumerate() {
                         let mut child_path = current_path.to_vec();
                         child_path.push(idx);
@@ -221,7 +223,7 @@ impl<'a> Evaluator<'a> {
                             walk(child, prop, &new_path, results);
                         }
                     }
-                    JsonValue::Array(items) => {
+                    JsonValue::Array(items) | JsonValue::JsonlRoot(items) => {
                         for (idx, item) in items.iter().enumerate() {
                             let mut new_path = current_path.to_vec();
                             new_path.push(idx);
@@ -289,13 +291,15 @@ impl<'a> Evaluator<'a> {
     }
 
     fn get_array_element(&self, node: &'a JsonNode, idx: isize) -> Vec<&'a JsonNode> {
-        if let JsonValue::Array(items) = node.value() {
-            let len = items.len() as isize;
-            let normalized_idx = if idx < 0 { len + idx } else { idx };
+        let items = match node.value() {
+            JsonValue::Array(items) | JsonValue::JsonlRoot(items) => items,
+            _ => return vec![],
+        };
+        let len = items.len() as isize;
+        let normalized_idx = if idx < 0 { len + idx } else { idx };
 
-            if normalized_idx >= 0 && (normalized_idx as usize) < items.len() {
-                return vec![&items[normalized_idx as usize]];
-            }
+        if normalized_idx >= 0 && (normalized_idx as usize) < items.len() {
+            return vec![&items[normalized_idx as usize]];
         }
         vec![]
     }
@@ -315,7 +319,7 @@ impl<'a> Evaluator<'a> {
         start: Option<isize>,
         end: Option<isize>,
     ) -> Vec<&'a JsonNode> {
-        if let JsonValue::Array(items) = node.value() {
+        if let JsonValue::Array(items) | JsonValue::JsonlRoot(items) = node.value() {
             let len = items.len() as isize;
 
             // Normalize start
@@ -353,7 +357,7 @@ impl<'a> Evaluator<'a> {
                         }
                         walk(child, prop, results);
                     }
-                } else if let JsonValue::Array(items) = node.value() {
+                } else if let JsonValue::Array(items) | JsonValue::JsonlRoot(items) = node.value() {
                     for item in items {
                         walk(item, prop, results);
                     }
@@ -367,7 +371,7 @@ impl<'a> Evaluator<'a> {
                             walk(child, prop, results);
                         }
                     }
-                    JsonValue::Array(items) => {
+                    JsonValue::Array(items) | JsonValue::JsonlRoot(items) => {
                         for item in items {
                             results.push(item);
                             walk(item, prop, results);

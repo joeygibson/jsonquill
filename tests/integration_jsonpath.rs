@@ -228,10 +228,10 @@ fn test_jsonpath_invalid_query_error() {
     let tree = create_bookstore();
     let mut state = EditorState::new_with_default_theme(tree);
 
-    // Invalid query - missing $
+    // Query without $ is auto-prepended, so "store.book" becomes "$.store.book"
     state.execute_jsonpath_search("store.book");
-    // Should have no results and error message
-    assert_eq!(state.search_results_info(), None);
+    // Should find the book array node
+    assert!(state.search_results_info().is_some());
 
     // Invalid query - malformed bracket
     state.execute_jsonpath_search("$.store.book[");

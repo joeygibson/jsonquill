@@ -2754,14 +2754,24 @@ impl EditorState {
     }
 
     /// Executes a JSONPath query and populates search results.
+    /// Automatically prepends `$` if the query doesn't start with it.
     pub fn execute_jsonpath_search(&mut self, query: &str) {
         use crate::jsonpath::{Evaluator, Parser};
 
         self.search_results.clear();
         self.search_index = 0;
 
+        // Auto-prepend $ if missing (e.g. "[0].roles" → "$[0].roles")
+        let query = if query.starts_with('$') {
+            query.to_string()
+        } else if query.starts_with('[') || query.starts_with('.') {
+            format!("${}", query)
+        } else {
+            format!("$.{}", query)
+        };
+
         // Parse the JSONPath query
-        let path = match Parser::parse(query) {
+        let path = match Parser::parse(&query) {
             Ok(p) => p,
             Err(e) => {
                 self.set_message(format!("Invalid JSONPath: {}", e), MessageLevel::Error);
