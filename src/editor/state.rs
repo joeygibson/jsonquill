@@ -753,6 +753,17 @@ impl EditorState {
         self.tree_view.rebuild(&self.tree);
     }
 
+    /// Expands all ancestor nodes of the given path so the node becomes visible in the tree view.
+    fn ensure_path_visible(&mut self, path: &[usize]) {
+        for len in 0..path.len() {
+            let ancestor = &path[..len];
+            if !self.tree_view.is_expanded(ancestor) {
+                self.tree_view.toggle_expand(ancestor);
+            }
+        }
+        self.tree_view.rebuild(&self.tree);
+    }
+
     /// Deletes the node at the current cursor position.
     /// Stores the deleted node in register history before deletion.
     /// Adjusts the cursor position after deletion and rebuilds the tree view.
@@ -2689,6 +2700,7 @@ impl EditorState {
     }
 
     /// Executes a search for the current search buffer text.
+    /// Searches the entire tree structure (including collapsed nodes).
     /// Uses smart case: case-insensitive search unless the pattern contains uppercase letters.
     pub fn execute_search(&mut self) {
         if self.search_buffer.is_empty() {
@@ -2707,48 +2719,115 @@ impl EditorState {
         self.search_index = 0;
         self.search_type = Some(SearchType::Text);
 
-        // Search through all visible lines
-        for line in self.tree_view.lines() {
-            let mut matches = false;
-
-            // Check key name
-            if let Some(key) = &line.key {
-                let key_text = if case_sensitive {
-                    key.clone()
-                } else {
-                    key.to_lowercase()
-                };
-                if key_text.contains(&query) {
-                    matches = true;
-                }
-            }
-
-            // Check string values
-            if let crate::ui::tree_view::ValueType::String = line.value_type {
-                let value_text = if case_sensitive {
-                    line.value_preview.clone()
-                } else {
-                    line.value_preview.to_lowercase()
-                };
-                if value_text.contains(&query) {
-                    matches = true;
-                }
-            }
-
-            if matches {
-                self.search_results.push(line.path.clone());
-            }
-        }
+        // Search the entire tree, not just visible lines
+        Self::search_node(
+            self.tree.root(),
+            &[],
+            &query,
+            case_sensitive,
+            &mut self.search_results,
+        );
 
         // Jump to first or last result based on search direction
         if !self.search_results.is_empty() {
-            if self.search_forward {
+            let path = if self.search_forward {
                 self.search_index = 0;
-                self.cursor.set_path(self.search_results[0].clone());
+                self.search_results[0].clone()
             } else {
                 self.search_index = self.search_results.len() - 1;
-                self.cursor
-                    .set_path(self.search_results[self.search_index].clone());
+                self.search_results[self.search_index].clone()
+            };
+            self.ensure_path_visible(&path);
+            self.cursor.set_path(path);
+        }
+    }
+
+    /// Recursively searches a node and its children for text matches.
+    fn search_node(
+        node: &crate::document::node::JsonNode,
+        path: &[usize],
+        query: &str,
+        case_sensitive: bool,
+        results: &mut Vec<Vec<usize>>,
+    ) {
+        use crate::document::node::JsonValue;
+
+        match node.value() {
+            JsonValue::Object(entries) => {
+                for (i, (key, child)) in entries.iter().enumerate() {
+                    let child_path: Vec<usize> =
+                        path.iter().copied().chain(std::iter::once(i)).collect();
+                    let key_text = if case_sensitive {
+                        key.clone()
+                    } else {
+                        key.to_lowercase()
+                    };
+                    if key_text.contains(query) {
+                        results.push(child_path.clone());
+                    } else {
+                        // Check scalar values
+                        Self::check_scalar_value(
+                            child,
+                            &child_path,
+                            query,
+                            case_sensitive,
+                            results,
+                        );
+                    }
+                    // Recurse into containers
+                    if child.value().is_container() {
+                        Self::search_node(child, &child_path, query, case_sensitive, results);
+                    }
+                }
+            }
+            JsonValue::Array(elements) | JsonValue::JsonlRoot(elements) => {
+                for (i, child) in elements.iter().enumerate() {
+                    let child_path: Vec<usize> =
+                        path.iter().copied().chain(std::iter::once(i)).collect();
+                    // Check scalar values
+                    Self::check_scalar_value(child, &child_path, query, case_sensitive, results);
+                    // Recurse into containers
+                    if child.value().is_container() {
+                        Self::search_node(child, &child_path, query, case_sensitive, results);
+                    }
+                }
+            }
+            _ => {}
+        }
+    }
+
+    /// Checks if a scalar node's value matches the query.
+    fn check_scalar_value(
+        node: &crate::document::node::JsonNode,
+        path: &[usize],
+        query: &str,
+        case_sensitive: bool,
+        results: &mut Vec<Vec<usize>>,
+    ) {
+        use crate::document::node::JsonValue;
+
+        let text = match node.value() {
+            JsonValue::String(s) => Some(s.clone()),
+            JsonValue::Number(n) => {
+                if n.fract() == 0.0 && n.is_finite() {
+                    Some(format!("{:.0}", n))
+                } else {
+                    Some(n.to_string())
+                }
+            }
+            JsonValue::Boolean(b) => Some(b.to_string()),
+            JsonValue::Null => Some("null".to_string()),
+            _ => None,
+        };
+
+        if let Some(text) = text {
+            let text = if case_sensitive {
+                text
+            } else {
+                text.to_lowercase()
+            };
+            if text.contains(query) {
+                results.push(path.to_vec());
             }
         }
     }
@@ -2788,7 +2867,9 @@ impl EditorState {
 
         // Jump to first result or show message
         if !self.search_results.is_empty() {
-            self.cursor.set_path(self.search_results[0].clone());
+            let path = self.search_results[0].clone();
+            self.ensure_path_visible(&path);
+            self.cursor.set_path(path);
             self.set_message(
                 format!("Found {} matches for {}", self.search_results.len(), query),
                 MessageLevel::Info,
@@ -2818,8 +2899,9 @@ impl EditorState {
                 self.search_index - 1
             };
         }
-        self.cursor
-            .set_path(self.search_results[self.search_index].clone());
+        let path = self.search_results[self.search_index].clone();
+        self.ensure_path_visible(&path);
+        self.cursor.set_path(path);
         (true, wrapped)
     }
 

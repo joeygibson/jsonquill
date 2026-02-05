@@ -1,5 +1,7 @@
 use jsonquill::config::Config;
-use jsonquill::document::node::JsonValue;
+use jsonquill::document::node::{JsonNode, JsonValue};
+use jsonquill::document::tree::JsonTree;
+use jsonquill::editor::state::EditorState;
 use jsonquill::file::loader::load_json_file;
 use jsonquill::file::saver::save_json_file;
 use std::fs;
@@ -93,4 +95,53 @@ fn test_delete_jsonl_line() {
 
     let content = fs::read_to_string(&output_path).unwrap();
     assert_eq!(content.lines().count(), 2);
+}
+
+#[test]
+fn test_text_search_collapsed_jsonl() {
+    let tree = JsonTree::new(JsonNode::new(JsonValue::JsonlRoot(vec![
+        JsonNode::new(JsonValue::Object(vec![
+            ("id".to_string(), JsonNode::new(JsonValue::Number(1.0))),
+            (
+                "name".to_string(),
+                JsonNode::new(JsonValue::String("Alice Smith".to_string())),
+            ),
+            (
+                "role".to_string(),
+                JsonNode::new(JsonValue::String("admin".to_string())),
+            ),
+        ])),
+        JsonNode::new(JsonValue::Object(vec![
+            ("id".to_string(), JsonNode::new(JsonValue::Number(2.0))),
+            (
+                "name".to_string(),
+                JsonNode::new(JsonValue::String("Bob Jones".to_string())),
+            ),
+        ])),
+    ])));
+
+    let mut state = EditorState::new_with_default_theme(tree);
+
+    // JSONL starts collapsed - search should find text inside collapsed nodes
+    for ch in "admin".chars() {
+        state.push_to_search_buffer(ch);
+    }
+    state.execute_search();
+
+    assert!(
+        state.search_results_info().is_some(),
+        "Should find 'admin' inside collapsed JSONL nodes"
+    );
+
+    // Search for a key name
+    state.clear_search_buffer();
+    for ch in "role".chars() {
+        state.push_to_search_buffer(ch);
+    }
+    state.execute_search();
+
+    assert!(
+        state.search_results_info().is_some(),
+        "Should find 'role' key inside collapsed JSONL nodes"
+    );
 }
