@@ -444,6 +444,36 @@ impl InputHandler {
                         }
                         return Ok(false);
                     }
+                    Key::Left => {
+                        state.command_cursor_left();
+                        return Ok(false);
+                    }
+                    Key::Right => {
+                        state.command_cursor_right();
+                        return Ok(false);
+                    }
+                    Key::Ctrl('a') => {
+                        state.command_cursor_home();
+                        return Ok(false);
+                    }
+                    Key::Ctrl('e') => {
+                        state.command_cursor_end();
+                        return Ok(false);
+                    }
+                    Key::Ctrl('d') => {
+                        state.command_delete_at_cursor();
+                        if state.command_buffer().is_empty() {
+                            state.set_mode(EditorMode::Normal);
+                        }
+                        return Ok(false);
+                    }
+                    Key::Ctrl('k') => {
+                        state.command_kill_to_end();
+                        if state.command_buffer().is_empty() {
+                            state.set_mode(EditorMode::Normal);
+                        }
+                        return Ok(false);
+                    }
                     Key::Esc => {
                         state.clear_command_buffer();
                         state.set_mode(EditorMode::Normal);
@@ -478,6 +508,32 @@ impl InputHandler {
                     }
                     Key::Backspace => {
                         state.pop_from_search_buffer();
+                        state.execute_search();
+                        return Ok(false);
+                    }
+                    Key::Left => {
+                        state.search_cursor_left();
+                        return Ok(false);
+                    }
+                    Key::Right => {
+                        state.search_cursor_right();
+                        return Ok(false);
+                    }
+                    Key::Ctrl('a') => {
+                        state.search_cursor_home();
+                        return Ok(false);
+                    }
+                    Key::Ctrl('e') => {
+                        state.search_cursor_end();
+                        return Ok(false);
+                    }
+                    Key::Ctrl('d') => {
+                        state.search_delete_at_cursor();
+                        state.execute_search();
+                        return Ok(false);
+                    }
+                    Key::Ctrl('k') => {
+                        state.search_kill_to_end();
                         state.execute_search();
                         return Ok(false);
                     }

@@ -195,6 +195,7 @@ pub struct EditorState {
     tree_view: TreeViewState,
     message: Option<Message>,
     command_buffer: String,
+    command_cursor: usize,
     show_help: bool,
     help_scroll: usize,
     pending_theme: Option<String>,
@@ -208,6 +209,7 @@ pub struct EditorState {
     pending_register: Option<char>,
     append_mode: bool,
     search_buffer: String,
+    search_cursor: usize,
     search_results: Vec<Vec<usize>>,
     search_index: usize,
     search_forward: bool,
@@ -302,6 +304,7 @@ impl EditorState {
             tree_view,
             message: None,
             command_buffer: String::new(),
+            command_cursor: 0,
             show_help: false,
             help_scroll: 0,
             pending_theme: None,
@@ -315,6 +318,7 @@ impl EditorState {
             pending_register: None,
             append_mode: false,
             search_buffer: String::new(),
+            search_cursor: 0,
             search_results: Vec::new(),
             search_index: 0,
             search_forward: true,
@@ -1627,27 +1631,101 @@ impl EditorState {
         &self.command_buffer
     }
 
-    /// Sets the command buffer.
+    /// Returns the current command cursor position.
+    pub fn command_cursor_position(&self) -> usize {
+        self.command_cursor
+    }
+
+    /// Sets the command buffer and moves cursor to end.
     pub fn set_command_buffer(&mut self, buffer: String) {
+        self.command_cursor = buffer.len();
         self.command_buffer = buffer;
     }
 
-    /// Appends a character to the command buffer.
+    /// Inserts a character at the current cursor position in the command buffer.
     pub fn push_to_command_buffer(&mut self, ch: char) {
-        self.command_buffer.push(ch);
+        self.command_buffer.insert(self.command_cursor, ch);
+        self.command_cursor += ch.len_utf8();
         self.reset_completion();
+        self.reset_cursor_blink();
     }
 
-    /// Removes the last character from the command buffer.
+    /// Removes the character before the cursor in the command buffer (backspace).
     pub fn pop_from_command_buffer(&mut self) {
-        self.command_buffer.pop();
-        self.reset_completion();
+        if self.command_cursor > 0 {
+            let char_start = self.command_buffer[..self.command_cursor]
+                .char_indices()
+                .next_back()
+                .map(|(i, _)| i)
+                .unwrap_or(0);
+            self.command_buffer.remove(char_start);
+            self.command_cursor = char_start;
+            self.reset_completion();
+            self.reset_cursor_blink();
+        }
     }
 
-    /// Clears the command buffer.
+    /// Clears the command buffer and resets cursor.
     pub fn clear_command_buffer(&mut self) {
         self.command_buffer.clear();
+        self.command_cursor = 0;
         self.reset_completion();
+    }
+
+    /// Moves the command cursor left by one character.
+    pub fn command_cursor_left(&mut self) {
+        if self.command_cursor > 0 {
+            let char_start = self.command_buffer[..self.command_cursor]
+                .char_indices()
+                .next_back()
+                .map(|(i, _)| i)
+                .unwrap_or(0);
+            self.command_cursor = char_start;
+            self.reset_cursor_blink();
+        }
+    }
+
+    /// Moves the command cursor right by one character.
+    pub fn command_cursor_right(&mut self) {
+        if self.command_cursor < self.command_buffer.len() {
+            if let Some((next_pos, _)) = self.command_buffer[self.command_cursor..]
+                .char_indices()
+                .nth(1)
+            {
+                self.command_cursor += next_pos;
+            } else {
+                self.command_cursor = self.command_buffer.len();
+            }
+            self.reset_cursor_blink();
+        }
+    }
+
+    /// Moves the command cursor to the beginning (Ctrl-a).
+    pub fn command_cursor_home(&mut self) {
+        self.command_cursor = 0;
+        self.reset_cursor_blink();
+    }
+
+    /// Moves the command cursor to the end (Ctrl-e).
+    pub fn command_cursor_end(&mut self) {
+        self.command_cursor = self.command_buffer.len();
+        self.reset_cursor_blink();
+    }
+
+    /// Deletes the character at the cursor position in the command buffer (Ctrl-d).
+    pub fn command_delete_at_cursor(&mut self) {
+        if self.command_cursor < self.command_buffer.len() {
+            self.command_buffer.remove(self.command_cursor);
+            self.reset_completion();
+            self.reset_cursor_blink();
+        }
+    }
+
+    /// Deletes from cursor to end of command buffer (Ctrl-k).
+    pub fn command_kill_to_end(&mut self) {
+        self.command_buffer.truncate(self.command_cursor);
+        self.reset_completion();
+        self.reset_cursor_blink();
     }
 
     /// Handles tab-completion for command mode.
@@ -1671,6 +1749,7 @@ impl EditorState {
         // Apply the current completion
         if !self.completion_candidates.is_empty() {
             self.command_buffer = self.completion_candidates[self.completion_index].clone();
+            self.command_cursor = self.command_buffer.len();
         }
     }
 
@@ -2472,20 +2551,96 @@ impl EditorState {
         &self.search_buffer
     }
 
-    /// Appends a character to the search buffer.
+    /// Returns the current search cursor position.
+    pub fn search_cursor_position(&self) -> usize {
+        self.search_cursor
+    }
+
+    /// Returns the search direction.
+    pub fn search_forward(&self) -> bool {
+        self.search_forward
+    }
+
+    /// Inserts a character at the current cursor position in the search buffer.
     pub fn push_to_search_buffer(&mut self, ch: char) {
-        self.search_buffer.push(ch);
+        self.search_buffer.insert(self.search_cursor, ch);
+        self.search_cursor += ch.len_utf8();
+        self.reset_cursor_blink();
     }
 
-    /// Removes the last character from the search buffer.
+    /// Removes the character before the cursor in the search buffer (backspace).
     pub fn pop_from_search_buffer(&mut self) {
-        self.search_buffer.pop();
+        if self.search_cursor > 0 {
+            let char_start = self.search_buffer[..self.search_cursor]
+                .char_indices()
+                .next_back()
+                .map(|(i, _)| i)
+                .unwrap_or(0);
+            self.search_buffer.remove(char_start);
+            self.search_cursor = char_start;
+            self.reset_cursor_blink();
+        }
     }
 
-    /// Clears the search buffer.
+    /// Clears the search buffer and resets cursor.
     pub fn clear_search_buffer(&mut self) {
         self.search_buffer.clear();
+        self.search_cursor = 0;
         self.search_type = None;
+    }
+
+    /// Moves the search cursor left by one character.
+    pub fn search_cursor_left(&mut self) {
+        if self.search_cursor > 0 {
+            let char_start = self.search_buffer[..self.search_cursor]
+                .char_indices()
+                .next_back()
+                .map(|(i, _)| i)
+                .unwrap_or(0);
+            self.search_cursor = char_start;
+            self.reset_cursor_blink();
+        }
+    }
+
+    /// Moves the search cursor right by one character.
+    pub fn search_cursor_right(&mut self) {
+        if self.search_cursor < self.search_buffer.len() {
+            if let Some((next_pos, _)) = self.search_buffer[self.search_cursor..]
+                .char_indices()
+                .nth(1)
+            {
+                self.search_cursor += next_pos;
+            } else {
+                self.search_cursor = self.search_buffer.len();
+            }
+            self.reset_cursor_blink();
+        }
+    }
+
+    /// Moves the search cursor to the beginning (Ctrl-a).
+    pub fn search_cursor_home(&mut self) {
+        self.search_cursor = 0;
+        self.reset_cursor_blink();
+    }
+
+    /// Moves the search cursor to the end (Ctrl-e).
+    pub fn search_cursor_end(&mut self) {
+        self.search_cursor = self.search_buffer.len();
+        self.reset_cursor_blink();
+    }
+
+    /// Deletes the character at the cursor position in the search buffer (Ctrl-d).
+    pub fn search_delete_at_cursor(&mut self) {
+        if self.search_cursor < self.search_buffer.len() {
+            self.search_buffer.remove(self.search_cursor);
+            self.reset_cursor_blink();
+        }
+    }
+
+    /// Deletes from cursor to end of search buffer (Ctrl-k).
+    pub fn search_kill_to_end(&mut self) {
+        self.search_buffer.truncate(self.search_cursor);
+        self.reset_cursor_blink();
     }
 
     /// Sets the search direction.
@@ -2525,6 +2680,7 @@ impl EditorState {
         };
 
         // Set up the search
+        self.search_cursor = key_name.len();
         self.search_buffer = key_name.clone();
         self.search_forward = forward;
         self.execute_search();
