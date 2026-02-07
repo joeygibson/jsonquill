@@ -174,7 +174,10 @@ fn run_event_loop<B: ratatui::backend::Backend>(
     ui: &mut UI,
     input_handler: &mut InputHandler,
     state: &mut EditorState,
-) -> Result<()> {
+) -> Result<()>
+where
+    B::Error: Send + Sync + 'static,
+{
     loop {
         // Check for pending theme changes
         if let Some(theme_name) = state.take_pending_theme() {

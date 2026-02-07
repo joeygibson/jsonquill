@@ -129,7 +129,10 @@ impl UI {
         &self,
         terminal: &mut Terminal<B>,
         state: &mut EditorState,
-    ) -> Result<()> {
+    ) -> Result<()>
+    where
+        B::Error: Send + Sync + 'static,
+    {
         terminal.draw(|f| {
             let chunks = Layout::default()
                 .direction(Direction::Vertical)
