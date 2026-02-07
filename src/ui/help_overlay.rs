@@ -332,8 +332,16 @@ pub fn render_help_overlay(f: &mut Frame, colors: &ThemeColors, scroll: usize) {
             Span::raw("Search backward in keys and values"),
         ]),
         Line::from(vec![
+            Span::styled("  Enter / ↑/↓   ", Style::default().fg(colors.number)),
+            Span::raw("Confirm search and exit (results kept for n)"),
+        ]),
+        Line::from(vec![
+            Span::styled("  Esc           ", Style::default().fg(colors.number)),
+            Span::raw("Cancel search (clears results)"),
+        ]),
+        Line::from(vec![
             Span::styled("  n             ", Style::default().fg(colors.number)),
-            Span::raw("Jump to next match (shows current/total)"),
+            Span::raw("Jump to next match (works after exiting search)"),
         ]),
         Line::from(vec![
             Span::styled("  *             ", Style::default().fg(colors.number)),

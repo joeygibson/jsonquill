@@ -487,10 +487,11 @@ impl InputHandler {
             if *state.mode() == EditorMode::Search {
                 match key {
                     Key::Char('\n') => {
-                        // Exit search mode
+                        // Exit search mode, keep results for `n` navigation
                         state.set_mode(EditorMode::Normal);
                         use crate::editor::state::MessageLevel;
-                        if let Some((_current, total)) = state.search_results_info() {
+                        let total = state.search_results_count();
+                        if total > 0 {
                             state.set_message(
                                 format!("Found {} matches", total),
                                 MessageLevel::Info,
@@ -499,6 +500,7 @@ impl InputHandler {
                             state
                                 .set_message("No matches found".to_string(), MessageLevel::Warning);
                         }
+                        state.hide_search_info();
                         return Ok(false);
                     }
                     Key::Char(c) => {
@@ -539,8 +541,14 @@ impl InputHandler {
                     }
                     Key::Esc => {
                         state.clear_search_buffer();
+                        state.clear_search_results();
                         state.set_mode(EditorMode::Normal);
                         return Ok(false);
+                    }
+                    Key::Up | Key::Down => {
+                        // Exit search mode and fall through to normal movement handling
+                        state.set_mode(EditorMode::Normal);
+                        // Don't return - let the key be processed as a normal movement below
                     }
                     _ => return Ok(false),
                 }
@@ -748,7 +756,7 @@ impl InputHandler {
             match input_event {
                 InputEvent::Quit => {
                     state.clear_pending();
-                    state.clear_search_results();
+                    state.hide_search_info();
                     if state.is_dirty() {
                         use crate::editor::state::MessageLevel;
                         state.set_message(
@@ -776,7 +784,7 @@ impl InputHandler {
                 }
                 InputEvent::EnterCommandMode => {
                     state.clear_pending();
-                    state.clear_search_results();
+                    state.hide_search_info();
                     state.clear_command_buffer();
                     state.set_mode(EditorMode::Command);
                 }
@@ -814,12 +822,12 @@ impl InputHandler {
                 }
                 InputEvent::Help => {
                     state.clear_pending();
-                    state.clear_search_results();
+                    state.hide_search_info();
                     state.toggle_help();
                 }
                 InputEvent::ExitMode => {
                     state.clear_pending();
-                    state.clear_search_results();
+                    state.hide_search_info();
                     // If exiting from visual mode, use exit_visual_mode() to clear selection
                     if state.mode() == &EditorMode::Visual {
                         state.exit_visual_mode();
@@ -830,7 +838,7 @@ impl InputHandler {
                 InputEvent::MoveDown => {
                     let count = state.get_count();
                     state.clear_pending();
-                    state.clear_search_results();
+                    state.hide_search_info();
                     for _ in 0..count {
                         state.move_cursor_down();
                     }
@@ -842,7 +850,7 @@ impl InputHandler {
                 InputEvent::MoveUp => {
                     let count = state.get_count();
                     state.clear_pending();
-                    state.clear_search_results();
+                    state.hide_search_info();
                     for _ in 0..count {
                         state.move_cursor_up();
                     }
@@ -854,7 +862,7 @@ impl InputHandler {
                 InputEvent::MoveRight => {
                     let count = state.get_count();
                     state.clear_pending();
-                    state.clear_search_results();
+                    state.hide_search_info();
                     for _ in 0..count {
                         state.toggle_expand_at_cursor();
                     }
@@ -866,7 +874,7 @@ impl InputHandler {
                 InputEvent::MoveLeft => {
                     let count = state.get_count();
                     state.clear_pending();
-                    state.clear_search_results();
+                    state.hide_search_info();
                     for _ in 0..count {
                         state.toggle_expand_at_cursor();
                     }
@@ -877,12 +885,12 @@ impl InputHandler {
                 }
                 InputEvent::ExpandAll => {
                     state.clear_pending();
-                    state.clear_search_results();
+                    state.hide_search_info();
                     state.expand_all_at_cursor();
                 }
                 InputEvent::CollapseAll => {
                     state.clear_pending();
-                    state.clear_search_results();
+                    state.hide_search_info();
                     state.collapse_all_at_cursor();
                 }
                 InputEvent::Yank => {
@@ -890,7 +898,7 @@ impl InputHandler {
                     // In visual mode, yank selection and exit visual mode
                     if state.mode() == &EditorMode::Visual {
                         state.clear_pending();
-                        state.clear_search_results();
+                        state.hide_search_info();
                         let count = state.yank_visual_selection();
                         if count > 0 {
                             if count > 1 {
@@ -907,7 +915,7 @@ impl InputHandler {
                         // Normal mode: second 'y' press (yy)
                         let count = state.get_count();
                         state.clear_pending();
-                        state.clear_search_results();
+                        state.hide_search_info();
 
                         if state.yank_nodes(count) {
                             // Record command for repeat
@@ -1060,7 +1068,7 @@ impl InputHandler {
                     // Check if this is the second 'Z' press
                     if state.pending_command() == Some('Z') {
                         state.clear_pending();
-                        state.clear_search_results();
+                        state.hide_search_info();
                         // Save the file
                         if let Some(filename) = state.filename() {
                             use crate::file::saver::save_json_file;
@@ -1093,13 +1101,13 @@ impl InputHandler {
                     if state.pending_count().is_some() {
                         let line_num = state.get_count();
                         state.clear_pending();
-                        state.clear_search_results();
+                        state.hide_search_info();
                         state.record_jump();
                         state.jump_to_line(line_num as usize);
                     } else if state.pending_command() == Some('g') {
                         // Second 'g' press (gg) - jump to top
                         state.clear_pending();
-                        state.clear_search_results();
+                        state.hide_search_info();
                         state.record_jump();
                         state.jump_to_top();
                     } else {
@@ -1113,35 +1121,35 @@ impl InputHandler {
                     if state.pending_count().is_some() {
                         let line_num = state.get_count();
                         state.clear_pending();
-                        state.clear_search_results();
+                        state.hide_search_info();
                         state.record_jump();
                         state.jump_to_line(line_num as usize);
                     } else {
                         // No count - jump to bottom
                         state.clear_pending();
-                        state.clear_search_results();
+                        state.hide_search_info();
                         state.record_jump();
                         state.jump_to_bottom();
                     }
                 }
                 InputEvent::HalfPageDown => {
                     state.clear_pending();
-                    state.clear_search_results();
+                    state.hide_search_info();
                     state.page_down();
                 }
                 InputEvent::HalfPageUp => {
                     state.clear_pending();
-                    state.clear_search_results();
+                    state.hide_search_info();
                     state.page_up();
                 }
                 InputEvent::FullPageDown => {
                     state.clear_pending();
-                    state.clear_search_results();
+                    state.hide_search_info();
                     state.full_page_down();
                 }
                 InputEvent::FullPageUp => {
                     state.clear_pending();
-                    state.clear_search_results();
+                    state.hide_search_info();
                     state.full_page_up();
                 }
                 InputEvent::Undo => {
@@ -1192,27 +1200,27 @@ impl InputHandler {
                 }
                 InputEvent::NextSibling => {
                     state.clear_pending();
-                    state.clear_search_results();
+                    state.hide_search_info();
                     state.move_to_next_sibling();
                 }
                 InputEvent::PreviousSibling => {
                     state.clear_pending();
-                    state.clear_search_results();
+                    state.hide_search_info();
                     state.move_to_previous_sibling();
                 }
                 InputEvent::FirstSibling => {
                     state.clear_pending();
-                    state.clear_search_results();
+                    state.hide_search_info();
                     state.move_to_first_sibling();
                 }
                 InputEvent::LastSibling => {
                     state.clear_pending();
-                    state.clear_search_results();
+                    state.hide_search_info();
                     state.move_to_last_sibling();
                 }
                 InputEvent::SearchKeyForward => {
                     state.clear_pending();
-                    state.clear_search_results();
+                    state.hide_search_info();
                     use crate::editor::state::MessageLevel;
                     state.record_jump();
                     if state.execute_key_search(true) {
@@ -1226,7 +1234,7 @@ impl InputHandler {
                 }
                 InputEvent::SearchKeyBackward => {
                     state.clear_pending();
-                    state.clear_search_results();
+                    state.hide_search_info();
                     use crate::editor::state::MessageLevel;
                     state.record_jump();
                     if state.execute_key_search(false) {
@@ -1240,48 +1248,48 @@ impl InputHandler {
                 }
                 InputEvent::NextAtSameOrShallowerDepth => {
                     state.clear_pending();
-                    state.clear_search_results();
+                    state.hide_search_info();
                     state.move_to_next_at_same_or_shallower_depth();
                 }
                 InputEvent::PreviousAtSameOrShallowerDepth => {
                     state.clear_pending();
-                    state.clear_search_results();
+                    state.hide_search_info();
                     state.move_to_previous_at_same_or_shallower_depth();
                 }
                 InputEvent::MoveToParent => {
                     state.clear_pending();
-                    state.clear_search_results();
+                    state.hide_search_info();
                     state.move_to_parent();
                 }
                 InputEvent::ScreenPosition => {
                     // First 'z' press - set pending
                     state.clear_message();
-                    state.clear_search_results();
+                    state.hide_search_info();
                     state.set_pending_command('z');
                 }
                 InputEvent::RegisterSelect => {
                     // " key pressed - wait for register name
                     self.awaiting_register = true;
                     state.clear_message();
-                    state.clear_search_results();
+                    state.hide_search_info();
                 }
                 InputEvent::InsertCharacter(_)
                 | InputEvent::InsertBackspace
                 | InputEvent::InsertEnter => {
                     state.clear_pending();
-                    state.clear_search_results();
+                    state.hide_search_info();
                     // These are handled earlier in insert mode, should never reach here
                 }
                 InputEvent::EnterVisualMode => {
                     state.clear_pending();
-                    state.clear_search_results();
+                    state.hide_search_info();
                     use crate::editor::state::MessageLevel;
                     state.enter_visual_mode();
                     state.set_message("-- VISUAL --".to_string(), MessageLevel::Info);
                 }
                 InputEvent::MarkSet => {
                     state.clear_pending();
-                    state.clear_search_results();
+                    state.hide_search_info();
                     state.set_pending_mark_set(true);
                 }
                 InputEvent::MarkJump => {
@@ -1293,12 +1301,12 @@ impl InputHandler {
                         // Record jump before jumping to mark (only for regular jumps)
                         state.record_jump();
                     }
-                    state.clear_search_results();
+                    state.hide_search_info();
                     state.set_pending_mark_jump(true);
                 }
                 InputEvent::JumpBackward => {
                     state.clear_pending();
-                    state.clear_search_results();
+                    state.hide_search_info();
                     use crate::editor::state::MessageLevel;
                     if state.jump_backward() {
                         state.set_message("".to_string(), MessageLevel::Info);
@@ -1308,7 +1316,7 @@ impl InputHandler {
                 }
                 InputEvent::JumpForward => {
                     state.clear_pending();
-                    state.clear_search_results();
+                    state.hide_search_info();
                     use crate::editor::state::MessageLevel;
                     if state.jump_forward() {
                         state.set_message("".to_string(), MessageLevel::Info);
@@ -1331,7 +1339,7 @@ impl InputHandler {
                 }
                 InputEvent::Unknown => {
                     state.clear_pending();
-                    state.clear_search_results();
+                    state.hide_search_info();
                     // Ignore unknown keys
                 }
             }

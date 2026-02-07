@@ -269,14 +269,17 @@ Scroll wheel/trackpad - Scroll viewport (3 lines per tick)
             - Shows match counter (e.g., "Match 2/5")
             - Shows "W" prefix when wrapping around (e.g., "W Match 1/5")
 ?           - Start backward search (searches up through document)
-n           - Jump to next match in search direction
+Enter       - Confirm search and exit to NORMAL mode (results kept for n)
+↑/↓         - Exit search and move cursor (results kept for n)
+Esc         - Cancel search and clear results (n will not work)
+n           - Jump to next match in search direction (works after exiting search)
 *           - Search forward for current object key
 #           - Search backward for current object key
-Esc         - Exit SEARCH mode
 
-Note: Search results info disappears from the status bar when you press any key
-other than `n` (next match). This keeps the status bar clean once you're done
-navigating search results.
+Note: Search results persist after exiting search with Enter or movement keys,
+allowing continued navigation with `n`. Results are cleared when the tree is
+modified (delete, paste, add, undo/redo) or when search is cancelled with Esc.
+Search info disappears from the status bar on any key other than `n`.
 
 # JSONPath Search (structural search)
 :path $.store.book[*].author  - Find all book authors

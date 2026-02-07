@@ -214,6 +214,7 @@ pub struct EditorState {
     search_index: usize,
     search_forward: bool,
     search_type: Option<SearchType>,
+    show_search_info: bool,
     show_line_numbers: bool,
     relative_line_numbers: bool,
     enable_mouse: bool,
@@ -323,6 +324,7 @@ impl EditorState {
             search_index: 0,
             search_forward: true,
             search_type: None,
+            show_search_info: false,
             show_line_numbers: true,
             relative_line_numbers: false,
             enable_mouse: true,
@@ -2718,6 +2720,7 @@ impl EditorState {
         self.search_results.clear();
         self.search_index = 0;
         self.search_type = Some(SearchType::Text);
+        self.show_search_info = true;
 
         // Search the entire tree, not just visible lines
         Self::search_node(
@@ -2864,6 +2867,7 @@ impl EditorState {
 
         // Set search type
         self.search_type = Some(SearchType::JsonPath(query.to_string()));
+        self.show_search_info = true;
 
         // Jump to first result or show message
         if !self.search_results.is_empty() {
@@ -2886,6 +2890,8 @@ impl EditorState {
             return (false, false);
         }
 
+        self.show_search_info = true;
+
         let wrapped;
         if self.search_forward {
             let old_index = self.search_index;
@@ -2905,9 +2911,9 @@ impl EditorState {
         (true, wrapped)
     }
 
-    /// Returns the current search results info.
+    /// Returns the current search results info (only when search info display is active).
     pub fn search_results_info(&self) -> Option<(usize, usize)> {
-        if self.search_results.is_empty() {
+        if !self.show_search_info || self.search_results.is_empty() {
             None
         } else {
             Some((self.search_index + 1, self.search_results.len()))
@@ -2919,12 +2925,23 @@ impl EditorState {
         self.search_type.as_ref()
     }
 
-    /// Clears search results but preserves search buffer and type.
-    /// This removes search info from the status bar while keeping
-    /// the search query available for potential "repeat search" features.
+    /// Clears search results and hides search info from the status bar.
+    /// Use this when tree structure changes make existing result paths invalid.
     pub fn clear_search_results(&mut self) {
         self.search_results.clear();
         self.search_index = 0;
+        self.show_search_info = false;
+    }
+
+    /// Hides search info from the status bar but preserves search results
+    /// so that `n` can still navigate through them.
+    pub fn hide_search_info(&mut self) {
+        self.show_search_info = false;
+    }
+
+    /// Returns the number of search results, regardless of display state.
+    pub fn search_results_count(&self) -> usize {
+        self.search_results.len()
     }
 
     /// Returns whether line numbers should be shown.
