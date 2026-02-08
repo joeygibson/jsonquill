@@ -1,7 +1,7 @@
 //! Keyboard event mapping and input event types.
 
 use crate::editor::mode::EditorMode;
-use termion::event::{Event, Key};
+use crate::input::backend::{BackendEvent, BackendKey};
 
 /// High-level input events abstracted from raw keyboard input.
 ///
@@ -115,7 +115,7 @@ pub enum InputEvent {
     Unknown,
 }
 
-/// Maps a termion Event to an InputEvent based on the current editor mode.
+/// Maps a BackendEvent to an InputEvent based on the current editor mode.
 ///
 /// Different modes interpret keys differently (vim-style modal editing):
 /// - Normal mode: hjkl for movement, i for insert, : for command, q for quit
@@ -124,7 +124,7 @@ pub enum InputEvent {
 ///
 /// # Arguments
 ///
-/// * `event` - The termion Event to map
+/// * `event` - The BackendEvent to map
 /// * `mode` - The current editor mode
 ///
 /// # Returns
@@ -134,112 +134,112 @@ pub enum InputEvent {
 /// # Example
 ///
 /// ```
-/// use termion::event::{Event, Key};
+/// use jsonquill::input::backend::{BackendEvent, BackendKey};
 /// use jsonquill::editor::mode::EditorMode;
 /// use jsonquill::input::keys::{map_key_event, InputEvent};
 ///
-/// let event = Event::Key(Key::Char('j'));
+/// let event = BackendEvent::Key(BackendKey::Char('j'));
 /// let input_event = map_key_event(event, &EditorMode::Normal);
 /// assert_eq!(input_event, InputEvent::MoveDown);
 /// ```
-pub fn map_key_event(event: Event, mode: &EditorMode) -> InputEvent {
+pub fn map_key_event(event: BackendEvent, mode: &EditorMode) -> InputEvent {
     // We only care about key events
     let key = match event {
-        Event::Key(k) => k,
+        BackendEvent::Key(k) => k,
         _ => return InputEvent::Unknown,
     };
 
     match mode {
         EditorMode::Normal => match key {
             // Ctrl-modified keys
-            Key::Ctrl('d') => InputEvent::HalfPageDown,
-            Key::Ctrl('u') => InputEvent::HalfPageUp,
-            Key::Ctrl('f') => InputEvent::FullPageDown,
-            Key::Ctrl('b') => InputEvent::FullPageUp,
-            Key::Ctrl('r') => InputEvent::Redo,
-            Key::Ctrl('o') => InputEvent::JumpBackward,
-            Key::Ctrl('i') => InputEvent::JumpForward,
+            BackendKey::Ctrl('d') => InputEvent::HalfPageDown,
+            BackendKey::Ctrl('u') => InputEvent::HalfPageUp,
+            BackendKey::Ctrl('f') => InputEvent::FullPageDown,
+            BackendKey::Ctrl('b') => InputEvent::FullPageUp,
+            BackendKey::Ctrl('r') => InputEvent::Redo,
+            BackendKey::Ctrl('o') => InputEvent::JumpBackward,
+            BackendKey::Ctrl('i') => InputEvent::JumpForward,
             // Regular keys
-            Key::Char('q') => InputEvent::Quit,
-            Key::Char('j') => InputEvent::MoveDown,
-            Key::Char('k') => InputEvent::MoveUp,
-            Key::Char('h') => InputEvent::MoveLeft,
-            Key::Char('l') => InputEvent::MoveRight,
-            Key::Char(':') => InputEvent::EnterCommandMode,
-            Key::Char('/') => InputEvent::EnterSearchMode,
-            Key::Char('?') => InputEvent::EnterReverseSearchMode,
-            Key::Char('n') => InputEvent::NextSearchResult,
-            Key::Char('d') => InputEvent::Delete,
-            Key::Char('y') => InputEvent::Yank,
-            Key::Char('p') => InputEvent::Paste,
-            Key::Char('P') => InputEvent::PasteBefore,
-            Key::Char('Z') => InputEvent::SaveAndQuit,
-            Key::Char('g') => InputEvent::JumpToTop,
-            Key::Char('G') => InputEvent::JumpToBottom,
-            Key::Char('u') => InputEvent::Undo,
-            Key::Char('e') => InputEvent::EnterInsertMode,
-            Key::Char('i') => InputEvent::Add,
-            Key::Char('a') => InputEvent::AddArray,
-            Key::Char('o') => InputEvent::AddObject,
-            Key::Char('r') => InputEvent::Rename,
-            Key::Char('E') => InputEvent::ExpandAll,
-            Key::Char('C') => InputEvent::CollapseAll,
-            Key::Char('H') => InputEvent::MoveToParent,
-            Key::Char('z') => InputEvent::ScreenPosition,
-            Key::Char('}') => InputEvent::NextSibling,
-            Key::Char('{') => InputEvent::PreviousSibling,
-            Key::Char('0') => InputEvent::FirstSibling,
-            Key::Char('^') => InputEvent::FirstSibling,
-            Key::Char('$') => InputEvent::LastSibling,
-            Key::Char('*') => InputEvent::SearchKeyForward,
-            Key::Char('#') => InputEvent::SearchKeyBackward,
-            Key::Char('w') => InputEvent::NextAtSameOrShallowerDepth,
-            Key::Char('b') => InputEvent::PreviousAtSameOrShallowerDepth,
-            Key::Char('"') => InputEvent::RegisterSelect,
-            Key::Char('v') | Key::Char('V') => InputEvent::EnterVisualMode,
-            Key::Char('m') => InputEvent::MarkSet,
-            Key::Char('\'') => InputEvent::MarkJump,
-            Key::Char('.') => InputEvent::Repeat,
-            Key::Down => InputEvent::MoveDown,
-            Key::Up => InputEvent::MoveUp,
-            Key::Left => InputEvent::MoveLeft,
-            Key::Right => InputEvent::MoveRight,
-            Key::PageDown => InputEvent::FullPageDown,
-            Key::PageUp => InputEvent::FullPageUp,
-            Key::Home => InputEvent::JumpToTop,
-            Key::End => InputEvent::JumpToBottom,
-            Key::F(1) => InputEvent::Help,
+            BackendKey::Char('q') => InputEvent::Quit,
+            BackendKey::Char('j') => InputEvent::MoveDown,
+            BackendKey::Char('k') => InputEvent::MoveUp,
+            BackendKey::Char('h') => InputEvent::MoveLeft,
+            BackendKey::Char('l') => InputEvent::MoveRight,
+            BackendKey::Char(':') => InputEvent::EnterCommandMode,
+            BackendKey::Char('/') => InputEvent::EnterSearchMode,
+            BackendKey::Char('?') => InputEvent::EnterReverseSearchMode,
+            BackendKey::Char('n') => InputEvent::NextSearchResult,
+            BackendKey::Char('d') => InputEvent::Delete,
+            BackendKey::Char('y') => InputEvent::Yank,
+            BackendKey::Char('p') => InputEvent::Paste,
+            BackendKey::Char('P') => InputEvent::PasteBefore,
+            BackendKey::Char('Z') => InputEvent::SaveAndQuit,
+            BackendKey::Char('g') => InputEvent::JumpToTop,
+            BackendKey::Char('G') => InputEvent::JumpToBottom,
+            BackendKey::Char('u') => InputEvent::Undo,
+            BackendKey::Char('e') => InputEvent::EnterInsertMode,
+            BackendKey::Char('i') => InputEvent::Add,
+            BackendKey::Char('a') => InputEvent::AddArray,
+            BackendKey::Char('o') => InputEvent::AddObject,
+            BackendKey::Char('r') => InputEvent::Rename,
+            BackendKey::Char('E') => InputEvent::ExpandAll,
+            BackendKey::Char('C') => InputEvent::CollapseAll,
+            BackendKey::Char('H') => InputEvent::MoveToParent,
+            BackendKey::Char('z') => InputEvent::ScreenPosition,
+            BackendKey::Char('}') => InputEvent::NextSibling,
+            BackendKey::Char('{') => InputEvent::PreviousSibling,
+            BackendKey::Char('0') => InputEvent::FirstSibling,
+            BackendKey::Char('^') => InputEvent::FirstSibling,
+            BackendKey::Char('$') => InputEvent::LastSibling,
+            BackendKey::Char('*') => InputEvent::SearchKeyForward,
+            BackendKey::Char('#') => InputEvent::SearchKeyBackward,
+            BackendKey::Char('w') => InputEvent::NextAtSameOrShallowerDepth,
+            BackendKey::Char('b') => InputEvent::PreviousAtSameOrShallowerDepth,
+            BackendKey::Char('"') => InputEvent::RegisterSelect,
+            BackendKey::Char('v') | BackendKey::Char('V') => InputEvent::EnterVisualMode,
+            BackendKey::Char('m') => InputEvent::MarkSet,
+            BackendKey::Char('\'') => InputEvent::MarkJump,
+            BackendKey::Char('.') => InputEvent::Repeat,
+            BackendKey::Down => InputEvent::MoveDown,
+            BackendKey::Up => InputEvent::MoveUp,
+            BackendKey::Left => InputEvent::MoveLeft,
+            BackendKey::Right => InputEvent::MoveRight,
+            BackendKey::PageDown => InputEvent::FullPageDown,
+            BackendKey::PageUp => InputEvent::FullPageUp,
+            BackendKey::Home => InputEvent::JumpToTop,
+            BackendKey::End => InputEvent::JumpToBottom,
+            BackendKey::F(1) => InputEvent::Help,
             _ => InputEvent::Unknown,
         },
         EditorMode::Insert => match key {
-            Key::Esc => InputEvent::ExitMode,
-            Key::Char('\n') => InputEvent::InsertEnter,
-            Key::Backspace => InputEvent::InsertBackspace,
-            Key::Char(c) => InputEvent::InsertCharacter(c),
+            BackendKey::Esc => InputEvent::ExitMode,
+            BackendKey::Char('\n') => InputEvent::InsertEnter,
+            BackendKey::Backspace => InputEvent::InsertBackspace,
+            BackendKey::Char(c) => InputEvent::InsertCharacter(c),
             _ => InputEvent::Unknown,
         },
         EditorMode::Command => match key {
-            Key::Esc => InputEvent::ExitMode,
+            BackendKey::Esc => InputEvent::ExitMode,
             _ => InputEvent::Unknown,
         },
         EditorMode::Search => match key {
-            Key::Esc => InputEvent::ExitMode,
+            BackendKey::Esc => InputEvent::ExitMode,
             _ => InputEvent::Unknown,
         },
         EditorMode::Visual => match key {
-            Key::Esc => InputEvent::ExitMode,
-            Key::Char('j') => InputEvent::MoveDown,
-            Key::Char('k') => InputEvent::MoveUp,
-            Key::Char('h') => InputEvent::MoveLeft,
-            Key::Char('l') => InputEvent::MoveRight,
-            Key::Char('d') => InputEvent::Delete,
-            Key::Char('y') => InputEvent::Yank,
-            Key::Char('p') => InputEvent::Paste,
-            Key::Char('P') => InputEvent::PasteBefore,
-            Key::Down => InputEvent::MoveDown,
-            Key::Up => InputEvent::MoveUp,
-            Key::Left => InputEvent::MoveLeft,
-            Key::Right => InputEvent::MoveRight,
+            BackendKey::Esc => InputEvent::ExitMode,
+            BackendKey::Char('j') => InputEvent::MoveDown,
+            BackendKey::Char('k') => InputEvent::MoveUp,
+            BackendKey::Char('h') => InputEvent::MoveLeft,
+            BackendKey::Char('l') => InputEvent::MoveRight,
+            BackendKey::Char('d') => InputEvent::Delete,
+            BackendKey::Char('y') => InputEvent::Yank,
+            BackendKey::Char('p') => InputEvent::Paste,
+            BackendKey::Char('P') => InputEvent::PasteBefore,
+            BackendKey::Down => InputEvent::MoveDown,
+            BackendKey::Up => InputEvent::MoveUp,
+            BackendKey::Left => InputEvent::MoveLeft,
+            BackendKey::Right => InputEvent::MoveRight,
             _ => InputEvent::Unknown,
         },
     }
@@ -251,26 +251,38 @@ mod tests {
 
     #[test]
     fn test_normal_mode_quit() {
-        let event = Event::Key(Key::Char('q'));
+        let event = BackendEvent::Key(BackendKey::Char('q'));
         assert_eq!(map_key_event(event, &EditorMode::Normal), InputEvent::Quit);
     }
 
     #[test]
     fn test_normal_mode_movement_vim_keys() {
         assert_eq!(
-            map_key_event(Event::Key(Key::Char('j')), &EditorMode::Normal),
+            map_key_event(
+                BackendEvent::Key(BackendKey::Char('j')),
+                &EditorMode::Normal
+            ),
             InputEvent::MoveDown
         );
         assert_eq!(
-            map_key_event(Event::Key(Key::Char('k')), &EditorMode::Normal),
+            map_key_event(
+                BackendEvent::Key(BackendKey::Char('k')),
+                &EditorMode::Normal
+            ),
             InputEvent::MoveUp
         );
         assert_eq!(
-            map_key_event(Event::Key(Key::Char('h')), &EditorMode::Normal),
+            map_key_event(
+                BackendEvent::Key(BackendKey::Char('h')),
+                &EditorMode::Normal
+            ),
             InputEvent::MoveLeft
         );
         assert_eq!(
-            map_key_event(Event::Key(Key::Char('l')), &EditorMode::Normal),
+            map_key_event(
+                BackendEvent::Key(BackendKey::Char('l')),
+                &EditorMode::Normal
+            ),
             InputEvent::MoveRight
         );
     }
@@ -278,11 +290,11 @@ mod tests {
     #[test]
     fn test_normal_mode_movement_arrow_keys() {
         assert_eq!(
-            map_key_event(Event::Key(Key::Down), &EditorMode::Normal),
+            map_key_event(BackendEvent::Key(BackendKey::Down), &EditorMode::Normal),
             InputEvent::MoveDown
         );
         assert_eq!(
-            map_key_event(Event::Key(Key::Up), &EditorMode::Normal),
+            map_key_event(BackendEvent::Key(BackendKey::Up), &EditorMode::Normal),
             InputEvent::MoveUp
         );
     }
@@ -290,11 +302,17 @@ mod tests {
     #[test]
     fn test_normal_mode_enter_modes() {
         assert_eq!(
-            map_key_event(Event::Key(Key::Char('e')), &EditorMode::Normal),
+            map_key_event(
+                BackendEvent::Key(BackendKey::Char('e')),
+                &EditorMode::Normal
+            ),
             InputEvent::EnterInsertMode
         );
         assert_eq!(
-            map_key_event(Event::Key(Key::Char(':')), &EditorMode::Normal),
+            map_key_event(
+                BackendEvent::Key(BackendKey::Char(':')),
+                &EditorMode::Normal
+            ),
             InputEvent::EnterCommandMode
         );
     }
@@ -302,7 +320,7 @@ mod tests {
     #[test]
     fn test_insert_mode_exit() {
         assert_eq!(
-            map_key_event(Event::Key(Key::Esc), &EditorMode::Insert),
+            map_key_event(BackendEvent::Key(BackendKey::Esc), &EditorMode::Insert),
             InputEvent::ExitMode
         );
     }
@@ -310,7 +328,7 @@ mod tests {
     #[test]
     fn test_command_mode_exit() {
         assert_eq!(
-            map_key_event(Event::Key(Key::Esc), &EditorMode::Command),
+            map_key_event(BackendEvent::Key(BackendKey::Esc), &EditorMode::Command),
             InputEvent::ExitMode
         );
     }
@@ -318,7 +336,10 @@ mod tests {
     #[test]
     fn test_unknown_key() {
         assert_eq!(
-            map_key_event(Event::Key(Key::Char('x')), &EditorMode::Normal),
+            map_key_event(
+                BackendEvent::Key(BackendKey::Char('x')),
+                &EditorMode::Normal
+            ),
             InputEvent::Unknown
         );
     }

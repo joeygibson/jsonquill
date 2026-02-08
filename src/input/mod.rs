@@ -1,5 +1,6 @@
 //! Input handling for keyboard events and vim-style keybindings.
 
+pub mod backend;
 pub mod handler;
 pub mod keys;
 
