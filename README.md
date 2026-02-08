@@ -56,6 +56,8 @@ See [CLAUDE.md](CLAUDE.md) for detailed feature list and developer documentation
 
 JSONQuill is a Rust-based terminal application for viewing and editing JSON files in a structured, tree-like format. It provides an intuitive vim-style interface for navigating and manipulating complex JSON documents directly in the terminal.
 
+Inspired by [jless](https://github.com/PaulJuliusMartinez/jless), a great TUI JSON viewer.
+
 ## Tech Stack
 
 - **Rust**: Core language
