@@ -50,7 +50,7 @@ See [CLAUDE.md](CLAUDE.md) for detailed feature list and developer documentation
 
 - ✅ **Linux** (x86_64 glibc and musl)
 - ✅ **macOS** (Intel and Apple Silicon)
-- ❌ **Windows** (not currently supported)
+- ⚠️ **Windows** (experimental — newly added, not as well-tested as Linux/macOS)
 
 ## Description
 
