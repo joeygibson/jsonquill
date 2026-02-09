@@ -21,6 +21,7 @@
 //! ```
 
 pub mod cursor;
+pub mod history;
 pub mod jumplist;
 pub mod marks;
 pub mod mode;

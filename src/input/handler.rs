@@ -380,6 +380,9 @@ impl InputHandler {
                     BackendKey::Char('\n') => {
                         // Execute command and return to normal mode
                         let command = state.command_buffer().to_string();
+                        if !command.is_empty() {
+                            state.push_command_history(command.clone());
+                        }
                         state.clear_command_buffer();
                         state.set_mode(EditorMode::Normal);
                         return self.execute_command(&command, state);
@@ -431,6 +434,14 @@ impl InputHandler {
                         }
                         return Ok(false);
                     }
+                    BackendKey::Up => {
+                        state.command_history_up();
+                        return Ok(false);
+                    }
+                    BackendKey::Down => {
+                        state.command_history_down();
+                        return Ok(false);
+                    }
                     BackendKey::Esc => {
                         state.clear_command_buffer();
                         state.set_mode(EditorMode::Normal);
@@ -444,6 +455,11 @@ impl InputHandler {
             if *state.mode() == EditorMode::Search {
                 match key {
                     BackendKey::Char('\n') => {
+                        // Push to search history before exiting
+                        let query = state.search_buffer().to_string();
+                        if !query.is_empty() {
+                            state.push_search_history(query);
+                        }
                         // Exit search mode, keep results for `n` navigation
                         state.set_mode(EditorMode::Normal);
                         use crate::editor::state::MessageLevel;
@@ -502,10 +518,17 @@ impl InputHandler {
                         state.set_mode(EditorMode::Normal);
                         return Ok(false);
                     }
-                    BackendKey::Up | BackendKey::Down => {
-                        // Exit search mode and fall through to normal movement handling
-                        state.set_mode(EditorMode::Normal);
-                        // Don't return - let the key be processed as a normal movement below
+                    BackendKey::Up => {
+                        if state.search_history_up() {
+                            state.execute_search();
+                        }
+                        return Ok(false);
+                    }
+                    BackendKey::Down => {
+                        if state.search_history_down() {
+                            state.execute_search();
+                        }
+                        return Ok(false);
                     }
                     _ => return Ok(false),
                 }
@@ -743,17 +766,20 @@ impl InputHandler {
                     state.clear_pending();
                     state.hide_search_info();
                     state.clear_command_buffer();
+                    state.reset_command_history_browse();
                     state.set_mode(EditorMode::Command);
                 }
                 InputEvent::EnterSearchMode => {
                     state.clear_pending();
                     state.clear_search_buffer();
+                    state.reset_search_history_browse();
                     state.set_search_forward(true);
                     state.set_mode(EditorMode::Search);
                 }
                 InputEvent::EnterReverseSearchMode => {
                     state.clear_pending();
                     state.clear_search_buffer();
+                    state.reset_search_history_browse();
                     state.set_search_forward(false);
                     state.set_mode(EditorMode::Search);
                 }
@@ -1490,6 +1516,7 @@ impl InputHandler {
             if query.is_empty() {
                 state.set_message("Usage: :path <jsonpath>".to_string(), MessageLevel::Error);
             } else {
+                state.push_search_history(query.to_string());
                 state.execute_jsonpath_search(query);
             }
             return Ok(false);
@@ -1500,6 +1527,7 @@ impl InputHandler {
             if query.is_empty() {
                 state.set_message("Usage: :jp <jsonpath>".to_string(), MessageLevel::Error);
             } else {
+                state.push_search_history(query.to_string());
                 state.execute_jsonpath_search(query);
             }
             return Ok(false);
@@ -1513,6 +1541,7 @@ impl InputHandler {
                 state.set_search_forward(true);
                 state.clear_search_buffer();
             } else {
+                state.push_search_history(query.to_string());
                 // Execute text search immediately
                 state.clear_search_buffer();
                 for ch in query.chars() {

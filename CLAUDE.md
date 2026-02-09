@@ -204,6 +204,7 @@ Implemented modules:
 - ✅ Marks (`m{a-z}` to set, `'{a-z}` to jump)
 - ✅ Jump list (`Ctrl-o`/`Ctrl-i` to navigate through jump history)
 - ✅ Repeat command (`.` to repeat last edit operation)
+- ✅ Command & search history (Up/Down arrows to browse previous commands/searches)
 - ✅ All tests passing
 
 **Known Issues / TODO:**
@@ -270,16 +271,17 @@ Scroll wheel/trackpad - Scroll viewport (3 lines per tick)
             - Shows "W" prefix when wrapping around (e.g., "W Match 1/5")
 ?           - Start backward search (searches up through document)
 Enter       - Confirm search and exit to NORMAL mode (results kept for n)
-↑/↓         - Exit search and move cursor (results kept for n)
+↑/↓         - Browse search history
 Esc         - Cancel search and clear results (n will not work)
 n           - Jump to next match in search direction (works after exiting search)
 *           - Search forward for current object key
 #           - Search backward for current object key
 
-Note: Search results persist after exiting search with Enter or movement keys,
+Note: Search results persist after exiting search with Enter,
 allowing continued navigation with `n`. Results are cleared when the tree is
 modified (delete, paste, add, undo/redo) or when search is cancelled with Esc.
 Search info disappears from the status bar on any key other than `n`.
+`:path`/`:jp` queries are also saved to search history.
 
 # JSONPath Search (structural search)
 :path $.store.book[*].author  - Find all book authors
@@ -317,6 +319,7 @@ Enter       - Commit changes and return to NORMAL mode
 Esc         - Cancel editing and return to NORMAL mode
 
 # Commands (in COMMAND mode)
+↑/↓         - Browse command history
 Tab         - Autocomplete theme names (:theme <Tab>) and settings (:set <Tab>)
             - Press Tab multiple times to cycle through completions
 :w          - Save file

@@ -332,8 +332,12 @@ pub fn render_help_overlay(f: &mut Frame, colors: &ThemeColors, scroll: usize) {
             Span::raw("Search backward in keys and values"),
         ]),
         Line::from(vec![
-            Span::styled("  Enter / ↑/↓   ", Style::default().fg(colors.number)),
+            Span::styled("  Enter         ", Style::default().fg(colors.number)),
             Span::raw("Confirm search and exit (results kept for n)"),
+        ]),
+        Line::from(vec![
+            Span::styled("  ↑/↓           ", Style::default().fg(colors.number)),
+            Span::raw("Browse search history"),
         ]),
         Line::from(vec![
             Span::styled("  Esc           ", Style::default().fg(colors.number)),
@@ -376,6 +380,13 @@ pub fn render_help_overlay(f: &mut Frame, colors: &ThemeColors, scroll: usize) {
             "Commands",
             Style::default().fg(colors.key).add_modifier(Modifier::BOLD),
         )]),
+        Line::from(vec![
+            Span::styled(
+                "  ↑/↓                   ",
+                Style::default().fg(colors.number),
+            ),
+            Span::raw("Browse command history"),
+        ]),
         Line::from(vec![
             Span::styled(
                 "  :w                    ",
