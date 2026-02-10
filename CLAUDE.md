@@ -122,6 +122,22 @@ This is useful for:
 - Regenerating notes after editing commit messages
 - Creating notes for custom version ranges
 
+### Updating GitHub Release Notes
+
+Use the `scripts/update-release` script to push release notes from a local file to a GitHub release:
+
+```bash
+# Update release v0.14.0 from release-notes-v0.14.0.md
+./scripts/update-release 0.14.0
+```
+
+The script will:
+1. Look for `release-notes-v<version>.md` in the project root
+2. Verify the GitHub release exists
+3. Update the release notes via `gh release edit`
+
+Accepts the version with or without the `v` prefix (`0.14.0` or `v0.14.0`).
+
 ## Architecture
 
 The project follows a standard Rust binary + library structure:
