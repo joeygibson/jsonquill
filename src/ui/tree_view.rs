@@ -708,7 +708,63 @@ fn format_collapsed_object(fields: &[(String, JsonNode)], max_chars: usize) -> S
     }
 
     let count = fields.len();
-    let mut preview = format!("({}) {{", count);
+    let prefix = format!("({}) ", count);
+    let remaining = max_chars.saturating_sub(prefix.len());
+    format!("{}{}", prefix, format_inline_object(fields, remaining))
+}
+
+fn format_collapsed_array(elements: &[JsonNode], max_chars: usize) -> String {
+    if elements.is_empty() {
+        return "[…]".to_string();
+    }
+
+    let count = elements.len();
+    let prefix = format!("({}) ", count);
+    let remaining = max_chars.saturating_sub(prefix.len());
+    format!("{}{}", prefix, format_inline_array(elements, remaining))
+}
+
+/// Formats a value inline for use within collapsed previews.
+/// Recursively expands nested containers when there is sufficient room.
+fn format_value_inline(node: &JsonNode, max_chars: usize) -> String {
+    match node.value() {
+        JsonValue::Object(fields) => {
+            if fields.is_empty() || max_chars < 10 {
+                "{…}".to_string()
+            } else {
+                format_inline_object(fields, max_chars)
+            }
+        }
+        JsonValue::Array(elements) | JsonValue::JsonlRoot(elements) => {
+            if elements.is_empty() || max_chars < 10 {
+                "[…]".to_string()
+            } else {
+                format_inline_array(elements, max_chars)
+            }
+        }
+        JsonValue::String(s) => {
+            let quoted = format!("\"{}\"", s);
+            if quoted.len() > max_chars {
+                let truncated: String = s.chars().take(10).collect();
+                format!("\"{}...\"", truncated)
+            } else {
+                quoted
+            }
+        }
+        JsonValue::Number(n) => format_number(*n),
+        JsonValue::Boolean(b) => format!("{}", b),
+        JsonValue::Null => "null".to_string(),
+    }
+}
+
+/// Formats an object inline without count prefix: {key: val, key: val}
+/// Recursively expands nested containers.
+fn format_inline_object(fields: &[(String, JsonNode)], max_chars: usize) -> String {
+    if fields.is_empty() || max_chars < 5 {
+        return "{…}".to_string();
+    }
+
+    let mut preview = "{".to_string();
     let mut truncated = false;
 
     for (i, (key, value)) in fields.iter().enumerate() {
@@ -719,38 +775,18 @@ fn format_collapsed_object(fields: &[(String, JsonNode)], max_chars: usize) -> S
             break;
         }
 
-        // Add key
         preview.push_str(key);
         preview.push_str(": ");
 
-        // Add value
-        let value_str = match value.value() {
-            JsonValue::Object(_) => "{…}".to_string(),
-            JsonValue::Array(_) | JsonValue::JsonlRoot(_) => "[…]".to_string(),
-            JsonValue::String(s) => {
-                let quoted = format!("\"{}\"", s);
-                if preview.len() + quoted.len() > max_chars {
-                    // Use char-based truncation to avoid UTF-8 boundary panics
-                    let truncated: String = s.chars().take(10).collect();
-                    format!("\"{}...\"", truncated)
-                } else {
-                    quoted
-                }
-            }
-            JsonValue::Number(n) => format_number(*n),
-            JsonValue::Boolean(b) => format!("{}", b),
-            JsonValue::Null => "null".to_string(),
-        };
-
+        let remaining = max_chars.saturating_sub(preview.len());
+        let value_str = format_value_inline(value, remaining);
         preview.push_str(&value_str);
 
-        // Add comma if not last
         if i < fields.len() - 1 {
             preview.push_str(", ");
         }
     }
 
-    // Close brace if we didn't truncate
     if !truncated {
         preview.push('}');
     }
@@ -758,42 +794,25 @@ fn format_collapsed_object(fields: &[(String, JsonNode)], max_chars: usize) -> S
     preview
 }
 
-fn format_collapsed_array(elements: &[JsonNode], max_chars: usize) -> String {
-    if elements.is_empty() {
+/// Formats an array inline without count prefix: [val, val, val]
+/// Recursively expands nested containers.
+fn format_inline_array(elements: &[JsonNode], max_chars: usize) -> String {
+    if elements.is_empty() || max_chars < 5 {
         return "[…]".to_string();
     }
 
-    let count = elements.len();
-    let mut preview = format!("({}) [", count);
+    let mut preview = "[".to_string();
     let mut truncated = false;
 
     for (i, element) in elements.iter().enumerate() {
-        // Check if we need to truncate (leave room for "..." and "]")
         if preview.len() + 10 > max_chars {
             preview.push_str("...");
             truncated = true;
             break;
         }
 
-        let value_str = match element.value() {
-            JsonValue::Object(_) => "{…}".to_string(),
-            JsonValue::Array(_) | JsonValue::JsonlRoot(_) => "[…]".to_string(),
-            JsonValue::String(s) => {
-                let quoted = format!("\"{}\"", s);
-                // Check length to avoid exceeding max_chars with long strings
-                if preview.len() + quoted.len() > max_chars {
-                    // Use char-based truncation to avoid UTF-8 boundary panics
-                    let truncated_str: String = s.chars().take(10).collect();
-                    format!("\"{}...\"", truncated_str)
-                } else {
-                    quoted
-                }
-            }
-            JsonValue::Number(n) => format_number(*n),
-            JsonValue::Boolean(b) => format!("{}", b),
-            JsonValue::Null => "null".to_string(),
-        };
-
+        let remaining = max_chars.saturating_sub(preview.len());
+        let value_str = format_value_inline(element, remaining);
         preview.push_str(&value_str);
 
         if i < elements.len() - 1 {
@@ -1163,7 +1182,7 @@ mod tests {
         ]));
 
         let preview = format_collapsed_preview(&obj, 100);
-        assert_eq!(preview, "(2) {id: 1, user: {…}}");
+        assert_eq!(preview, "(2) {id: 1, user: {name: \"Alice\"}}");
     }
 
     #[test]
