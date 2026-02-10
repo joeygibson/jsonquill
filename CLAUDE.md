@@ -39,6 +39,9 @@ cargo clippy -- -D warnings
 
 # Run all tests
 cargo test
+
+# Security audit for dependency vulnerabilities
+cargo audit
 ```
 
 ### 2. Project-Specific Requirements
@@ -49,10 +52,10 @@ cargo test
 ### 3. Pre-Commit Command Summary
 **Run this before EVERY commit:**
 ```bash
-cargo fmt && cargo clippy -- -D warnings && cargo test
+cargo fmt && cargo clippy -- -D warnings && cargo test && cargo audit
 ```
 
-If any of these fail, fix the issues before committing. Do not commit code that doesn't pass all three checks.
+If any of these fail, fix the issues before committing. Do not commit code that doesn't pass all checks.
 
 ## Version Management
 
