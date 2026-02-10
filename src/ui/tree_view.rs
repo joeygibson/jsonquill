@@ -192,7 +192,7 @@ impl TreeViewState {
             let is_expanded = self.is_expanded(&path);
 
             // Show collapsed preview for the line itself
-            let preview = format_collapsed_preview(node, 60);
+            let preview = format_collapsed_preview(node, 500);
             self.lines.push(TreeViewLine {
                 path: path.clone(),
                 depth: 0,
@@ -281,7 +281,7 @@ impl TreeViewState {
 
                     // Always use collapsed preview for containers
                     let value_preview = if child.value().is_container() {
-                        format_collapsed_preview(child, 60)
+                        format_collapsed_preview(child, 500)
                     } else {
                         self.get_value_preview(child.value())
                     };
@@ -309,7 +309,7 @@ impl TreeViewState {
 
                     // Always use collapsed preview for containers
                     let value_preview = if child.value().is_container() {
-                        format_collapsed_preview(child, 60)
+                        format_collapsed_preview(child, 500)
                     } else {
                         self.get_value_preview(child.value())
                     };
