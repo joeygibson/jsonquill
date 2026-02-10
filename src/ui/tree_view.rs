@@ -707,10 +707,7 @@ fn format_collapsed_object(fields: &[(String, JsonNode)], max_chars: usize) -> S
         return "{…}".to_string();
     }
 
-    let count = fields.len();
-    let prefix = format!("({}) ", count);
-    let remaining = max_chars.saturating_sub(prefix.len());
-    format!("{}{}", prefix, format_inline_object(fields, remaining))
+    format_inline_object(fields, max_chars)
 }
 
 fn format_collapsed_array(elements: &[JsonNode], max_chars: usize) -> String {
@@ -718,10 +715,7 @@ fn format_collapsed_array(elements: &[JsonNode], max_chars: usize) -> String {
         return "[…]".to_string();
     }
 
-    let count = elements.len();
-    let prefix = format!("({}) ", count);
-    let remaining = max_chars.saturating_sub(prefix.len());
-    format!("{}{}", prefix, format_inline_array(elements, remaining))
+    format_inline_array(elements, max_chars)
 }
 
 /// Formats a value inline for use within collapsed previews.
@@ -1163,7 +1157,7 @@ mod tests {
         ]));
 
         let preview = format_collapsed_preview(&obj, 100);
-        assert_eq!(preview, "(2) {id: 1, name: \"Alice\"}");
+        assert_eq!(preview, "{id: 1, name: \"Alice\"}");
     }
 
     #[test]
@@ -1182,7 +1176,7 @@ mod tests {
         ]));
 
         let preview = format_collapsed_preview(&obj, 100);
-        assert_eq!(preview, "(2) {id: 1, user: {name: \"Alice\"}}");
+        assert_eq!(preview, "{id: 1, user: {name: \"Alice\"}}");
     }
 
     #[test]
@@ -1196,7 +1190,7 @@ mod tests {
         ]));
 
         let preview = format_collapsed_preview(&arr, 100);
-        assert_eq!(preview, "(3) [1, 2, 3]");
+        assert_eq!(preview, "[1, 2, 3]");
     }
 
     #[test]
@@ -1220,7 +1214,6 @@ mod tests {
         ]));
 
         let preview = format_collapsed_preview(&obj, 40);
-        assert!(preview.len() <= 43); // Allow a bit of overflow for "..."
         assert!(preview.contains("..."));
     }
 
