@@ -5,6 +5,16 @@ All notable changes to jsonquill will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.14.1] - 2026-02-19
+
+### Added
+
+- open empty document when specified file doesn't exist
+- add update-release script to push release notes to GitHub
+
+### Other
+
+- updated demo
 ## [0.14.0] - 2026-02-10
 
 ### Added
@@ -369,3 +379,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [0.13.0]: https://github.com/yourusername/jsonquill/compare/v0.12.4...v0.13.0
 [0.13.1]: https://github.com/yourusername/jsonquill/compare/v0.13.0...v0.13.1
 [0.14.0]: https://github.com/yourusername/jsonquill/compare/v0.13.1...v0.14.0
+[0.14.1]: https://github.com/yourusername/jsonquill/compare/v0.14.0...v0.14.1
