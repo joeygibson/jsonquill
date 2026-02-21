@@ -1052,6 +1052,10 @@ fn test_paste_without_clipboard_fails() {
     )])));
     let mut state = EditorState::new_with_default_theme(tree);
 
+    // Use a named register to avoid depending on system clipboard state
+    // (Windows CI may have valid JSON in the clipboard, causing a false pass)
+    state.set_pending_register('z', false);
+
     // Try to paste without yanking first
     let result = state.paste_node_at_cursor();
     assert!(result.is_err());
