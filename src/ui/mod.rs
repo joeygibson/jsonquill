@@ -142,6 +142,7 @@ impl UI {
             // Adjust scroll to ensure cursor is visible
             let viewport_height = chunks[0].height as usize;
             state.adjust_scroll_to_cursor(viewport_height);
+            state.set_viewport_width(chunks[0].width as usize);
 
             // Render tree view
             tree_view::render_tree_view(
@@ -153,6 +154,7 @@ impl UI {
                 state.show_line_numbers(),
                 state.relative_line_numbers(),
                 state.scroll_offset(),
+                state.horizontal_offset(),
                 state.visual_selection(),
             );
 

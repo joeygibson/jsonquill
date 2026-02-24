@@ -229,6 +229,7 @@ pub struct EditorState {
     scroll_offset: usize,
     horizontal_offset: usize,
     viewport_height: usize,
+    viewport_width: usize,
     undo_tree: super::undo::UndoTree,
     add_mode_stage: AddModeStage,
     add_key_buffer: String,
@@ -343,6 +344,7 @@ impl EditorState {
             scroll_offset: 0,
             horizontal_offset: 0,
             viewport_height: 20,
+            viewport_width: 0,
             undo_tree,
             add_mode_stage: AddModeStage::None,
             add_key_buffer: String::new(),
@@ -1060,6 +1062,50 @@ impl EditorState {
     /// Uses saturating subtraction to clamp at zero.
     pub fn scroll_left(&mut self, count: usize) {
         self.horizontal_offset = self.horizontal_offset.saturating_sub(count);
+    }
+
+    /// Returns the current viewport width in columns.
+    pub fn viewport_width(&self) -> usize {
+        self.viewport_width
+    }
+
+    /// Sets the viewport width.
+    pub fn set_viewport_width(&mut self, width: usize) {
+        self.viewport_width = width;
+    }
+
+    /// Calculates the display width of the current cursor line (in characters).
+    pub fn cursor_line_display_width(&self) -> usize {
+        let lines = self.tree_view.lines();
+        let current_path = self.cursor.path();
+        if let Some(line) = lines.iter().find(|l| l.path == current_path) {
+            let indent = line.depth * 2; // "  " per depth level
+            let indicator = 2; // expand/collapse indicator or spacing
+            let key_len = line.key.as_ref().map(|k| k.len() + 2).unwrap_or(0); // "key: "
+            let value_len = line.value_preview.len();
+            indent + indicator + key_len + value_len
+        } else {
+            0
+        }
+    }
+
+    /// Scrolls so that the cursor line content starts at the left edge of the viewport (zs).
+    pub fn scroll_cursor_to_left_edge(&mut self) {
+        let lines = self.tree_view.lines();
+        if let Some(line) = lines.iter().find(|l| l.path == self.cursor.path()) {
+            let indent = line.depth * 2;
+            self.horizontal_offset = indent;
+        }
+    }
+
+    /// Scrolls so that the cursor line content ends at the right edge of the viewport (ze).
+    pub fn scroll_cursor_to_right_edge(&mut self) {
+        let width = self.cursor_line_display_width();
+        if width > self.viewport_width {
+            self.horizontal_offset = width - self.viewport_width;
+        } else {
+            self.horizontal_offset = 0;
+        }
     }
 
     /// Adjusts scroll offset to ensure the cursor is visible in the viewport.

@@ -486,6 +486,32 @@ use ratatui::{
     Frame,
 };
 
+/// Clips a list of spans by skipping `offset` characters from the left.
+/// Preserves styling across span boundaries.
+fn clip_spans_horizontal<'a>(spans: Vec<Span<'a>>, offset: usize) -> Vec<Span<'a>> {
+    if offset == 0 {
+        return spans;
+    }
+    let mut remaining = offset;
+    let mut result = Vec::new();
+    for span in spans {
+        let char_count = span.content.chars().count();
+        if remaining >= char_count {
+            remaining -= char_count;
+            continue;
+        }
+        if remaining > 0 {
+            // Partial clip: skip `remaining` chars from this span
+            let content: String = span.content.chars().skip(remaining).collect();
+            result.push(Span::styled(content, span.style));
+            remaining = 0;
+        } else {
+            result.push(span);
+        }
+    }
+    result
+}
+
 /// Renders the tree view with syntax highlighting and cursor.
 ///
 /// Displays JSON tree as an expandable/collapsible list with:
@@ -526,7 +552,7 @@ use ratatui::{
 /// tree_view.rebuild(&tree);
 ///
 /// terminal.draw(|f| {
-///     render_tree_view(f, f.area(), &tree_view, &cursor, &colors, true, false, 0, &[]);
+///     render_tree_view(f, f.area(), &tree_view, &cursor, &colors, true, false, 0, 0, &[]);
 /// }).unwrap();
 /// ```
 #[allow(clippy::too_many_arguments)]
@@ -539,6 +565,7 @@ pub fn render_tree_view(
     show_line_numbers: bool,
     relative_line_numbers: bool,
     scroll_offset: usize,
+    horizontal_offset: usize,
     visual_selection: &[Vec<usize>],
 ) {
     let mut lines_to_render = Vec::new();
@@ -648,10 +675,26 @@ pub fn render_tree_view(
 
         spans.push(Span::styled(&line.value_preview, value_style));
 
+        // Separate line number spans from content spans for horizontal scrolling
+        let (line_num_spans, content_spans) = if show_line_numbers && !spans.is_empty() {
+            // First span is the line number - pin it
+            let line_num_span = spans.remove(0);
+            (vec![line_num_span], spans)
+        } else {
+            (vec![], spans)
+        };
+
+        // Apply horizontal offset to content spans only
+        let clipped_content = clip_spans_horizontal(content_spans, horizontal_offset);
+
+        // Reassemble: pinned line numbers + clipped content
+        let mut all_spans = line_num_spans;
+        all_spans.extend(clipped_content);
+
         // Apply visual selection background if this line is selected
         let final_line = if is_selected {
             Line::from(
-                spans
+                all_spans
                     .into_iter()
                     .map(|span| {
                         Span::styled(span.content, span.style.bg(colors.visual_selection_bg))
@@ -659,7 +702,7 @@ pub fn render_tree_view(
                     .collect::<Vec<_>>(),
             )
         } else {
-            Line::from(spans)
+            Line::from(all_spans)
         };
 
         lines_to_render.push(final_line);
@@ -992,7 +1035,18 @@ mod tests {
 
         terminal
             .draw(|f| {
-                render_tree_view(f, f.area(), &state, &cursor, &colors, false, false, 0, &[]);
+                render_tree_view(
+                    f,
+                    f.area(),
+                    &state,
+                    &cursor,
+                    &colors,
+                    false,
+                    false,
+                    0,
+                    0,
+                    &[],
+                );
             })
             .unwrap();
 
@@ -1043,7 +1097,18 @@ mod tests {
 
         terminal
             .draw(|f| {
-                render_tree_view(f, f.area(), &state, &cursor, &colors, false, false, 0, &[]);
+                render_tree_view(
+                    f,
+                    f.area(),
+                    &state,
+                    &cursor,
+                    &colors,
+                    false,
+                    false,
+                    0,
+                    0,
+                    &[],
+                );
             })
             .unwrap();
 
@@ -1113,7 +1178,18 @@ mod tests {
 
         terminal
             .draw(|f| {
-                render_tree_view(f, f.area(), &state, &cursor, &colors, false, false, 0, &[]);
+                render_tree_view(
+                    f,
+                    f.area(),
+                    &state,
+                    &cursor,
+                    &colors,
+                    false,
+                    false,
+                    0,
+                    0,
+                    &[],
+                );
             })
             .unwrap();
 
