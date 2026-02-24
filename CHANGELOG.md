@@ -5,6 +5,31 @@ All notable changes to jsonquill will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2026-02-23
+
+### Added
+
+- wire horizontal scroll keybindings and render with span clipping
+- reset horizontal_offset on vertical movement
+- add scroll_left/scroll_right methods to EditorState
+- add horizontal_offset field to EditorState
+
+### Changed
+
+- Documentation: add horizontal scrolling to README
+- Documentation: add horizontal scrolling to CLAUDE.md and test data
+- Documentation: add horizontal scroll keybindings to help overlay
+- Documentation: add horizontal scrolling implementation plan
+- Documentation: add horizontal scrolling design
+
+### Fixed
+
+- auto-scroll horizontally to reveal search matches
+- make paste test deterministic across platforms
+
+### Other
+
+- bumped dependency versions
 ## [1.0.0] - 2026-02-19
 
 ### Added
@@ -386,3 +411,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [0.14.0]: https://github.com/yourusername/jsonquill/compare/v0.13.1...v0.14.0
 [0.14.1]: https://github.com/yourusername/jsonquill/compare/v0.14.0...v0.14.1
 [1.0.0]: https://github.com/yourusername/jsonquill/compare/v0.14.1...v1.0.0
+[1.1.0]: https://github.com/yourusername/jsonquill/compare/v1.0.0...v1.1.0
