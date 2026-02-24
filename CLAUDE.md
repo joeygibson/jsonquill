@@ -224,6 +224,7 @@ Implemented modules:
 - ✅ Jump list (`Ctrl-o`/`Ctrl-i` to navigate through jump history)
 - ✅ Repeat command (`.` to repeat last edit operation)
 - ✅ Command & search history (Up/Down arrows to browse previous commands/searches)
+- ✅ Horizontal scrolling (zh/zl, zH/zL, zs/ze; auto-scrolls to search matches; resets on vertical movement)
 - ✅ All tests passing
 
 **Known Issues / TODO:**
@@ -270,6 +271,12 @@ Ctrl-b/PgUp - Full-page up
 zz          - Center cursor on screen
 zt          - Move cursor to top of screen
 zb          - Move cursor to bottom of screen
+zh          - Scroll left 1 column (count prefix supported, e.g., 10zh)
+zl          - Scroll right 1 column (count prefix supported)
+zH          - Scroll left half-screen
+zL          - Scroll right half-screen
+zs          - Scroll cursor to left edge
+ze          - Scroll cursor to right edge
 }           - Jump to next sibling (same parent, next index)
 {           - Jump to previous sibling (same parent, previous index)
 0 or ^      - Jump to first sibling (same parent, index 0)

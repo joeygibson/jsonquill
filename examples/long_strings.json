@@ -1,0 +1,22 @@
+{
+  "short": "hello",
+  "medium": "The quick brown fox jumps over the lazy dog near the riverbank on a warm summer afternoon",
+  "long_description": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.",
+  "base64_blob": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWUsImlhdCI6MTUxNjIzOTAyMiwiZXhwIjoxNTE2MjQyNjIyLCJpc3MiOiJodHRwczovL2F1dGguZXhhbXBsZS5jb20iLCJhdWQiOiJodHRwczovL2FwaS5leGFtcGxlLmNvbSJ9.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
+  "nested": {
+    "deeply": {
+      "nested": {
+        "value": "This string is buried deep in nesting so the indentation already pushes it far to the right, and then the value itself is also quite long which means you definitely need horizontal scrolling to see the whole thing",
+        "another": "AAAAAAAAAAAAAAAAAAAAABBBBBBBBBBBBBBBBBBBBBBCCCCCCCCCCCCCCCCCCCCCCDDDDDDDDDDDDDDDDDDDDDDEEEEEEEEEEEEEEEEEEEEEE"
+      }
+    }
+  },
+  "url": "https://api.example.com/v2/organizations/acme-corp/projects/super-secret-project/environments/production/deployments/2026-02-23T14:30:00Z/logs?level=error&limit=500&offset=0&format=json",
+  "error_message": "ERROR: Failed to connect to database server at postgresql://db-primary-replica-3.us-east-1.internal.example.com:5432/myapp_production - connection timed out after 30000ms. Retrying with fallback server at postgresql://db-secondary-replica-1.us-west-2.internal.example.com:5432/myapp_production",
+  "csv_row": "id,first_name,last_name,email,phone,address_line_1,address_line_2,city,state,zip,country,created_at,updated_at,last_login,role,department,manager_id,salary,currency,status",
+  "tags": ["short", "also-short", "this-tag-is-unreasonably-long-and-someone-should-really-reconsider-their-tagging-strategy-because-this-is-getting-out-of-hand"],
+  "config": {
+    "connection_string": "Server=sql-primary-cluster.database.windows.net;Database=ProductionDB_v3;User Id=app_service_account@corp.example.com;Password=REDACTED;MultipleActiveResultSets=true;Connection Timeout=30;TrustServerCertificate=true;Encrypt=yes",
+    "flags": [true, false, true, true, false, false, true, false, true, true, false, true, false, true, true, false, false, true, false, true]
+  }
+}
