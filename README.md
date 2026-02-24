@@ -22,7 +22,7 @@ A terminal-based structural JSON editor with vim-style keybindings.
 **Alpha Release** - Core functionality is implemented and usable. The editor supports:
 - JSON file loading and editing (including JSONL format)
 - Tree-based navigation with vim keybindings
-- Advanced navigation (sibling jumping, screen positioning, count prefixes)
+- Advanced navigation (sibling jumping, screen positioning, horizontal scrolling, count prefixes)
 - Add, edit, delete operations for JSON values
 - Undo/redo functionality with repeat command
 - Clipboard operations (yank/paste with path copying, smart paste, named registers)
@@ -165,6 +165,12 @@ jsonquill data.jsonl
 | `zz` | Center cursor on screen | Scroll viewport to center current line |
 | `zt` | Move cursor to top of screen | Scroll viewport to place current line at top |
 | `zb` | Move cursor to bottom of screen | Scroll viewport to place current line at bottom |
+| `zh` | Scroll left 1 column | Count prefix supported (e.g., `10zh`) |
+| `zl` | Scroll right 1 column | Count prefix supported (e.g., `10zl`) |
+| `zH` | Scroll left half-screen | Scroll left by half the viewport width |
+| `zL` | Scroll right half-screen | Scroll right by half the viewport width |
+| `zs` | Scroll cursor to left edge | Scroll so cursor line content starts at left |
+| `ze` | Scroll cursor to right edge | Scroll so cursor line content ends at right |
 | `}` | Jump to next sibling | Move to the next node at the same level |
 | `{` | Jump to previous sibling | Move to the previous node at the same level |
 | `0` / `^` | Jump to first sibling | Move to first node at current level |
@@ -289,7 +295,7 @@ p           # Paste from unnamed register (system clipboard)
 |-----|--------|-------------|
 | `/` | Start forward search | Enter SEARCH mode to search forward through document<br>Uses smart case (case-insensitive unless pattern has uppercase) |
 | `?` | Start backward search | Enter SEARCH mode to search backward through document |
-| `n` | Jump to next match | Find next occurrence in search direction<br>Shows match counter (e.g., "Match 2/5")<br>Shows "W" when wrapping around |
+| `n` | Jump to next match | Find next occurrence in search direction<br>Shows match counter (e.g., "Match 2/5")<br>Shows "W" when wrapping around<br>Auto-scrolls horizontally to reveal match in long lines |
 | `*` | Search forward for key | Search forward for current object key name |
 | `#` | Search backward for key | Search backward for current object key name |
 | `:find` | Enter text search mode | Same as pressing `/` |
