@@ -227,6 +227,7 @@ pub struct EditorState {
     pending_command: Option<char>,
     pending_count: Option<u32>,
     scroll_offset: usize,
+    horizontal_offset: usize,
     viewport_height: usize,
     undo_tree: super::undo::UndoTree,
     add_mode_stage: AddModeStage,
@@ -340,6 +341,7 @@ impl EditorState {
             pending_command: None,
             pending_count: None,
             scroll_offset: 0,
+            horizontal_offset: 0,
             viewport_height: 20,
             undo_tree,
             add_mode_stage: AddModeStage::None,
@@ -1029,6 +1031,21 @@ impl EditorState {
     /// Returns the current scroll offset (top line of viewport).
     pub fn scroll_offset(&self) -> usize {
         self.scroll_offset
+    }
+
+    /// Returns the current horizontal scroll offset (columns scrolled right).
+    pub fn horizontal_offset(&self) -> usize {
+        self.horizontal_offset
+    }
+
+    /// Sets the horizontal scroll offset.
+    pub fn set_horizontal_offset(&mut self, offset: usize) {
+        self.horizontal_offset = offset;
+    }
+
+    /// Resets the horizontal scroll offset to zero.
+    pub fn reset_horizontal_offset(&mut self) {
+        self.horizontal_offset = 0;
     }
 
     /// Adjusts scroll offset to ensure the cursor is visible in the viewport.
