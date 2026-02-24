@@ -1108,6 +1108,63 @@ impl EditorState {
         }
     }
 
+    /// Adjusts horizontal scroll so the search match text is visible in the viewport.
+    /// Called after navigating to a search result.
+    fn adjust_horizontal_for_search(&mut self) {
+        if self.search_buffer.is_empty() || self.viewport_width == 0 {
+            return;
+        }
+
+        let lines = self.tree_view.lines();
+        let line = match lines.iter().find(|l| l.path == self.cursor.path()) {
+            Some(l) => l,
+            None => return,
+        };
+
+        // Build the full rendered text for this line (matching render_tree_view structure)
+        let indent = "  ".repeat(line.depth);
+        let indicator = if line.expandable {
+            if line.expanded {
+                "\u{25bc} "
+            } else {
+                "\u{25b6} "
+            }
+        } else {
+            "  "
+        };
+        let key_part = line
+            .key
+            .as_ref()
+            .map(|k| format!("{}: ", k))
+            .unwrap_or_default();
+        let full_text = format!("{}{}{}{}", indent, indicator, key_part, line.value_preview);
+
+        // Find the match position (case-insensitive if search was case-insensitive)
+        let case_sensitive = self.search_buffer.chars().any(|c| c.is_uppercase());
+        let match_pos = if case_sensitive {
+            full_text.find(&self.search_buffer)
+        } else {
+            full_text
+                .to_lowercase()
+                .find(&self.search_buffer.to_lowercase())
+        };
+
+        if let Some(pos) = match_pos {
+            let match_end = pos + self.search_buffer.len();
+            // If match is off-screen to the right
+            if match_end > self.horizontal_offset + self.viewport_width {
+                // Scroll so the match is visible with some left context
+                let margin = self.viewport_width / 4;
+                self.horizontal_offset = pos.saturating_sub(margin);
+            }
+            // If match is off-screen to the left
+            if pos < self.horizontal_offset {
+                let margin = self.viewport_width / 4;
+                self.horizontal_offset = pos.saturating_sub(margin);
+            }
+        }
+    }
+
     /// Adjusts scroll offset to ensure the cursor is visible in the viewport.
     ///
     /// # Arguments
@@ -2955,6 +3012,7 @@ impl EditorState {
             };
             self.ensure_path_visible(&path);
             self.cursor.set_path(path);
+            self.adjust_horizontal_for_search();
         }
     }
 
@@ -3122,6 +3180,7 @@ impl EditorState {
         let path = self.search_results[self.search_index].clone();
         self.ensure_path_visible(&path);
         self.cursor.set_path(path);
+        self.adjust_horizontal_for_search();
         (true, wrapped)
     }
 
