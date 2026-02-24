@@ -26,3 +26,29 @@ fn test_reset_horizontal_offset() {
     state.reset_horizontal_offset();
     assert_eq!(state.horizontal_offset(), 0);
 }
+
+#[test]
+fn test_scroll_right() {
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![])));
+    let mut state = EditorState::new_with_default_theme(tree);
+    state.scroll_right(5);
+    assert_eq!(state.horizontal_offset(), 5);
+}
+
+#[test]
+fn test_scroll_left_clamps_to_zero() {
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![])));
+    let mut state = EditorState::new_with_default_theme(tree);
+    state.scroll_right(3);
+    state.scroll_left(10);
+    assert_eq!(state.horizontal_offset(), 0);
+}
+
+#[test]
+fn test_scroll_left() {
+    let tree = JsonTree::new(JsonNode::new(JsonValue::Object(vec![])));
+    let mut state = EditorState::new_with_default_theme(tree);
+    state.scroll_right(10);
+    state.scroll_left(3);
+    assert_eq!(state.horizontal_offset(), 7);
+}

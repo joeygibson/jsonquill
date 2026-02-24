@@ -1048,6 +1048,18 @@ impl EditorState {
         self.horizontal_offset = 0;
     }
 
+    /// Scrolls right by incrementing the horizontal offset.
+    /// Uses saturating addition to prevent overflow.
+    pub fn scroll_right(&mut self, count: usize) {
+        self.horizontal_offset = self.horizontal_offset.saturating_add(count);
+    }
+
+    /// Scrolls left by decrementing the horizontal offset.
+    /// Uses saturating subtraction to clamp at zero.
+    pub fn scroll_left(&mut self, count: usize) {
+        self.horizontal_offset = self.horizontal_offset.saturating_sub(count);
+    }
+
     /// Adjusts scroll offset to ensure the cursor is visible in the viewport.
     ///
     /// # Arguments
