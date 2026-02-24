@@ -52,3 +52,71 @@ fn test_scroll_left() {
     state.scroll_left(3);
     assert_eq!(state.horizontal_offset(), 7);
 }
+
+#[test]
+fn test_horizontal_offset_resets_on_move_down() {
+    let node = JsonNode::new(JsonValue::Object(vec![
+        (
+            "a".to_string(),
+            JsonNode::new(JsonValue::String("hello".to_string())),
+        ),
+        (
+            "b".to_string(),
+            JsonNode::new(JsonValue::String("world".to_string())),
+        ),
+    ]));
+    let tree = JsonTree::new(node);
+    let mut state = EditorState::new_with_default_theme(tree);
+    state.scroll_right(5);
+    assert_eq!(state.horizontal_offset(), 5);
+    state.move_cursor_down();
+    assert_eq!(state.horizontal_offset(), 0);
+}
+
+#[test]
+fn test_horizontal_offset_resets_on_move_up() {
+    let node = JsonNode::new(JsonValue::Object(vec![
+        (
+            "a".to_string(),
+            JsonNode::new(JsonValue::String("hello".to_string())),
+        ),
+        (
+            "b".to_string(),
+            JsonNode::new(JsonValue::String("world".to_string())),
+        ),
+    ]));
+    let tree = JsonTree::new(node);
+    let mut state = EditorState::new_with_default_theme(tree);
+    // Move down first so we can move up
+    state.move_cursor_down();
+    state.scroll_right(5);
+    assert_eq!(state.horizontal_offset(), 5);
+    state.move_cursor_up();
+    assert_eq!(state.horizontal_offset(), 0);
+}
+
+#[test]
+fn test_horizontal_offset_resets_on_jump_to_top() {
+    let node = JsonNode::new(JsonValue::Object(vec![(
+        "a".to_string(),
+        JsonNode::new(JsonValue::String("hello".to_string())),
+    )]));
+    let tree = JsonTree::new(node);
+    let mut state = EditorState::new_with_default_theme(tree);
+    state.scroll_right(5);
+    state.jump_to_top();
+    assert_eq!(state.horizontal_offset(), 0);
+}
+
+#[test]
+fn test_horizontal_offset_resets_on_jump_to_bottom() {
+    let node = JsonNode::new(JsonValue::Object(vec![(
+        "a".to_string(),
+        JsonNode::new(JsonValue::String("hello".to_string())),
+    )]));
+    let tree = JsonTree::new(node);
+    let mut state = EditorState::new_with_default_theme(tree);
+    state.scroll_right(5);
+    state.jump_to_bottom();
+    assert_eq!(state.horizontal_offset(), 0);
+}

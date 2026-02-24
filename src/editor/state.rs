@@ -894,6 +894,7 @@ impl EditorState {
     /// assert_eq!(state.cursor().path(), &[1]);
     /// ```
     pub fn move_cursor_down(&mut self) {
+        self.horizontal_offset = 0;
         let lines = self.tree_view.lines();
         if lines.is_empty() {
             return;
@@ -944,6 +945,7 @@ impl EditorState {
     /// assert_eq!(state.cursor().path(), &[0]);
     /// ```
     pub fn move_cursor_up(&mut self) {
+        self.horizontal_offset = 0;
         let lines = self.tree_view.lines();
         if lines.is_empty() {
             return;
@@ -1097,6 +1099,7 @@ impl EditorState {
 
     /// Jumps to the first line in the tree.
     pub fn jump_to_top(&mut self) {
+        self.horizontal_offset = 0;
         let lines = self.tree_view.lines();
         if let Some(first_line) = lines.first() {
             self.cursor.set_path(first_line.path.clone());
@@ -1106,6 +1109,7 @@ impl EditorState {
 
     /// Jumps to the last line in the tree.
     pub fn jump_to_bottom(&mut self) {
+        self.horizontal_offset = 0;
         let lines = self.tree_view.lines();
         if let Some(last_line) = lines.last() {
             self.cursor.set_path(last_line.path.clone());
@@ -1117,6 +1121,7 @@ impl EditorState {
     /// If the line number is valid, moves the cursor to that line.
     /// If the line number is out of bounds, does nothing.
     pub fn jump_to_line(&mut self, line_num: usize) {
+        self.horizontal_offset = 0;
         let lines = self.tree_view.lines();
         if line_num == 0 || line_num > lines.len() {
             return;
@@ -1132,6 +1137,7 @@ impl EditorState {
     /// This scrolls the viewport down by half its height and moves the cursor
     /// to maintain its relative position on screen (vim Ctrl-d behavior).
     pub fn page_down(&mut self) {
+        self.horizontal_offset = 0;
         if self.viewport_height == 0 {
             return;
         }
@@ -1164,6 +1170,7 @@ impl EditorState {
     /// This scrolls the viewport up by half its height and moves the cursor
     /// to maintain its relative position on screen (vim Ctrl-u behavior).
     pub fn page_up(&mut self) {
+        self.horizontal_offset = 0;
         if self.viewport_height == 0 {
             return;
         }
@@ -1194,6 +1201,7 @@ impl EditorState {
     /// Scrolls the viewport down by the entire visible height and moves the cursor
     /// to maintain its relative position on screen (vim Ctrl-f behavior).
     pub fn full_page_down(&mut self) {
+        self.horizontal_offset = 0;
         if self.viewport_height == 0 {
             return;
         }
@@ -1226,6 +1234,7 @@ impl EditorState {
     /// Scrolls the viewport up by the entire visible height and moves the cursor
     /// to maintain its relative position on screen (vim Ctrl-b behavior).
     pub fn full_page_up(&mut self) {
+        self.horizontal_offset = 0;
         if self.viewport_height == 0 {
             return;
         }
@@ -1256,6 +1265,7 @@ impl EditorState {
     /// Adjusts the scroll offset so the cursor is in the middle of the viewport.
     /// Does not move the cursor position, only adjusts the viewport.
     pub fn center_cursor_on_screen(&mut self) {
+        self.horizontal_offset = 0;
         if self.viewport_height == 0 {
             return;
         }
@@ -1284,6 +1294,7 @@ impl EditorState {
     /// Adjusts the scroll offset so the cursor is at the top of the viewport.
     /// Does not move the cursor position, only adjusts the viewport.
     pub fn cursor_to_top_of_screen(&mut self) {
+        self.horizontal_offset = 0;
         let lines = self.tree_view.lines();
         if lines.is_empty() {
             return;
@@ -1303,6 +1314,7 @@ impl EditorState {
     /// Adjusts the scroll offset so the cursor is at the bottom of the viewport.
     /// Does not move the cursor position, only adjusts the viewport.
     pub fn cursor_to_bottom_of_screen(&mut self) {
+        self.horizontal_offset = 0;
         if self.viewport_height == 0 {
             return;
         }
@@ -1357,6 +1369,7 @@ impl EditorState {
     /// assert_eq!(state.cursor().path(), &[2]);
     /// ```
     pub fn move_to_next_sibling(&mut self) {
+        self.horizontal_offset = 0;
         let current_path = self.cursor.path();
 
         // Root has no siblings
@@ -1404,6 +1417,7 @@ impl EditorState {
     /// assert_eq!(state.cursor().path(), &[0]);
     /// ```
     pub fn move_to_first_sibling(&mut self) {
+        self.horizontal_offset = 0;
         let current_path = self.cursor.path();
 
         // Root has no siblings
@@ -1450,6 +1464,7 @@ impl EditorState {
     /// assert_eq!(state.cursor().path(), &[2]);
     /// ```
     pub fn move_to_last_sibling(&mut self) {
+        self.horizontal_offset = 0;
         let current_path = self.cursor.path();
 
         // Root has no siblings
@@ -1524,6 +1539,7 @@ impl EditorState {
     /// assert_eq!(state.cursor().path(), &[0]);
     /// ```
     pub fn move_to_previous_sibling(&mut self) {
+        self.horizontal_offset = 0;
         let current_path = self.cursor.path();
 
         // Root has no siblings
@@ -1570,6 +1586,7 @@ impl EditorState {
     /// }
     /// ```
     pub fn move_to_next_at_same_or_shallower_depth(&mut self) {
+        self.horizontal_offset = 0;
         let current_path = self.cursor.path();
 
         // Find the current line to get its depth
@@ -1609,6 +1626,7 @@ impl EditorState {
     /// }
     /// ```
     pub fn move_to_parent(&mut self) {
+        self.horizontal_offset = 0;
         let current_path = self.cursor.path();
 
         // Can't move to parent if already at root
@@ -1640,6 +1658,7 @@ impl EditorState {
     /// }
     /// ```
     pub fn move_to_previous_at_same_or_shallower_depth(&mut self) {
+        self.horizontal_offset = 0;
         let current_path = self.cursor.path();
 
         // Find the current line to get its depth
@@ -3034,6 +3053,7 @@ impl EditorState {
     /// Jumps to the next search result (respects search direction).
     /// Returns (success, wrapped) where wrapped indicates if the search wrapped around.
     pub fn next_search_result(&mut self) -> (bool, bool) {
+        self.horizontal_offset = 0;
         if self.search_results.is_empty() {
             return (false, false);
         }
