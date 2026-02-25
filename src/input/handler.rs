@@ -206,6 +206,11 @@ impl InputHandler {
             return Ok(false);
         }
 
+        // Handle resize events — just let the next render cycle pick up new dimensions
+        if matches!(event, BackendEvent::Resize(_, _)) {
+            return Ok(false);
+        }
+
         // Handle mouse events if mouse is enabled
         if let BackendEvent::Mouse(ref mouse_event) = event {
             if state.enable_mouse() {

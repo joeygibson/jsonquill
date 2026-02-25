@@ -54,6 +54,7 @@ fn translate_event(event: Event) -> Option<BackendEvent> {
             MouseEventKind::ScrollDown => Some(BackendEvent::Mouse(BackendMouse::WheelDown)),
             _ => None,
         },
+        Event::Resize(w, h) => Some(BackendEvent::Resize(w, h)),
         _ => None,
     }
 }

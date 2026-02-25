@@ -3,21 +3,19 @@
 use super::event::{BackendEvent, BackendKey, BackendMouse};
 use anyhow::{Context, Result};
 use std::fs::File;
-use std::io::{self, Stdin};
+use std::io;
+use std::sync::mpsc;
+use std::thread;
+use std::time::Duration;
 use termion::event::{Event, Key, MouseButton, MouseEvent};
 use termion::input::{Events, TermRead};
 
-/// Event source for reading terminal events via termion.
-enum EventSource {
-    /// Reading from stdin.
-    Stdin(Events<Stdin>),
-    /// Reading from /dev/tty (when stdin was piped).
-    Tty(Events<File>),
-}
-
 /// Reads terminal events using the termion backend.
+///
+/// Uses a background thread to read events from termion's blocking iterator,
+/// forwarding them through a channel so `poll_event` can use a timeout.
 pub struct EventReader {
-    events: EventSource,
+    rx: mpsc::Receiver<BackendEvent>,
 }
 
 impl Default for EventReader {
@@ -29,9 +27,11 @@ impl Default for EventReader {
 impl EventReader {
     /// Creates a new EventReader that reads from stdin.
     pub fn new() -> Self {
-        Self {
-            events: EventSource::Stdin(io::stdin().events()),
-        }
+        let (tx, rx) = mpsc::channel();
+        thread::spawn(move || {
+            read_events_from(io::stdin().events(), tx);
+        });
+        Self { rx }
     }
 
     /// Creates a new EventReader that reads from /dev/tty.
@@ -43,25 +43,32 @@ impl EventReader {
             .open("/dev/tty")
             .context("Failed to open /dev/tty for keyboard input")?;
 
-        Ok(Self {
-            events: EventSource::Tty(tty_file.events()),
-        })
+        let (tx, rx) = mpsc::channel();
+        thread::spawn(move || {
+            read_events_from(tty_file.events(), tx);
+        });
+        Ok(Self { rx })
     }
 
-    /// Polls for a terminal event.
+    /// Polls for a terminal event with a timeout.
     ///
-    /// Returns `Some(BackendEvent)` if an event occurred, `None` if no event is available.
+    /// Returns `Some(BackendEvent)` if an event occurred, `None` if timeout elapsed.
     pub fn poll_event(&mut self) -> Result<Option<BackendEvent>> {
-        let raw_event = match &mut self.events {
-            EventSource::Stdin(events) => events.next(),
-            EventSource::Tty(events) => events.next(),
-        };
+        match self.rx.recv_timeout(Duration::from_millis(100)) {
+            Ok(event) => Ok(Some(event)),
+            Err(mpsc::RecvTimeoutError::Timeout) => Ok(None),
+            Err(mpsc::RecvTimeoutError::Disconnected) => Ok(None),
+        }
+    }
+}
 
-        if let Some(event_result) = raw_event {
-            let event = event_result?;
-            Ok(translate_event(event))
-        } else {
-            Ok(None)
+/// Reads events from a termion event iterator and sends them through the channel.
+fn read_events_from<R: io::Read>(events: Events<R>, tx: mpsc::Sender<BackendEvent>) {
+    for event in events.flatten() {
+        if let Some(backend_event) = translate_event(event) {
+            if tx.send(backend_event).is_err() {
+                break;
+            }
         }
     }
 }
